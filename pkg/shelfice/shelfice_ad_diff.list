@@ -9,3 +9,4 @@ shelfice_step_icemass.f
 shelfice_thermodynamics.f
 shelfice_u_drag.f
 shelfice_v_drag.f
+shelfice_init_depths.f
