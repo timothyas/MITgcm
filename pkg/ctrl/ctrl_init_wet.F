@@ -20,9 +20,10 @@ c     == global variables ==
 #ifdef ALLOW_OBCS_CONTROL
 # include "OBCS_GRID.h"
 #endif
-#ifdef ALLOW_SHIFWFLX_CONTROL
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHIWET_CONTROL)
 # include "SHELFICE.h"
-#endif /* ALLOW_SHIFWFLX_CONTROL */
+#endif /* ALLOW_SHIFWFLX_CONTROL || ALLOW_SHIWET_CONTROL*/
+
 
 c     == routine arguments ==
 
@@ -42,6 +43,9 @@ c     == local variables ==
       integer nwettmp
 #ifdef ALLOW_SHIFWFLX_CONTROL
       integer ntmpshi
+#endif
+#ifdef ALLOW_SHIWET_CONTROL
+      integer ntmpUnderShelf
 #endif
 #ifdef ALLOW_OBCS_CONTROL
       integer ntmpob(nobcs)
@@ -75,6 +79,9 @@ c--   Initialise the counters.
             nwetvtile(bi,bj,k) = 0
 #ifdef ALLOW_SHIFWFLX_CONTROL
             nwetitile(bi,bj,k) = 0
+#endif
+#ifdef ALLOW_SHIWET_CONTROL
+            nwetutile(bi,bj,k) = 0
 #endif
           enddo
         enddo
@@ -134,6 +141,16 @@ c--             Ice shelf mask.
                  nwetitile(bi,bj,k) = nwetitile(bi,bj,k) + 1
                 endif
 #endif /* ALLOW_SHIFWFLX_CONTROL */
+
+#ifdef ALLOW_SHIWET_CONTROL
+c--             Mask giving maskInC at top layer for 2D ctrls 
+C               for wet points in an ice shelf domain. 
+                if (k.eq.1) then
+                  if (maskSHIWet(i,j,k,bi,bj) .ne. 0) then
+                    nwetutile(bi,bj,k) = nwetutile(bi,bj,k)+1
+                  endif
+                endif
+#endif /* ALLOW_SHIWET_CONTROL */
               enddo
             enddo
           enddo
@@ -201,6 +218,12 @@ c--             Ice shelf mask.
                         nvarlength = nvarlength +
      &                       ncvarrecs(i)*nwetitile(bi,bj,k)
 #endif /* ALLOW_SHIFWFLX_CONTROL */
+#ifdef ALLOW_SHIWET_CONTROL
+c--             Under Ice shelf mask.
+                     else if ( ncvargrd(i) .eq. 'u') then
+                        nvarlength = nvarlength +
+     &                       ncvarrecs(i)*nwetutile(bi,bj,k)
+#endif /* ALLOW_SHIWET_CONTROL */
                      else if ( ncvargrd(i) .eq. 'm' ) then
 #ifdef ALLOW_OBCS_CONTROL
                         do iobcs = 1, nobcs
@@ -233,11 +256,12 @@ cgg   As an ad-hoc solution I have divided by nobcs everywhere.
                            end if
                         enddo
 #endif
+
                      else
                         print*,'ctrl_init: invalid grid location'
                         print*,'     control variable = ',ncvarindex(i)
                         print*,'     grid location    = ',ncvargrd(i)
-                        stop   ' ... stopped in ctrl_init'
+                        stop   ' ... stopped in ctrl_init_wet'
                      endif
                   enddo
                enddo
@@ -577,6 +601,43 @@ c
      &    SQUEEZE_RIGHT , mythid)
 #endif
 
+#ifdef ALLOW_SHIWET_CONTROL
+      write(msgbuf,'(a,2x,I10)')
+     &     'ctrl-wet 18a:surface wet U = ', nwetutile(1,1,1)
+      call print_message( msgbuf, standardmessageunit,
+     &     SQUEEZE_RIGHT , mythid)
+
+
+      do k = 1, nr
+       ntmpundershelf=0
+       do bj=1,nSy
+        do bi=1,nSx
+         ntmpundershelf=ntmpundershelf+nWetuTile(bi,bj,k)
+        enddo
+       enddo
+       CALL GLOBAL_SUM_INT( ntmpundershelf,  myThid )
+       nWetuGlobal(k)=ntmpundershelf
+       write(msgbuf,'(a,2x,I3,2x,I10)')
+     &      'ctrl-wet 18b: global nWet U k=', k, nWetuGlobal(k)
+       call print_message( msgbuf, standardmessageunit,
+     &      SQUEEZE_RIGHT , mythid)
+      enddo
+
+      ntmpundershelf=0
+      do k = 1, nr
+       ntmpundershelf=ntmpundershelf+nWetuGlobal(k)
+      enddo
+      write(msgbuf,'(a,2x,I10)')
+     &    'ctrl-wet 18c: global SUM(K) under shelf ', ntmpundershelf
+      call print_message( msgbuf, standardmessageunit,
+     &    SQUEEZE_RIGHT , mythid)
+
+      write(msgbuf,'(a)')
+     &    'ctrl-wet -------------------------------------------------'
+      call print_message( msgbuf, standardmessageunit,
+     &    SQUEEZE_RIGHT , mythid)
+#endif
+
       write(msgbuf,'(a,2x,I10)')
      &     'ctrl_init: no. of control variables: ', nvartype
       call print_message( msgbuf, standardmessageunit,
@@ -614,6 +675,11 @@ c#else
       CALL ACTIVE_WRITE_GEN_RS( 'maskCtrlI', maskSHI, 'XY', Nr,
      I                          1, .FALSE., 0, mythid, dummyRS )
 c#endif
+#endif
+
+#ifdef ALLOW_SHIWET_CONTROL
+      CALL ACTIVE_WRITE_GEN_RS( 'maskCtrlU', maskSHIWet, 'XY', Nr,
+     I                          1, .FALSE., 0, mythid, dummyRS )
 #endif
 #endif /* ALLOW_AUTODIFF */
 

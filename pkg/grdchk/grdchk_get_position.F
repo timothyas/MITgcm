@@ -161,6 +161,14 @@ c--             Ice shelf mask.
                      endif
                      wetlocal = maskSHI(i,j,k,bi,bj)
 #endif /* ALLOW_SHIFWFLX_CONTROL */
+#ifdef ALLOW_SHIWET_CONTROL
+c--             under ice shelf mask.
+                  else if ( ncvargrd(grdchkvarindex) .eq. 'u' ) then
+                     if ( maskSHIWet(i,j,k,bi,bj) .gt. 0.) then
+                        icomptest = icomptest + 1
+                     endif
+                     wetlocal = maskSHIWet(i,j,k,bi,bj)
+#endif /* ALLOW_SHIWET_CONTROL */
                   else if ( ncvargrd(grdchkvarindex) .eq. 'm' ) then
                      if ( grdchkvarindex .EQ. 11 ) then
 #ifdef ALLOW_OBCSN_CONTROL
