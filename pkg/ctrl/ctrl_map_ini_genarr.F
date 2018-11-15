@@ -183,6 +183,9 @@ C     == global variables ==
 #include "optim.h"
 #include "CTRL_GENARR.h"
 #include "ctrl_dummy.h"
+#ifdef ALLOW_SHIWET_CONTROL
+# include "SHELFICE.h"
+#endif 
 
 C     !INPUT/OUTPUT PARAMETERS:
 C     == routine arguments ==
@@ -280,13 +283,28 @@ c--   Now, read the control vector.
               DO i = 1,sNx
 c scale param adjustment
                 IF (doscaling) then
-                if ( (maskC(i,j,1,bi,bj).NE.0.).AND.
-     &               (wgenarr2d(i,j,bi,bj,iarr).GT.0.) ) then
-                  xx_gen(i,j,bi,bj)=xx_gen(i,j,bi,bj)
+#ifdef ALLOW_SHIWET_CONTROL
+                 if ( (xx_genarr2d_file(iarr)(1:8).eq.'xx_depth') .or.
+     &           (xx_genarr2d_file(iarr)(1:13).eq.'xx_bottomdrag')) then
+                  if ( (maskSHIWet(i,j,1,bi,bj).NE.0.).AND.
+     &                 (wgenarr2d(i,j,bi,bj,iarr).GT.0.) ) then
+                   xx_gen(i,j,bi,bj)=xx_gen(i,j,bi,bj)
      &                     /sqrt( wgenarr2d(i,j,bi,bj,iarr) )
-                else
-                  xx_gen(i,j,bi,bj)=0.
-                endif
+                  else
+                    xx_gen(i,j,bi,bj)=0.
+                  endif
+                 else
+#endif /* ALLOW_SHIWET_CONTROL */
+                  if ( (maskC(i,j,1,bi,bj).NE.0.).AND.
+     &                 (wgenarr2d(i,j,bi,bj,iarr).GT.0.) ) then
+                    xx_gen(i,j,bi,bj)=xx_gen(i,j,bi,bj)
+     &                       /sqrt( wgenarr2d(i,j,bi,bj,iarr) )
+                  else
+                    xx_gen(i,j,bi,bj)=0.
+                  endif
+#ifdef ALLOW_SHIWET_CONTROL
+                 endif
+#endif /* ALLOW_SHIWET_CONTROL */
                 ENDIF
 c add to model parameter
                 fld(i,j,bi,bj)=fld(i,j,bi,bj)+xx_gen(i,j,bi,bj)
