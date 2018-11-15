@@ -253,5 +253,16 @@ C     which in turn require a particular set of input fields
 #endif
 #endif
 
+#ifdef ALLOW_SHIWET_CONTROL
+# ifndef ALLOW_GENARR2D_CONTROL
+         WRITE(msgBuf,'(2A)')
+     &        'ALLOW_SHIWET_CONTROL: used for 2D control var ',
+     &        'of 2D wet points only works with ALLOW_GENARR2D_CONTROL' 
+         CALL PRINT_ERROR( msgBuf, myThid )
+         STOP 'ABNORMAL END: S/R CTRL_CHECK'
+# endif
+#endif
+
+
       RETURN
       END
