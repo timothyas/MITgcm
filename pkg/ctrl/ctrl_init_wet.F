@@ -20,9 +20,9 @@ c     == global variables ==
 #ifdef ALLOW_OBCS_CONTROL
 # include "OBCS_GRID.h"
 #endif
-#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHIWET_CONTROL)
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
 # include "SHELFICE.h"
-#endif /* ALLOW_SHIFWFLX_CONTROL || ALLOW_SHIWET_CONTROL*/
+#endif /* ALLOW_SHIFWFLX_CONTROL || ALLOW_SHI2D_CONTROL*/
 
 
 c     == routine arguments ==
@@ -41,10 +41,10 @@ c     == local variables ==
       integer iobcs
       integer nwetc3d
       integer nwettmp
-#ifdef ALLOW_SHIFWFLX_CONTROL
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
       integer ntmpshi
 #endif
-#ifdef ALLOW_SHIWET_CONTROL
+#ifdef ALLOW_SHI2D_CONTROL
       integer ntmpUnderShelf
 #endif
 #ifdef ALLOW_OBCS_CONTROL
@@ -77,10 +77,10 @@ c--   Initialise the counters.
             nwetstile(bi,bj,k) = 0
             nwetwtile(bi,bj,k) = 0
             nwetvtile(bi,bj,k) = 0
-#ifdef ALLOW_SHIFWFLX_CONTROL
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
             nwetitile(bi,bj,k) = 0
 #endif
-#ifdef ALLOW_SHIWET_CONTROL
+#ifdef ALLOW_SHI2D_CONTROL
             nwetutile(bi,bj,k) = 0
 #endif
           enddo
@@ -135,14 +135,14 @@ c--             Vertical mask.
                   nwetvtile(bi,bj,k) = nwetvtile(bi,bj,k) + 1
                 endif
 #endif
-#ifdef ALLOW_SHIFWFLX_CONTROL
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
 c--             Ice shelf mask.
                 if (maskSHI(i,j,k,bi,bj) .eq. 1.) then
                  nwetitile(bi,bj,k) = nwetitile(bi,bj,k) + 1
                 endif
-#endif /* ALLOW_SHIFWFLX_CONTROL */
+#endif /* ALLOW_SHIFWFLX_CONTROL || ALLOW_SHI2D_CONTROL */
 
-#ifdef ALLOW_SHIWET_CONTROL
+#ifdef ALLOW_SHI2D_CONTROL
 c--             Mask giving maskInC at top layer for 2D ctrls 
 C               for wet points in an ice shelf domain. 
                 if (k.eq.1) then
@@ -150,7 +150,7 @@ C               for wet points in an ice shelf domain.
                     nwetutile(bi,bj,k) = nwetutile(bi,bj,k)+1
                   endif
                 endif
-#endif /* ALLOW_SHIWET_CONTROL */
+#endif /* ALLOW_SHI2D_CONTROL */
               enddo
             enddo
           enddo
@@ -212,18 +212,18 @@ c
                      else if ( ncvargrd(i) .eq. 'v' ) then
                         nvarlength = nvarlength +
      &                       ncvarrecs(i)*nwetvtile(bi,bj,k)
-#ifdef ALLOW_SHIFWFLX_CONTROL
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
 c--             Ice shelf mask.
                      else if ( ncvargrd(i) .eq. 'i') then
                         nvarlength = nvarlength +
      &                       ncvarrecs(i)*nwetitile(bi,bj,k)
-#endif /* ALLOW_SHIFWFLX_CONTROL */
-#ifdef ALLOW_SHIWET_CONTROL
+#endif /* ALLOW_SHIFWFLX_CONTROL ALLOW_SHI2D_CONTROL */
+#ifdef ALLOW_SHI2D_CONTROL
 c--             Under Ice shelf mask.
                      else if ( ncvargrd(i) .eq. 'u') then
                         nvarlength = nvarlength +
      &                       ncvarrecs(i)*nwetutile(bi,bj,k)
-#endif /* ALLOW_SHIWET_CONTROL */
+#endif /* ALLOW_SHI2D_CONTROL */
                      else if ( ncvargrd(i) .eq. 'm' ) then
 #ifdef ALLOW_OBCS_CONTROL
                         do iobcs = 1, nobcs
@@ -561,7 +561,7 @@ c
       call print_message( msgbuf, standardmessageunit,
      &    SQUEEZE_RIGHT , mythid)
 
-#ifdef ALLOW_SHIFWFLX_CONTROL
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
       write(msgbuf,'(a,2x,I10)')
      &     'ctrl-wet 17a:surface wet I = ', nwetitile(1,1,1)
       call print_message( msgbuf, standardmessageunit,
@@ -601,7 +601,7 @@ c
      &    SQUEEZE_RIGHT , mythid)
 #endif
 
-#ifdef ALLOW_SHIWET_CONTROL
+#ifdef ALLOW_SHI2D_CONTROL
       write(msgbuf,'(a,2x,I10)')
      &     'ctrl-wet 18a:surface wet U = ', nwetutile(1,1,1)
       call print_message( msgbuf, standardmessageunit,
@@ -668,7 +668,7 @@ c#endif
 #if (defined (ALLOW_EFLUXP0_CONTROL))
       call active_write_xyz( 'maskhFacV', hFacV, 1, 0, mythid, dummy)
 #endif
-#ifdef ALLOW_SHIFWFLX_CONTROL
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
 c#ifdef REAL4_IS_SLOW
 c     call active_write_xyz( 'maskCtrlI', maskSHI, 1, 0, mythid, dummy)
 c#else
@@ -677,7 +677,7 @@ c#else
 c#endif
 #endif
 
-#ifdef ALLOW_SHIWET_CONTROL
+#ifdef ALLOW_SHI2D_CONTROL
       CALL ACTIVE_WRITE_GEN_RS( 'maskCtrlU', maskSHIWet, 'XY', Nr,
      I                          1, .FALSE., 0, mythid, dummyRS )
 #endif

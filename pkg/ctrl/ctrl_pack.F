@@ -240,11 +240,11 @@ C     place holder of obsolete variable jG
 #ifdef ALLOW_CTRL_WETV
           write(cunit) (nWetvGlobal(k), k=1,nr)
 #endif
-#ifdef ALLOW_SHIFWFLX_CONTROL
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
           write(cunit) (nWetiGlobal(k), k=1,nr)
 c          write(cunit) nWetiGlobal(1)
 #endif
-#ifdef ALLOW_SHIWET_CONTROL
+#ifdef ALLOW_SHI2D_CONTROL
           write(cunit) (nWetuGlobal(k), k=1,nr)
 #endif
 
@@ -750,10 +750,13 @@ c          write(cunit) nWetiGlobal(1)
        do iarr = 1, maxCtrlArr2D
         if (xx_genarr2d_weight(iarr).NE.' ') then
          mskNameForSetPack='maskCtrlC'
-# ifdef ALLOW_SHIWET_CONTROL
+# ifdef ALLOW_SHI2D_CONTROL
          if ( (xx_genarr2d_file(iarr)(1:8).eq.'xx_depth') .or.
-     &        (xx_genarr2d_file(iarr)(1:13).eq.'xx_bottomdrag') )
-     &    mskNameForSetPack='maskCtrlU'
+     &        (xx_genarr2d_file(iarr)(1:13).eq.'xx_bottomdrag') ) then
+          mskNameForSetPack='maskCtrlU'
+         elseif (xx_genarr2d_file(iarr)(1:8).eq.'xx_shicoeff') then
+          mskNameForSetPack='maskCtrlI'
+         endif
 # endif
           call ctrl_set_fname( xx_genarr2d_file(iarr),
      O                         fname_local, mythid )
