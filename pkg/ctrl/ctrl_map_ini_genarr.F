@@ -37,6 +37,9 @@ C     == global variables ==
 # include "PTRACERS_SIZE.h"
 # include "PTRACERS_FIELDS.h"
 #endif
+#ifdef ALLOW_SHI2D_CONTROL
+# include "SHELFICE.h"
+#endif 
 
 C     !INPUT/OUTPUT PARAMETERS:
 C     == routine arguments ==
@@ -49,6 +52,9 @@ C     == local variables ==
 #endif
 #ifdef ALLOW_GENARR2D_CONTROL
       integer igen_etan,igen_bdrag,igen_geoth
+# ifdef ALLOW_SHI2D_CONTROL
+      integer igen_shiCoeffT,igen_shiCoeffS
+# endif
 #endif /* ALLOW_GENARR2D_CONTROL */
 #ifdef ALLOW_GENARR3D_CONTROL
       integer igen_theta0, igen_salt0
@@ -74,6 +80,12 @@ C--   generic 2D control variables
      &     igen_bdrag=iarr
         if (xx_genarr2d_file(iarr)(1:13).EQ.'xx_geothermal')
      &     igen_geoth=iarr
+# ifdef ALLOW_SHI2D_CONTROL
+        if (xx_genarr2d_file(iarr)(1:12).EQ.'xx_shicoefft') 
+     &     igen_shiCoeffT=iarr
+        if (xx_genarr2d_file(iarr)(1:12).EQ.'xx_shicoeffs') 
+     &     igen_shiCoeffS=iarr
+# endif /* ALLOW_SHI2D_CONTROL */
       endif
       ENDDO
 
@@ -88,6 +100,12 @@ C--   generic 2D control variables
       if (igen_geoth.GT.0)
      &  call ctrl_map_genarr2d(geothermalFlux,igen_geoth,myThid)
 #endif
+# ifdef ALLOW_SHI2D_CONTROL
+      if (igen_shiCoeffT.GT.0)
+     &  call ctrl_map_genarr2d(shiTransCoeffT,igen_shiCoeffT,myThid)
+      if (igen_shiCoeffS.GT.0)
+     &  call ctrl_map_genarr2d(shiTransCoeffS,igen_shiCoeffS,myThid)
+# endif /* ALLOW_SHI2D_CONTROL */
 
 #endif /* ALLOW_GENARR2D_CONTROL */
 
@@ -183,7 +201,7 @@ C     == global variables ==
 #include "optim.h"
 #include "CTRL_GENARR.h"
 #include "ctrl_dummy.h"
-#ifdef ALLOW_SHIWET_CONTROL
+#ifdef ALLOW_SHI2D_CONTROL
 # include "SHELFICE.h"
 #endif 
 
@@ -283,7 +301,7 @@ c--   Now, read the control vector.
               DO i = 1,sNx
 c scale param adjustment
                 IF (doscaling) then
-#ifdef ALLOW_SHIWET_CONTROL
+#ifdef ALLOW_SHI2D_CONTROL
                  if ( (xx_genarr2d_file(iarr)(1:8).eq.'xx_depth') .or.
      &           (xx_genarr2d_file(iarr)(1:13).eq.'xx_bottomdrag')) then
                   if ( (maskSHIWet(i,j,1,bi,bj).NE.0.).AND.
@@ -293,8 +311,17 @@ c scale param adjustment
                   else
                     xx_gen(i,j,bi,bj)=0.
                   endif
+                 elseif (xx_genarr2d_file(iarr)(1:11).eq.'xx_shicoeff')
+     &            then
+                  if ( (maskSHI(i,j,1,bi,bj).NE.0.).AND.
+     &                 (wgenarr2d(i,j,bi,bj,iarr).GT.0.) ) then
+                   xx_gen(i,j,bi,bj)=xx_gen(i,j,bi,bj)
+     &                     /sqrt( wgenarr2d(i,j,bi,bj,iarr) )
+                  else
+                    xx_gen(i,j,bi,bj)=0.
+                  endif
                  else
-#endif /* ALLOW_SHIWET_CONTROL */
+#endif /* ALLOW_SHI2D_CONTROL */
                   if ( (maskC(i,j,1,bi,bj).NE.0.).AND.
      &                 (wgenarr2d(i,j,bi,bj,iarr).GT.0.) ) then
                     xx_gen(i,j,bi,bj)=xx_gen(i,j,bi,bj)
@@ -302,10 +329,10 @@ c scale param adjustment
                   else
                     xx_gen(i,j,bi,bj)=0.
                   endif
-#ifdef ALLOW_SHIWET_CONTROL
-                 endif
-#endif /* ALLOW_SHIWET_CONTROL */
-                ENDIF
+#ifdef ALLOW_SHI2D_CONTROL
+                 endif ! end if xx_depth/bd or xx_shicoeff ...
+#endif /* ALLOW_SHI2D_CONTROL */
+                ENDIF ! end if (doscaling)
 c add to model parameter
                 fld(i,j,bi,bj)=fld(i,j,bi,bj)+xx_gen(i,j,bi,bj)
               enddo

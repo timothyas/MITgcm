@@ -821,12 +821,15 @@ c--
 #ifdef ALLOW_GENARR2D_CONTROL
        do iarr = 1, maxCtrlArr2D
         ncvargrdtmp='c'
-# ifdef ALLOW_SHIWET_CONTROL
+# ifdef ALLOW_SHI2D_CONTROL
 C       Under iceshelf, use maskSHIWet for these
         if ( (xx_genarr2d_file(iarr)(1:8).eq.'xx_depth') .or.
-     &       (xx_genarr2d_file(iarr)(1:13).eq.'xx_bottomdrag') )
-     &      ncvargrdtmp='u'
-# endif
+     &       (xx_genarr2d_file(iarr)(1:13).eq.'xx_bottomdrag') ) then
+            ncvargrdtmp='u'
+        elseif (xx_genarr2d_file(iarr)(1:11).eq.'xx_shicoeff') then
+            ncvargrdtmp='i'
+        endif
+# endif /* ALLOW_SHI2D_CONTROL */
 
 # ifndef ALLOW_OPENAD
         if (xx_genarr2d_weight(iarr).NE.' ')

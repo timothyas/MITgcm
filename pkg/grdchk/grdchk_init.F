@@ -106,7 +106,7 @@ c--   control variable on the current tile.
                enddo
             enddo
          enddo
-#ifdef ALLOW_SHIFWFLX_CONTROL
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
       else if ( ncvargrd(grdchkvarindex) .eq. 'i' ) then
          do bj = jtlo,jthi
             do bi = itlo,ithi
@@ -115,8 +115,8 @@ c--   control variable on the current tile.
                enddo
             enddo
          enddo
-#endif /* ALLOW_SHIFWFLX_CONTROL */
-#ifdef ALLOW_SHIWET_CONTROL
+#endif /* ALLOW_SHIFWFLX_CONTROL || ALLOW_SHI2D_CONTROL */
+#ifdef ALLOW_SHI2D_CONTROL
       else if ( ncvargrd(grdchkvarindex) .eq. 'u' ) then
          do bj = jtlo,jthi
             do bi = itlo,ithi
@@ -125,7 +125,7 @@ c--   control variable on the current tile.
                enddo
             enddo
          enddo
-#endif /* ALLOW_SHIWET_CONTROL */
+#endif /* ALLOW_SHI2D_CONTROL */
       else if ( ncvargrd(grdchkvarindex) .eq. 'm' ) then
          do bj = jtlo,jthi
             do bi = itlo,ithi

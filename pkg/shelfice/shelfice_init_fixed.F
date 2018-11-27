@@ -42,7 +42,7 @@ C     i, j, bi, bj :: Loop counters
       CHARACTER*16  diagUnits
       CHARACTER*(80) diagTitle
 #endif /* ALLOW_DIAGNOSTICS */
-#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHIWET_CONTROL)
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
       INTEGER k
 # ifdef ALLOW_SHIFWFLX_COST_CONTRIBUTION
       _RL dummy
@@ -82,7 +82,7 @@ C-----------------------------------------------------------------------
        ENDDO
       ENDDO
 
-#ifdef ALLOW_SHIFWFLX_CONTROL
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
 C     maskSHI is a hack to play along with the general ctrl-package
 C     infrastructure, where only the k=1 layer of a 3D mask is used
 C     for 2D fields. We cannot use maskInC instead, because routines
@@ -111,7 +111,7 @@ C     like ctrl_get_gen and ctrl_set_unpack_xy require 3D masks.
       ENDDO
 #endif /* ALLOW_SHIFWFLX_CONTROL */
 
-#ifdef ALLOW_SHIWET_CONTROL
+#ifdef ALLOW_SHI2D_CONTROL
 C     maskSHIWet is a similar hack to maskSHI, only differing in
 C     surface layer. Here, it is non-obcs wet points (maskInC) to give
 C     control of 2D fields under the ice shelf (e.g. bottomdrag or depth).
@@ -138,7 +138,7 @@ C     control of 2D fields under the ice shelf (e.g. bottomdrag or depth).
         ENDDO
        ENDDO
       ENDDO
-#endif /* ALLOW_SHIWET_CONTROL */
+#endif /* ALLOW_SHI2D_CONTROL */
 
 #ifdef ALLOW_COST
 #if  (defined (ALLOW_SHIFWFLX_COST_CONTRIBUTION) && \

@@ -123,15 +123,15 @@ C     ctrlUseGen             ::   use generic control approach rather than old c
       integer nwetvglobal     ( nr )
       integer nbuffglobal
 
-#ifdef ALLOW_SHIFWFLX_CONTROL
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
       common /controlvars_i_shifwflx/
      &     nwetitile, nwetiglobal, filenWetiGlobal
       integer nwetitile     ( nsx,nsy,nr )
       integer nwetiglobal     ( nr )
       integer filenWetiGlobal(nr)
-#endif /* ALLOW_SHIFWFLX_CONTROL */
+#endif /* ALLOW_SHIFWFLX_CONTROL || ALLOW_SHI2D_CONTROL */
 
-#ifdef ALLOW_SHIWET_CONTROL
+#ifdef ALLOW_SHI2D_CONTROL
 C These are essentially for a 2D mask underneath the ice shelf
 C works with maskSHIWet defined in ../shelfice/SHELFICE.h 
 C Used the letter 'u' for 'underneath iceshelf ... 
@@ -141,7 +141,7 @@ C other suggestions are welcome...
       integer nwetutile     ( nsx,nsy,nr )
       integer nwetuglobal     ( nr )
       integer filenWetuGlobal(nr)
-#endif /* ALLOW_SHIWET_CONTROL */
+#endif /* ALLOW_SHI2D_CONTROL */
 
       common /controlvars_c/
      &                       ncvargrd

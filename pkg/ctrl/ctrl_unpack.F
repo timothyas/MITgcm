@@ -240,11 +240,11 @@ c--       Header information.
 #ifdef ALLOW_CTRL_WETV
           read(cunit) (filenWetvGlobal(k),   k=1,nr)
 #endif
-#ifdef ALLOW_SHIFWFLX_CONTROL
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
           read(cunit) (filenWetiGlobal(k),   k=1,nr)
 c         read(cunit) filenWetiGlobal(1)
 #endif
-#ifdef ALLOW_SHIWET_CONTROL
+#ifdef ALLOW_SHI2D_CONTROL
           read(cunit) (filenWetuGlobal(k),   k=1,nr)
 #endif
 
@@ -297,23 +297,23 @@ c
                 STOP
              endif
           end do
-#ifdef ALLOW_SHIFWFLX_CONTROL
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
           do k=1,1
            if ( filenWetiGlobal(k) .NE. nWetiGlobal(k) ) then
             print *, 'WARNING: wrong nWetiGlobal for k = ', k
             STOP
            endif
           enddo
-#endif /* ALLOW_SHIFWFLX_CONTROL */
+#endif /* ALLOW_SHIFWFLX_CONTROL || ALLOW_SHI2D_CONTROL */
 
-#ifdef ALLOW_SHIWET_CONTROL
+#ifdef ALLOW_SHI2D_CONTROL
           do k=1,1
            if ( filenWetuGlobal(k) .NE. nWetuGlobal(k) ) then
             print *, 'WARNING: wrong nWetuGlobal for k = ', k
             STOP 'Ran into error in ctrl_unpack reading nWetuGlobal'
            endif
           enddo
-#endif /* ALLOW_SHIWET_CONTROL */
+#endif /* ALLOW_SHI2D_CONTROL */
 
 #if (defined (ALLOW_CTRL) && defined (ALLOW_OBCS))
 cgg(   Lets also check the OBCS mask info in the header.
@@ -848,11 +848,14 @@ c----------------------------------------------------------------------
         if (xx_genarr2d_weight(iarr).NE.' ') then
          mskNameForSetUnpack='maskCtrlC'
          nwettmp(1:Nr) = nwetcglobal(1:Nr)
-# ifdef ALLOW_SHIWET_CONTROL
+# ifdef ALLOW_SHI2D_CONTROL
          if ( (xx_genarr2d_file(iarr)(1:8).eq.'xx_depth') .or.
      &        (xx_genarr2d_file(iarr)(1:13).eq.'xx_bottomdrag') ) then
           mskNameForSetUnpack='maskCtrlU'
           nwettmp(1:Nr) = nwetuglobal(1:Nr)
+         elseif (xx_genarr2d_file(iarr)(1:11).eq.'xx_shicoeff') then
+          mskNameForSetUnpack='maskCtrlI'
+          nwettmp(1:Nr) = nwetiglobal(1:Nr)
          endif
 # endif
           call ctrl_set_fname( xx_genarr2d_file(iarr),
