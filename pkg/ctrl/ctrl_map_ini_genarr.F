@@ -317,9 +317,14 @@ c scale param adjustment
      &                 (wgenarr2d(i,j,bi,bj,iarr).GT.0.) ) then
                    xx_gen(i,j,bi,bj)=xx_gen(i,j,bi,bj)
      &                     /sqrt( wgenarr2d(i,j,bi,bj,iarr) )
+#ifdef ALLOW_LOG10_SHICOEFF_CONTROL
+                   if ( .not. doInitXX ) 
+     &              xx_gen(i,j,bi,bj) = 10. _d 0 ** xx_gen(i,j,bi,bj)
+#endif
                   else
                     xx_gen(i,j,bi,bj)=0.
                   endif
+
                  else
 #endif /* ALLOW_SHI2D_CONTROL */
                   if ( (maskC(i,j,1,bi,bj).NE.0.).AND.
@@ -333,6 +338,7 @@ c scale param adjustment
                  endif ! end if xx_depth/bd or xx_shicoeff ...
 #endif /* ALLOW_SHI2D_CONTROL */
                 ENDIF ! end if (doscaling)
+
 c add to model parameter
                 fld(i,j,bi,bj)=fld(i,j,bi,bj)+xx_gen(i,j,bi,bj)
               enddo
