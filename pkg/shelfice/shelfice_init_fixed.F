@@ -297,6 +297,22 @@ c     ENDIF
        CALL DIAGNOSTICS_ADDTOLIST( diagNum,
      I      diagName, diagCode, diagUnits, diagTitle, 0, myThid )
       ENDIF
+
+# if (defined ALLOW_AUTODIFF) && (defined ALLOW_SHI2D_CONTROL)
+      diagName  = 'ADJshict'
+      diagTitle = 'dJ/dgammaT: Sensitivity to heat transfer coefficient'
+      diagUnits = 'dJ/(m/s)        '
+      diagCode  = 'SM A    M1      '
+      CALL DIAGNOSTICS_ADDTOLIST( diagNum,
+     I          diagName, diagCode, diagUnits, diagTitle, 0, myThid )
+
+      diagName  = 'ADJshics'
+      diagTitle = 'dJ/dgammaS: Sensitivity to salt transfer coefficient'
+      diagUnits = 'dJ/(m/s)        '
+      diagCode  = 'SM A    M1      '
+      CALL DIAGNOSTICS_ADDTOLIST( diagNum,
+     I          diagName, diagCode, diagUnits, diagTitle, 0, myThid )
+# endif
 #endif /* ALLOW_DIAGNOSTICS */
 #endif /* ALLOW_SHELFICE */
 
