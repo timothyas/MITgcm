@@ -72,6 +72,8 @@ C--   generic 2D control variables
       igen_etan=0
       igen_bdrag=0
       igen_geoth=0
+      igen_shiCoeffT=0
+      igen_shiCoeffS=0
       DO iarr = 1, maxCtrlArr2D
       if (xx_genarr2d_weight(iarr).NE.' ') then
         if (xx_genarr2d_file(iarr)(1:7).EQ.'xx_etan')
@@ -223,6 +225,8 @@ C     == local variables ==
       logical dowc01
       logical dosmooth
       logical doscaling
+      logical dolog10ctrl
+      _RL log10initval
       _RL xx_gen  (1-olx:snx+olx,1-oly:sny+oly,nsx,nsy)
       _RS dummyRS(1)
       character*(80) fnamegenIn
@@ -233,6 +237,9 @@ C     == local variables ==
       integer ilgen
       logical doglobalread
       logical ladinit
+#ifdef ALLOW_SHI2D_CONTROL
+      _RL localmask  (1-olx:snx+olx,1-oly:sny+oly,nr,nsx,nsy)
+#endif
 CEOP
 
 c--   Now, read the control vector.
@@ -252,6 +259,8 @@ c--   Now, read the control vector.
       dosmooth=.false.
       dowc01  = .false.
       doscaling=.true.
+      dolog10ctrl=.false.
+      log10initval = 0. _d 0
 
       numsmo=1
       do k2 = 1, maxCtrlProc
@@ -268,6 +277,12 @@ c--   Now, read the control vector.
           endif
           if (xx_genarr2d_preproc(k2,iarr).EQ.'noscaling') then
              doscaling=.FALSE.
+          endif
+          if (xx_genarr2d_preproc_c(k2,iarr).eq.'log10ctrl') then
+C             log10(xx_fld) is set to log10initval passed via data.ctrl,
+C             (default = 0.0) when doInitXX = .true.
+              dolog10ctrl=.true.
+              log10initval = xx_genarr2d_preproc_r(k2,iarr)
           endif
       enddo
 
@@ -288,12 +303,31 @@ c--   Now, read the control vector.
       CALL READ_REC_XY_RL( fnamegenIn, xx_gen, 1, 1, myThid)
 #endif
 
-#ifdef ALLOW_SMOOTH
+#ifdef ALLOW_SHI2D_CONTROL
+c--   set local mask 
+      call ecco_zero(localmask,Nr,zeroRL,myThid)
+      if (xx_genarr2d_file(iarr)(1:11).eq.'xx_shicoeff') then
+        call ecco_cprsrl(maskSHI,nr,localmask,nr,myThid)
+      else if ( (xx_genarr2d_file(iarr)(1:8).eq.'xx_depth') .or.
+     &          (xx_genarr2d_file(iarr)(1:13).eq.'xx_bottomdrag') ) then
+        call ecco_cprsrl(maskSHIWet,nr,localmask,nr,myThid)
+      else 
+        call ecco_cprsrl(maskC,nr,localmask,nr,myThid)
+      endif
+# ifdef ALLOW_SMOOTH
+      IF (useSMOOTH) THEN
+       IF (dowc01) call smooth_correl2d(xx_gen,localmask,numsmo,mythid)
+       IF (dosmooth) call smooth2d(xx_gen,localmask,numsmo,mythid)
+      ENDIF
+# endif
+#else 
+# ifdef ALLOW_SMOOTH
       IF (useSMOOTH) THEN
        IF (dowc01) call smooth_correl2d(xx_gen,maskC,numsmo,mythid)
        IF (dosmooth) call smooth2d(xx_gen,maskC,numsmo,mythid)
       ENDIF
-#endif
+# endif
+#endif /* ALLOW_SHI2D_CONTROL */
 
       DO bj=myByLo(myThid), myByHi(myThid)
         DO bi=myBxLo(myThid), myBxHi(myThid)
@@ -302,52 +336,44 @@ c--   Now, read the control vector.
 c scale param adjustment
                 IF (doscaling) then
 #ifdef ALLOW_SHI2D_CONTROL
-                 if ( (xx_genarr2d_file(iarr)(1:8).eq.'xx_depth') .or.
-     &           (xx_genarr2d_file(iarr)(1:13).eq.'xx_bottomdrag')) then
-                  if ( (maskSHIWet(i,j,1,bi,bj).NE.0.).AND.
-     &                 (wgenarr2d(i,j,bi,bj,iarr).GT.0.) ) then
-                   xx_gen(i,j,bi,bj)=xx_gen(i,j,bi,bj)
-     &                     /sqrt( wgenarr2d(i,j,bi,bj,iarr) )
-                  else
-                    xx_gen(i,j,bi,bj)=0.
-                  endif
-                 elseif (xx_genarr2d_file(iarr)(1:11).eq.'xx_shicoeff')
-     &            then
-                  if ( (maskSHI(i,j,1,bi,bj).NE.0.).AND.
-     &                 (wgenarr2d(i,j,bi,bj,iarr).GT.0.) ) then
-                   xx_gen(i,j,bi,bj)=xx_gen(i,j,bi,bj)
-     &                     /sqrt( wgenarr2d(i,j,bi,bj,iarr) )
-#ifdef ALLOW_LOG10_SHICOEFF_CONTROL
-                   if ( .not. doInitXX ) 
-     &              xx_gen(i,j,bi,bj) = 10. _d 0 ** xx_gen(i,j,bi,bj)
+                 if ( (localmask(i,j,1,bi,bj).ne.0.) .and.
+#else
+                 if ( (maskC(i,j,1,bi,bj).NE.0.).AND.
 #endif
-                  else
-                    xx_gen(i,j,bi,bj)=0.
-                  endif
+     &                (wgenarr2d(i,j,bi,bj,iarr).GT.0.) ) then
+                   xx_gen(i,j,bi,bj)=xx_gen(i,j,bi,bj)
+     &                     /sqrt( wgenarr2d(i,j,bi,bj,iarr) )
 
+C                  Take 10^xx_fld for log10 controls
+                   if ( dolog10ctrl ) then
+                     if ( doInitXX ) xx_gen(i,j,bi,bj) = 
+     &                               xx_gen(i,j,bi,bj) + log10initval
+                     xx_gen(i,j,bi,bj) = 10.0 ** xx_gen(i,j,bi,bj)
+                   endif ! log10ctrls
                  else
-#endif /* ALLOW_SHI2D_CONTROL */
-                  if ( (maskC(i,j,1,bi,bj).NE.0.).AND.
-     &                 (wgenarr2d(i,j,bi,bj,iarr).GT.0.) ) then
-                    xx_gen(i,j,bi,bj)=xx_gen(i,j,bi,bj)
-     &                       /sqrt( wgenarr2d(i,j,bi,bj,iarr) )
-                  else
                     xx_gen(i,j,bi,bj)=0.
-                  endif
-#ifdef ALLOW_SHI2D_CONTROL
-                 endif ! end if xx_depth/bd or xx_shicoeff ...
-#endif /* ALLOW_SHI2D_CONTROL */
+                 endif ! end if mask!=0 & weight>0
                 ENDIF ! end if (doscaling)
 
 c add to model parameter
-                fld(i,j,bi,bj)=fld(i,j,bi,bj)+xx_gen(i,j,bi,bj)
+c unless doing log10ctrl, then field takes on ctrl parameter value
+                if ( .not. dolog10ctrl ) then
+                  fld(i,j,bi,bj)=fld(i,j,bi,bj)+xx_gen(i,j,bi,bj)
+                else
+                  fld(i,j,bi,bj)=xx_gen(i,j,bi,bj)
+                endif
               enddo
             enddo
         enddo
       enddo
 
 c avoid param out of [boundsVec(1) boundsVec(4)]
+#ifdef ALLOW_SHI2D_CONTROL
+      CALL CTRL_BOUND_2D(fld,localmask,xx_genarr2d_bounds(1,iarr),
+     &  myThid)
+#else
       CALL CTRL_BOUND_2D(fld,maskC,xx_genarr2d_bounds(1,iarr),myThid)
+#endif
 
       CALL EXCH_XY_RL( fld, mythid )
 
