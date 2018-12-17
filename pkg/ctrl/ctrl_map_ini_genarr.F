@@ -346,8 +346,7 @@ c scale param adjustment
 
 C                  Take 10^xx_fld for log10 controls
                    if ( dolog10ctrl ) then
-                     if ( doInitXX ) xx_gen(i,j,bi,bj) = 
-     &                               xx_gen(i,j,bi,bj) + log10initval
+                     xx_gen(i,j,bi,bj) =xx_gen(i,j,bi,bj)+log10initval
                      xx_gen(i,j,bi,bj) = 10.0 ** xx_gen(i,j,bi,bj)
                    endif ! log10ctrls
                  else
