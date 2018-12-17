@@ -34,7 +34,7 @@ C     msgBuf      - Informational/error message buffer
 
 #ifndef ALLOW_OPENAD
 #if (defined (ALLOW_GENARR2D_CONTROL) || defined (ALLOW_GENARR3D_CONTROL) || defined (ALLOW_GENTIM2D_CONTROL))
-      integer iarr
+      integer iarr, k2
 #endif
 #endif
 
@@ -262,6 +262,26 @@ C     which in turn require a particular set of input fields
          CALL PRINT_ERROR( msgBuf, myThid )
          STOP 'ABNORMAL END: S/R CTRL_CHECK'
 # endif
+#endif
+
+#ifdef ALLOW_GENARR2D_CONTROL
+C       Warn user: doscaling must be true to do log10 ctrl
+        do iarr = 1, maxCtrlArr2D
+          do k2 = 1, maxCtrlProc
+            if ( (xx_genarr2d_preproc(k2,iarr).eq.'noscaling') .and.
+     &         (xx_genarr2d_preproc_c(k2,iarr).eq.'log10ctrl') ) then
+              write(msgBuf,'(2A)') 
+     &        'CTRL_CHECK: conflicting ',
+     &        'preproc_c & preproc flags '
+              call print_error( msgBuf, myThid )
+              write(msgBuf,'(A,I2,A)') 
+     &        'log10ctrl and noscaling set for xx_genarr2d(',iarr,
+     &        '). '
+              call print_error( msgBuf, myThid )
+              STOP 'ABNORMAL END: S/R CTRL_CHECK'
+            endif
+          enddo
+        enddo
 #endif
 
 
