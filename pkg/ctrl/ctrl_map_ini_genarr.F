@@ -319,14 +319,14 @@ C             (default = 0.0) when doInitXX = .true.
 
 #ifdef ALLOW_SHI2D_CONTROL
 c--   set local mask 
-      call ecco_zero(localmask,Nr,zeroRL,myThid)
+      call ctrl_zero(localmask,Nr,zeroRL,myThid)
       if (xx_genarr2d_file(iarr)(1:11).eq.'xx_shicoeff') then
-        call ecco_cprsrl(maskSHI,nr,localmask,nr,myThid)
+        call ctrl_cprsrl(maskSHI,nr,localmask,nr,myThid)
       else if ( (xx_genarr2d_file(iarr)(1:8).eq.'xx_depth') .or.
      &          (xx_genarr2d_file(iarr)(1:13).eq.'xx_bottomdrag') ) then
-        call ecco_cprsrl(maskSHIWet,nr,localmask,nr,myThid)
+        call ctrl_cprsrl(maskSHIWet,nr,localmask,nr,myThid)
       else 
-        call ecco_cprsrl(maskC,nr,localmask,nr,myThid)
+        call ctrl_cprsrl(maskC,nr,localmask,nr,myThid)
       endif
 # ifdef ALLOW_SMOOTH
       IF (useSMOOTH) THEN
@@ -535,11 +535,11 @@ C             (default = 0.0) when doInitXX = .true.
 c--   set local mask
       call ecco_zero(localmask,Nr,zeroRL,myThid)
       if (xx_genarr3d_file(iarr)(1:7).EQ.'xx_uvel') then
-        call ecco_cprsrl(maskW,nr,localmask,nr,myThid)
+        call ctrl_cprsrl(maskW,nr,localmask,nr,myThid)
       else if (xx_genarr3d_file(iarr)(1:7).EQ.'xx_vvel') then
-        call ecco_cprsrl(maskS,nr,localmask,nr,myThid)
-      else
-        call ecco_cprsrl(maskC,nr,localmask,nr,myThid)
+        call ctrl_cprsrl(maskS,nr,localmask,nr,myThid)
+      else 
+        call ctrl_cprsrl(maskC,nr,localmask,nr,myThid)
       endif
 #endif
 
