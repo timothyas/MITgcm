@@ -73,8 +73,10 @@ C--   generic 2D control variables
       igen_etan=0
       igen_bdrag=0
       igen_geoth=0
+# ifdef ALLOW_SHI2D_CONTROL
       igen_shiCoeffT=0
       igen_shiCoeffS=0
+# endif /* ALLOW_SHI2D_CONTROL */
       DO iarr = 1, maxCtrlArr2D
       if (xx_genarr2d_weight(iarr).NE.' ') then
         if (xx_genarr2d_file(iarr)(1:7).EQ.'xx_etan')
