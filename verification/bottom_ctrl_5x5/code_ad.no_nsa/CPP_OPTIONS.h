@@ -125,14 +125,7 @@ C-- Other option files:
 C o Execution environment support options
 #include "CPP_EEOPTIONS.h"
 
-C o Include/exclude single header file containing multiple packages options
-C   (AUTODIFF, COST, CTRL, ECCO, EXF ...) instead of the standard way where
-C   each of the above pkg get its own options from its specific option file.
-C   Although this method, inherited from ECCO setup, has been traditionally
-C   used for all adjoint built, work is in progress to allow to use the
-C   standard method also for adjoint built.
-#ifdef PACKAGES_CONFIG_H
-# include "ECCO_CPPOPTIONS.h"
-#endif
+C o packages
+#include "PACKAGES_CONFIG.h"
 
 #endif /* CPP_OPTIONS_H */
