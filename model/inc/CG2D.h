@@ -48,7 +48,7 @@ C     cg2d_s ::   *same*
       COMMON /CG2D_I_WK_R/
      & cg2d_q, cg2d_r, cg2d_s
       _RL  cg2d_q(1-1:sNx+1,1-1:sNy+1,nSx,nSy)
-#ifdef ALLOW_CG2D_NSA
+#if defined (ALLOW_CG2D_NSA) || defined (ALLOW_DIFFERENTIATE_CG2D_MATRIX)
       _RL  cg2d_r(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL  cg2d_s(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
 #else  /* ALLOW_CG2D_NSA */

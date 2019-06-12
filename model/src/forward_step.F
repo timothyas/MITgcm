@@ -362,6 +362,9 @@ C     == Global variables ==
 # ifdef ALLOW_CG2D_NSA
 #  include "CG2D.h"
 # endif
+# if defined(ALLOW_DIFFERENTIATE_CG2D_MATRIX) && defined(NONLIN_FRSURF)
+#  include "CG2D.h"
+# endif
 #endif /* ALLOW_AUTODIFF */
 
 C     !INPUT/OUTPUT PARAMETERS:
