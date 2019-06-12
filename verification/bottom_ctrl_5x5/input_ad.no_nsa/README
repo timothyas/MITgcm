@@ -1,0 +1,4 @@
+Use all other inputs as from input_ad/ directory except 
+    - data.ctrl
+    - data.grdchk
+    - wt_ones.meta/data
