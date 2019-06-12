@@ -1,0 +1,7 @@
+ nDims = [   2 ];
+ dimList = [
+     5,    1,    5,
+     5,    1,    5
+ ];
+ dataprec = [ 'float32' ];
+ nrecords = [     1 ];
