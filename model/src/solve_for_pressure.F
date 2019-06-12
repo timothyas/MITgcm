@@ -1,5 +1,11 @@
 #include "PACKAGES_CONFIG.h"
 #include "CPP_OPTIONS.h"
+#ifdef ALLOW_AUTODIFF
+# include "AUTODIFF_OPTIONS.h"
+#endif
+#ifdef ALLOW_CTRL
+# include "CTRL_OPTIONS.h"
+#endif
 
 CBOP
 C     !ROUTINE: SOLVE_FOR_PRESSURE
@@ -25,12 +31,16 @@ C     == Global variables
 #include "FFIELDS.h"
 #include "DYNVARS.h"
 #include "SOLVE_FOR_PRESSURE.h"
+#include "CG2D.h"
 #ifdef ALLOW_NONHYDROSTATIC
 #include "SOLVE_FOR_PRESSURE3D.h"
 #include "NH_VARS.h"
 #endif
 #ifdef ALLOW_CD_CODE
 #include "CD_CODE_VARS.h"
+#endif
+#ifdef ALLOW_AUTODIFF
+# include "AUTODIFF_PARAMS.h"
 #endif
 
 C     === Functions ====
@@ -298,11 +308,21 @@ C--   Call the single reduce CG solver
       IF (.TRUE.) THEN
 C--   Call the default CG solver
 #endif /* ALLOW_SRCG */
+#ifdef ALLOW_DIFFERENTIATE_CG2D_MATRIX
+       cg2d_x(1,1,1,1) =  cg2d_x(1,1,1,1)+0.*AC2D(1,1,1,1) +
+     &   0.*AW2D(1,1,1,1) + 0.*AS2D(1,1,1,1)
+       CALL CG2D_NO_NSA(
+     U           cg2d_b, cg2d_x,
+     O           firstResidual, minResidualSq, lastResidual,
+     U           numIters, nIterMin,
+     I           myThid )
+#else
        CALL CG2D(
      U           cg2d_b, cg2d_x,
      O           firstResidual, minResidualSq, lastResidual,
      U           numIters, nIterMin,
      I           myThid )
+#endif
       ENDIF
 #endif /* ALLOW_CG2D_NSA */
 #endif /* DISCONNECTED_TILES */

@@ -97,7 +97,7 @@ CADJ STORE rstardhcdt,rstardhsdt,rstardhwdt
 CADJ &     = tapelev2, key = ilev_2
 # endif
 
-# ifdef ALLOW_CG2D_NSA
+# if defined(ALLOW_CG2D_NSA) || defined(ALLOW_DIFFERENTIATE_CG2D_MATRIX)
 CADJ STORE aW2d, aS2d, aC2d =
 CADJ &     tapelev2, key = ilev_2
 CADJ STORE pc, ps, pw =

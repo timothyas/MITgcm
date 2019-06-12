@@ -82,6 +82,15 @@ CADJ &     kind = isbyte
 CADJ STORE rstardhcdt,rstardhsdt,rstardhwdt
 CADJ &     = comlev1, key = ikey_dynamics, kind = isbyte
 # endif
+
+# ifdef ALLOW_DIFFERENTIATE_CG2D_MATRIX
+CADJ STORE aW2d, aS2d, aC2d =
+CADJ &     tapelev2, key = ikey_dynamics
+CADJ STORE pc, ps, pw =
+CADJ &     tapelev2, key = ikey_dynamics
+# endif
+
+
 #endif /* NONLIN_FRSURF */
 
 #ifdef ALLOW_DEPTH_CONTROL
