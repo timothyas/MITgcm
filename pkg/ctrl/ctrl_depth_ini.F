@@ -25,6 +25,9 @@ c     == global variables ==
 #include "ctrl.h"
 #include "ctrl_dummy.h"
 #include "optim.h"
+#ifdef ALLOW_GENARR2D_CONTROL
+# include "CTRL_GENARR.h"
+#endif
 
 C     !INPUT/OUTPUT PARAMETERS:
 c     == routine arguments ==
@@ -33,6 +36,8 @@ c     == routine arguments ==
 #ifdef ALLOW_DEPTH_CONTROL
 C     !LOCAL VARIABLES:
 c     == local variables ==
+
+#ifndef ALLOW_GENARR2D_CONTROL
 
       integer bi,bj
       integer i,j,k
@@ -55,8 +60,38 @@ c     == external ==
       integer  ilnblnk
       external ilnblnk
 
+#else
+
+      integer igen_depth, iarr
+
+#endif
+
+
 c     == end of interface ==
 CEOP
+
+#ifdef ALLOW_GENARR2D_CONTROL
+
+Cts ---
+C ctrl_map_genarr2d takes in field: r_low, and adds update to it:
+C xx_r_low. This is different from old setup: xx_r_low includes
+C contribution from r_low and ctrl file.
+
+      ! Need to set igen index for ctrl_map_genarr2d
+      igen_depth=0
+      do iarr = 1, maxCtrlArr2D
+        if (xx_genarr2d_weight(iarr).NE.' ') then
+          if (xx_genarr2d_file(iarr)(1:8).EQ.'xx_depth') then
+            igen_depth=iarr
+          endif
+        endif   
+      enddo
+
+      ! r_low = r_low + xx_depth.*.data
+      call ctrl_map_genarr2d(r_low, igen_depth, myThid)
+
+cts ---
+#else
 
       jtlo = mybylo(mythid)
       jthi = mybyhi(mythid)
@@ -97,6 +132,7 @@ C     this will be no longer necessary
       enddo
 
 C--
+
       do bj = jtlo,jthi
         do bi = itlo,ithi
           do j = 1-oly,sny+oly
@@ -127,6 +163,8 @@ C--
 c--   Update the tile edges.
 
       _EXCH_XY_RL( xx_r_low, myThid )
+
+#endif /* ALLOW_GENARR2D_CONTROL */
 
 #endif /* ALLOW_DEPTH_CONTROL */
 

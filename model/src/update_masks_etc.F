@@ -3,6 +3,9 @@
 #ifdef ALLOW_AUTODIFF
 # include "AUTODIFF_OPTIONS.h"
 #endif
+#ifdef ALLOW_CTRL
+# include "CTRL_OPTIONS.h"
+#endif
 
 C--  File update_masks_etc.F:
 C--   Contents
@@ -83,11 +86,14 @@ C    taking into account the lower_R Boundary (Bathymetrie / Top of Atmos)
          DO J=1-OLy,sNy+OLy
           DO I=1-OLx,sNx+OLx
 C      o Non-dimensional distance between grid bound. and domain lower_R bound.
-#ifdef ALLOW_DEPTH_CONTROL
+#if defined(ALLOW_DEPTH_CONTROL) && !(defined ALLOW_GENARR2D_CONTROL)
+
+           ! xx_r_low = r_low + xx_depth 
            hFacCtmp = (rF(K)-xx_r_low(I,J,bi,bj))*recip_drF(K)
 #else
+           ! r_low = r_low_const + xx_depth
            hFacCtmp = (rF(K)-R_low(I,J,bi,bj))*recip_drF(K)
-#endif /* ALLOW_DEPTH_CONTROL */
+#endif /* ALLOW_DEPTH_CONTROL && !ALLOW_GENARR2D_CONTROL */
 Cml           IF ( hFacCtmp .LE. 0. _d 0 ) THEN
 CmlC           IF ( hFacCtmp .LT. 0.5*hfacMnSz ) THEN
 Cml            hFacCtmp2 = 0. _d 0
