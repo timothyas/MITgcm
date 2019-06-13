@@ -229,6 +229,15 @@ C-    end bi,bj loops.
        ENDDO
       ENDDO
 
+#if ( defined (ALLOW_AUTODIFF) && \
+      defined (ALLOW_AUTODIFF_MONITOR) && \
+      defined (ALLOW_DEPTH_CONTROL) )
+C     Include call to a dummy routine. Its adjoint will be called at the proper
+C     place in the adjoint code. The adjoint routine will print out adjoint
+C     values if requested. The location of the call is important, it has to be
+C     after the adjoint of the exchanges (DO_GTERM_BLOCKING_EXCHANGES).
+      CALL DUMMY_FOR_HFAC( 'C', 0, myThid )
+#endif
 
       IF ( plotLevel.GE.debLevC ) THEN
         _BARRIER
@@ -421,6 +430,17 @@ C   3. Adjust rSurfS and rLowS:
 C-    end bi,bj loops.
        ENDDO
       ENDDO
+
+#if ( defined (ALLOW_AUTODIFF) && \
+      defined (ALLOW_AUTODIFF_MONITOR) && \
+      defined (ALLOW_DEPTH_CONTROL) )
+C     Include call to a dummy routine. Its adjoint will be called at the proper
+C     place in the adjoint code. The adjoint routine will print out adjoint
+C     values if requested. The location of the call is important, it has to be
+C     after the adjoint of the exchanges (DO_GTERM_BLOCKING_EXCHANGES).
+      CALL DUMMY_FOR_HFAC( 'W', 0, myThid )
+      CALL DUMMY_FOR_HFAC( 'S', 0, myThid )
+#endif
 
 Cts ---
 C   Note this is done after kSurfW/S & maskInW/S computation in
