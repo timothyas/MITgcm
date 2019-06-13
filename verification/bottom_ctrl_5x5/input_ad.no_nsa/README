@@ -1,4 +1,6 @@
 Use all other inputs as from input_ad/ directory except 
+    - data
+    - data.cost
     - data.ctrl
     - data.grdchk
     - wt_ones.meta/data
