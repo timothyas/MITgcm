@@ -940,6 +940,46 @@ C     Adjoint state variables
       CALL DIAGNOSTICS_ADDTOLIST( diagNum,
      I          diagName, diagCode, diagUnits, diagTitle, 0, myThid )
 
+# ifdef ALLOW_DEPTH_CONTROL
+      diagName  = 'ADJhFacC'
+      diagTitle = 'dJ/dhFacC: Sensitivity to partial cell fraction'
+      diagUnits = 'dJ/[]           '
+      diagCode  = 'SM A    MR      '
+      CALL DIAGNOSTICS_ADDTOLIST( diagNum,
+     I          diagName, diagCode, diagUnits, diagTitle, 0, myThid )
+      diagName  = 'ADJhFacS'
+      diagTitle = 'dJ/dhFacS: Sensitivity to partial cell fraction'
+      diagUnits = 'dJ/[]           '
+      diagCode  = 'SV A    MR      '
+      CALL DIAGNOSTICS_ADDTOLIST( diagNum,
+     I          diagName, diagCode, diagUnits, diagTitle, 0, myThid )
+      diagName  = 'ADJhFacW'
+      diagTitle = 'dJ/dhFacW: Sensitivity to partial cell fraction'
+      diagUnits = 'dJ/[]           '
+      diagCode  = 'SU A    MR      '
+      CALL DIAGNOSTICS_ADDTOLIST( diagNum,
+     I          diagName, diagCode, diagUnits, diagTitle, 0, myThid )
+
+      diagName  = 'ADJrhFaC'
+      diagTitle = 'dJ/drecip_hFacC: Sens. to recip. cell fraction'
+      diagUnits = 'dJ/[]           '
+      diagCode  = 'SM A    MR      '
+      CALL DIAGNOSTICS_ADDTOLIST( diagNum,
+     I          diagName, diagCode, diagUnits, diagTitle, 0, myThid )
+      diagName  = 'ADJrhFaS'
+      diagTitle = 'dJ/drecip_hFacS: Sens. to recip. cell fraction'
+      diagUnits = 'dJ/[]           '
+      diagCode  = 'SV A    MR      '
+      CALL DIAGNOSTICS_ADDTOLIST( diagNum,
+     I          diagName, diagCode, diagUnits, diagTitle, 0, myThid )
+      diagName  = 'ADJrhFaW'
+      diagTitle = 'dJ/drecip_hFacW: Sens. to recip. cell fraction'
+      diagUnits = 'dJ/[]           '
+      diagCode  = 'SU A    MR      '
+      CALL DIAGNOSTICS_ADDTOLIST( diagNum,
+     I          diagName, diagCode, diagUnits, diagTitle, 0, myThid )
+# endif /* ALLOW_DEPTH_CONTROL */
+
 #endif /* ALLOW_AUTODIFF */
 
       RETURN
