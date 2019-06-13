@@ -3,5 +3,5 @@
      5,    1,    5,
      5,    1,    5
  ];
- dataprec = [ 'float32' ];
+ dataprec = [ 'float64' ];
  nrecords = [     1 ];
