@@ -130,6 +130,14 @@ C     ctrlUseGen             ::   use generic control approach rather than old c
       integer nwetiglobal     ( nr )
       integer filenWetiGlobal(nr)
 #endif /* ALLOW_SHIFWFLX_CONTROL */
+#ifdef ALLOW_SHI2D_CONTROL
+C These are for a 2D mask underneath the ice shelf
+C works with maskSHIWet defined in ../shelfice/SHELFICE.h 
+C Used the letter 'u' for 'underneath iceshelf ... 
+       integer nwetutile     ( nsx,nsy,nr )
+       integer nwetuglobal     ( nr )
+       integer filenWetuGlobal(nr)
+#endif /* ALLOW_SHI2D_CONTROL */
 
       common /controlvars_c/
      &                       ncvargrd

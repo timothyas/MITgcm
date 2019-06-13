@@ -97,9 +97,11 @@ C     This is how GENARR2/3D_CONTROL is implemented (+ provides an example)
 
       integer cbuffindex
       integer cunit
+      integer nwettmp(Nr)
 
       character*(128) cfile
       character*( 80) weighttype
+      character*( 9) mskNameForSetUnpack
 
       logical lxxadxx
 
@@ -242,6 +244,9 @@ c--       Header information.
           read(cunit) (filenWetiGlobal(k),   k=1,nr)
 c         read(cunit) filenWetiGlobal(1)
 #endif
+#ifdef ALLOW_SHI2D_CONTROL
+          read(cunit) (filenWetuGlobal(k),   k=1,nr)
+#endif
 
 #if (defined (ALLOW_CTRL) && defined (ALLOW_OBCS))
 cgg(     Add OBCS mask information to the header.
@@ -300,6 +305,15 @@ c
            endif
           enddo
 #endif /* ALLOW_SHIFWFLX_CONTROL */
+
+#ifdef ALLOW_SHI2D_CONTROL
+          do k=1,1
+           if ( filenWetuGlobal(k) .NE. nWetuGlobal(k) ) then
+            print *, 'WARNING: wrong nWetuGlobal for k = ', k
+            STOP 'Ran into error in ctrl_unpack reading nWetuGlobal'
+           endif
+          enddo
+#endif /* ALLOW_SHI2D_CONTROL */
 
 #if (defined (ALLOW_CTRL) && defined (ALLOW_OBCS))
 cgg(   Lets also check the OBCS mask info in the header.
@@ -832,6 +846,15 @@ c----------------------------------------------------------------------
 #ifdef ALLOW_GENARR2D_CONTROL
        do iarr = 1, maxCtrlArr2D
         if (xx_genarr2d_weight(iarr).NE.' ') then
+         mskNameForSetUnpack='maskCtrlC'
+         nwettmp(1:Nr) = nwetcglobal(1:Nr)
+# ifdef ALLOW_SHI2D_CONTROL
+         if ( (xx_genarr2d_file(iarr)(1:8).eq.'xx_depth') .or.
+     &        (xx_genarr2d_file(iarr)(1:13).eq.'xx_bottomdrag') ) then
+          mskNameForSetUnpack='maskCtrlU'
+          nwettmp(1:Nr) = nwetuglobal(1:Nr)
+         endif
+# endif
           call ctrl_set_fname( xx_genarr2d_file(iarr),
      O                         fname_local, mythid )
           ivartype    = 100+iarr
@@ -839,9 +862,9 @@ cc          write(weighttype(1:80),'(80a)') ' '
 cc          write(weighttype(1:80),'(a)') "wunit"
           call ctrl_set_unpack_xy(
      &         lxxadxx, cunit, ivartype, genarr2dPrecond(iarr),
-     &         fname_local(ictrlgrad), "maskCtrlC",
+     &         fname_local(ictrlgrad), mskNameForSetUnpack,
      &         xx_genarr2d_weight(iarr),
-     &         nwetcglobal, mythid)
+     &         nwettmp, mythid)
         endif
        enddo
 #endif
