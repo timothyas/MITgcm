@@ -1,0 +1,8 @@
+cadj SUBROUTINE dummy_for_hfac INPUT   = 1, 2, 3
+cadj SUBROUTINE dummy_for_hfac OUTPUT  =
+cadj SUBROUTINE dummy_for_hfac ACTIVE  =
+cadj SUBROUTINE dummy_for_hfac DEPEND  = 1, 2, 3
+cadj SUBROUTINE dummy_for_hfac REQUIRED
+cadj SUBROUTINE dummy_for_hfac INFLUENCED
+cadj SUBROUTINE dummy_for_hfac ADNAME  = addummy_for_hfac
+cadj SUBROUTINE dummy_for_hfac FTLNAME = g_dummy_for_hfac
