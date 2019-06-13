@@ -105,6 +105,8 @@ C     This is how GENARR2/3D_CONTROL is implemented (+ provides an example)
 
       character*(128) cfile
       character*( 80) weighttype
+C 9 character limit set by set_(un)pack
+      character*( 9) mskNameForSetPack
 
 c     == end of interface ==
 
@@ -241,6 +243,9 @@ C     place holder of obsolete variable jG
 #ifdef ALLOW_SHIFWFLX_CONTROL
           write(cunit) (nWetiGlobal(k), k=1,nr)
 c          write(cunit) nWetiGlobal(1)
+#endif
+#ifdef ALLOW_SHI2D_CONTROL
+          write(cunit) (nWetuGlobal(k), k=1,nr)
 #endif
 
 #if (defined (ALLOW_CTRL) && defined (ALLOW_OBCS))
@@ -744,6 +749,13 @@ c          write(cunit) nWetiGlobal(1)
 #ifdef ALLOW_GENARR2D_CONTROL
        do iarr = 1, maxCtrlArr2D
         if (xx_genarr2d_weight(iarr).NE.' ') then
+         mskNameForSetPack='maskCtrlC'
+# ifdef ALLOW_SHI2D_CONTROL
+         if ( (xx_genarr2d_file(iarr)(1:8).eq.'xx_depth') .or.
+     &        (xx_genarr2d_file(iarr)(1:13).eq.'xx_bottomdrag') ) then
+          mskNameForSetPack='maskCtrlU'
+         endif
+# endif
           call ctrl_set_fname( xx_genarr2d_file(iarr),
      O                         fname_local, mythid )
           ivartype    = 100+iarr
@@ -751,7 +763,7 @@ cc          write(weighttype(1:80),'(80a)') ' '
 cc          write(weighttype(1:80),'(a)') "wunit"
           call ctrl_set_pack_xy(
      &         cunit, ivartype, genarr2dPrecond(iarr),
-     &         fname_local(ictrlgrad), "maskCtrlC",
+     &         fname_local(ictrlgrad), mskNameForSetPack,
      &         xx_genarr2d_weight(iarr),
      &         lxxadxx, mythid)
         endif

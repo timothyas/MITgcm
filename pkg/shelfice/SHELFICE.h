@@ -142,10 +142,21 @@ CEOP
       _RS
      &   shelfIceMassDynTendency(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
 
-#ifdef ALLOW_SHIFWFLX_CONTROL
-      COMMON /SHELFICE_MASKS_CTRL/ maskSHI
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
+C-- COMMON /SHELFICE_MASKS_CTRL/
+C   maskSHI           ::  Mask=1 where ice shelf is present on surface 
+C                           layer, showing full 2D ice shelf extent.
+C                           =maskC for rest of k values
+C                           Used with ice shelf fwflx ctrl. 
+C   maskSHIWet        ::  Mask=1 at surface for non-obcs wet points at 
+C                           any depth. =maskC for rest of k values
+C                           Used with eta0, bottomdrag ctrls w/ shelfice
+      COMMON /SHELFICE_MASKS_CTRL/ 
+     &     maskSHI,
+     &     maskSHIWet
       _RS maskSHI  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
-#endif /* ALLOW_SHIFWFLX_CONTROL */
+      _RL maskSHIWet(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
+#endif /* ALLOW_SHIFWFLX_CONTROL || ALLOW_SHI2D_CONTROL */
 
       LOGICAL SHELFICEisOn
       LOGICAL useISOMIPTD

@@ -183,6 +183,9 @@ C     == global variables ==
 #include "optim.h"
 #include "CTRL_GENARR.h"
 #include "ctrl_dummy.h"
+#ifdef ALLOW_SHI2D_CONTROL
+# include "SHELFICE.h"
+#endif 
 
 C     !INPUT/OUTPUT PARAMETERS:
 C     == routine arguments ==
@@ -212,6 +215,9 @@ C     == local variables ==
       integer ilgen
       logical doglobalread
       logical ladinit
+#ifdef ALLOW_SHI2D_CONTROL
+      _RL localmask  (1-olx:snx+olx,1-oly:sny+oly,nr,nsx,nsy)
+#endif
 CEOP
 
 c--   Now, read the control vector.
@@ -267,10 +273,22 @@ c--   Now, read the control vector.
       CALL READ_REC_XY_RL( fnamegenIn, xx_gen, 1, 1, myThid)
 #endif
 
+c--   set local mask 
+      call ctrl_zero(localmask,Nr,zeroRL,myThid)
+#ifdef ALLOW_SHI2D_CONTROL
+      if ( (xx_genarr2d_file(iarr)(1:8).eq.'xx_depth') .or.
+     &     (xx_genarr2d_file(iarr)(1:13).eq.'xx_bottomdrag') ) then
+        call ctrl_cprsrl(maskSHIWet,nr,localmask,nr,myThid)
+      else 
+        call ctrl_cprsrl(maskC,nr,localmask,nr,myThid)
+      endif
+#else
+      call ctrl_cprsrl(maskC,nr,localmask,nr,myThid)
+#endif /* ALLOW_SHI2D_CONTROL */
 #ifdef ALLOW_SMOOTH
       IF (useSMOOTH) THEN
-       IF (dowc01) call smooth_correl2d(xx_gen,maskC,numsmo,mythid)
-       IF (dosmooth) call smooth2d(xx_gen,maskC,numsmo,mythid)
+       IF (dowc01) call smooth_correl2d(xx_gen,localmask,numsmo,mythid)
+       IF (dosmooth) call smooth2d(xx_gen,localmask,numsmo,mythid)
       ENDIF
 #endif
 
@@ -279,15 +297,16 @@ c--   Now, read the control vector.
             DO j = 1,sNy
               DO i = 1,sNx
 c scale param adjustment
-                if ( (maskC(i,j,1,bi,bj).NE.0.).AND.
-     &               (wgenarr2d(i,j,bi,bj,iarr).GT.0.) ) then
+                if ( (localmask(i,j,1,bi,bj).ne.0.) .and.
+     &                (wgenarr2d(i,j,bi,bj,iarr).GT.0.) ) then
                  IF (doscaling) then
-                  xx_gen(i,j,bi,bj)=xx_gen(i,j,bi,bj)
+                   xx_gen(i,j,bi,bj)=xx_gen(i,j,bi,bj)
      &                     /sqrt( wgenarr2d(i,j,bi,bj,iarr) )
-                 ENDIF
+                 ENDIF ! end if (doscaling)
                 else
-                  xx_gen(i,j,bi,bj)=0.
-                endif
+                   xx_gen(i,j,bi,bj)=0.
+                endif ! end if mask!=0 & weight>0
+
 c add to model parameter
                 fld(i,j,bi,bj)=fld(i,j,bi,bj)+xx_gen(i,j,bi,bj)
               enddo
@@ -296,7 +315,8 @@ c add to model parameter
       enddo
 
 c avoid param out of [boundsVec(1) boundsVec(4)]
-      CALL CTRL_BOUND_2D(fld,maskC,xx_genarr2d_bounds(1,iarr),myThid)
+      CALL CTRL_BOUND_2D(fld,localmask,xx_genarr2d_bounds(1,iarr),
+     &  myThid)
 
       CALL EXCH_XY_RL( fld, mythid )
 

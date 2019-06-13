@@ -212,6 +212,14 @@ cpj)
                         jtmp = j
                      endif
 #endif /* ALLOW_SHIFWFLX_CONTROL */
+#ifdef ALLOW_SHI2D_CONTROL
+                  else if ( ncvargrd(grdchkvarindex) .eq. 'u' ) then
+                     if ( maskSHIWet(i,j,k,bi,bj) .gt. 0.) then
+                        icomptest = icomptest + 1
+                        itmp = i
+                        jtmp = j
+                     endif
+#endif /* ALLOW_SHI2D_CONTROL */
                   else if ( ncvargrd(grdchkvarindex) .eq. 'm' ) then
                      if ( grdchkvarindex .EQ. 11 ) then
 #ifdef ALLOW_OBCSN_CONTROL
