@@ -84,6 +84,7 @@ C     == Global variables ==
 #include "PARAMS.h"
 #include "DYNVARS.h"
 #include "SURFACE.h"
+#include "CG2D.h"
 #ifdef ALLOW_AUTODIFF
 # include "GRID.h"
 # include "FFIELDS.h"
@@ -111,12 +112,43 @@ CEOP
 # ifdef ALLOW_DEPTH_CONTROL
 C--   Intialize the depth for TAF/TAMC
       CALL INI_DEPTHS( myThid )
+
+#if defined(ALLOW_SHELFICE) 
+      IF ( useShelfIce ) THEN
+C--   Modify  ocean upper boundary position according to ice-shelf topography
+       CALL SHELFICE_INIT_DEPTHS(
+     U               R_low, Ro_surf,
+     I               myThid )
+      ENDIF
+#endif /* ALLOW_SHELFICE */
+
+Cts ---
+C     Re-initialize West/South rLow and rSurf. Needs to be after
+C     shelfice_init_depths and before ctrl_depth_ini for generic ctrls
+CADJ STORE r_low = tapelev_init, key = 1
+CADJ STORE ro_surf = tapelev_init, key = 1
+      call ini_sw_depths( myThid )
+
 C--   Get control parameter depth
+CADJ STORE maskC = tapelev_init, key = 1
+CADJ STORE r_low = tapelev_init, key = 1
       CALL CTRL_DEPTH_INI( myThid )
+
 C--   Re-calculate hFacS/W and some other parameters from hFacC
+CADJ STORE maskC   = tapelev_init, key = 1
+CADJ STORE maskInC = tapelev_init, key = 1
+CADJ STORE r_low   = tapelev_init, key = 1
       CALL UPDATE_MASKS_ETC( myThid )
+
+Cts ---
+C   Update maskInC/S/W as in original initialization call sequence
+#ifdef ALLOW_OBCS
+      call obcs_update_masks( myThid )
+#endif
+
 C--   Update laplace operators for use in 2D conjugate gradient solver.
       CALL UPDATE_CG2D( startTime, nIter0, myThid )
+
 # endif /* ALLOW_DEPTH_CONTROL */
 #endif /* ALLOW_CTRL */
 

@@ -123,7 +123,8 @@ C     and writing data.
       INTEGER act0, act1, act2, act3, act4
       INTEGER max0, max1, max2, max3
       INTEGER iikey, kkey, passkey, igadkey,
-     &        itdkey, idynkey, igmkey, ikppkey, iptrkey
+     &        itdkey, idynkey, igmkey, ikppkey, iptrkey,
+     &        iumekey
 
 #ifdef ALLOW_CG2D_NSA
 C     Parameter that is needed for the tape complev_cg2d_iter
