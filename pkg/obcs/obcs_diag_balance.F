@@ -1,4 +1,7 @@
 #include "OBCS_OPTIONS.h"
+#ifdef ALLOW_CTRL
+# include "CTRL_OPTIONS.h"
+#endif
 
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
 CBOP
@@ -91,7 +94,7 @@ C--   Integrate the transport through each OB
            IF ( iB.NE.OB_indexNone .AND. iB.GT.1 ) THEN
             n = OBE_connect(j,k,bi,bj)
             IF ( n.GE.1 ) THEN
-              tmpA = drF(k)*hFacW(iB,j,k,bi,bj)*dyG(iB,j,bi,bj)
+              tmpA = drF(k)*_hFacW(iB,j,k,bi,bj)*dyG(iB,j,bi,bj)
      &                     *maskInW(iB,j,bi,bj)
               tileAreaOB(bi,bj,n) = tileAreaOB(bi,bj,n) + tmpA
               tileInFlow(bi,bj,n) = tileInFlow(bi,bj,n)
@@ -114,7 +117,8 @@ C--   Integrate the transport through each OB
             n = OBW_connect(j,k,bi,bj)
             IF ( n.GE.1 ) THEN
               iB = 1+iB
-              tmpA = drF(k)*hFacW(iB,j,k,bi,bj)*dyG(iB,j,bi,bj)
+              tmpA = drF(k)*_hFacW(iB,j,k,bi,bj)*
+     &                      dyG(iB,j,bi,bj)
      &                     *maskInW(iB,j,bi,bj)
               tileAreaOB(bi,bj,n) = tileAreaOB(bi,bj,n) + tmpA
               tileInFlow(bi,bj,n) = tileInFlow(bi,bj,n)
@@ -136,7 +140,7 @@ C--   Integrate the transport through each OB
            IF ( jB.NE.OB_indexNone .AND. jB.GT.1 ) THEN
             n = OBN_connect(i,k,bi,bj)
             IF ( n.GE.1 ) THEN
-              tmpA = drF(k)*hFacS(i,jB,k,bi,bj)*dxG(i,jB,bi,bj)
+              tmpA = drF(k)*_hFacS(i,jB,k,bi,bj)*dxG(i,jB,bi,bj)
      &                     *maskInS(i,jB,bi,bj)
               tileAreaOB(bi,bj,n) = tileAreaOB(bi,bj,n) + tmpA
               tileInFlow(bi,bj,n) = tileInFlow(bi,bj,n)
@@ -159,7 +163,7 @@ C--   Integrate the transport through each OB
             n = OBS_connect(i,k,bi,bj)
             IF ( n.GE.1 ) THEN
               jB = 1+jB
-              tmpA = drF(k)*hFacS(i,jB,k,bi,bj)*dxG(i,jB,bi,bj)
+              tmpA = drF(k)*_hFacS(i,jB,k,bi,bj)*dxG(i,jB,bi,bj)
      &                     *maskInS(i,jB,bi,bj)
               tileAreaOB(bi,bj,n) = tileAreaOB(bi,bj,n) + tmpA
               tileInFlow(bi,bj,n) = tileInFlow(bi,bj,n)
@@ -208,7 +212,7 @@ c          DO j=1-OLy,sNy+OLy
      &                            - uTrans(iB,j,bi,bj)
              ELSE
                div2d(iB ,j,bi,bj) = div2d(iB,j,bi,bj)
-     &                 + inFlow(n)*drF(k)*hFacW(iB,j,k,bi,bj)
+     &                 + inFlow(n)*drF(k)*_hFacW(iB,j,k,bi,bj)
      &                            *dyG(iB,j,bi,bj)*maskInW(iB,j,bi,bj)
              ENDIF
             ENDIF
@@ -229,7 +233,7 @@ c          DO j=1-OLy,sNy+OLy
      &                            + uTrans(iB,j,bi,bj)
              ELSE
                div2d(iBt,j,bi,bj) = div2d(iBt,j,bi,bj)
-     &                 + inFlow(n)*drF(k)*hFacW(iB,j,k,bi,bj)
+     &                 + inFlow(n)*drF(k)*_hFacW(iB,j,k,bi,bj)
      &                            *dyG(iB,j,bi,bj)*maskInW(iB,j,bi,bj)
              ENDIF
             ENDIF
@@ -249,7 +253,7 @@ c          DO i=1-OLx,sNx+OLx
      &                            - vTrans(i,jB,bi,bj)
              ELSE
                div2d(i,jB ,bi,bj) = div2d(i,jB ,bi,bj)
-     &                 + inFlow(n)*drF(k)*hFacS(i,jB,k,bi,bj)
+     &                 + inFlow(n)*drF(k)*_hFacS(i,jB,k,bi,bj)
      &                            *dxG(i,jB,bi,bj)*maskInS(i,jB,bi,bj)
              ENDIF
             ENDIF
@@ -270,7 +274,7 @@ c          DO i=1-OLx,sNx+OLx
      &                            + vTrans(i,jB,bi,bj)
              ELSE
                div2d(i,jBt,bi,bj) = div2d(i,jBt,bi,bj)
-     &                 + inFlow(n)*drF(k)*hFacS(i,jB,k,bi,bj)
+     &                 + inFlow(n)*drF(k)*_hFacS(i,jB,k,bi,bj)
      &                            *dxG(i,jB,bi,bj)*maskInS(i,jB,bi,bj)
              ENDIF
             ENDIF

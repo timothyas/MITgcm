@@ -33,6 +33,18 @@ C     | the topography of the domain through masks (0s and 1s)
 C     | and fractional height factors (0<hFac<1). The latter
 C     | distinguish between the lopped-cell and full-step
 C     | topographic representations.
+C     |
+C     | Updated by Tim Smith 
+C     |   Note: This was rewritten closely following ini_masks_etc 
+C     |   to work when shelfice package is used. 
+C     |   The following is assumed:
+C     |   1. selectSigmaCoord.EQ.0: otherwise, you're on your own :) 
+C     |   2. useMin4hFacEdges = .false. : this only produces different results
+C     |      when useShelfice=.true., which is more general than when
+C     |      useMin4hFacEdges=.true.. When useShelfice=.false., this
+C     |      method will produce equivalent results to useMin4hFacEdges=.true.
+C     |   3. call to ADD_WALLS2MASKS is not included
+C     |
 C     *==========================================================*
 C     | code taken from ini_masks_etc.F
 C     *==========================================================*
@@ -47,7 +59,10 @@ C     === Global variables ===
 #include "GRID.h"
 #include "SURFACE.h"
 Cml we need optimcycle for storing the new hFaC(C/W/S) and depth
+Cts need tamc header for store directives 
 #ifdef ALLOW_AUTODIFF
+# include "tamc.h"
+# include "tamc_keys.h"
 # include "optim.h"
 #endif
 
@@ -69,16 +84,27 @@ C     tmpfld  :: Temporary array used to compute & write Total Depth
       INTEGER bi, bj
       INTEGER I, J, K
       _RS tmpfld(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL tmpVar(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
+      _RL tmpVar1(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
+      _RL tmpVar2(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       CHARACTER*(MAX_LEN_MBUF) suff
-Cml(
-      INTEGER Im1, Jm1
-      _RL hFacCtmp, hFacCtmp2
-      _RL hFacMnSz
-Cml)
-CEOP
 
-C- Calculate lopping factor hFacC : over-estimate the part inside of the domain
-C    taking into account the lower_R Boundary (Bathymetrie / Top of Atmos)
+      INTEGER Im1, Jm1
+      _RL hFacCtmp
+      _RL hFac1tmp, hFac2tmp
+      _RL hFacMnSz
+
+C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
+
+
+      
+
+Cts ---
+C   Calculate hFacC from rLow
+C   Here we see the first impact of r_low as a control vector.
+Cts ---
+CADJ STORE r_low = tapelev_init, key = 1
+CADJ STORE ro_surf = tapelev_init, key = 1
       DO bj=myByLo(myThid), myByHi(myThid)
        DO bi=myBxLo(myThid), myBxHi(myThid)
         DO K=1, Nr
@@ -88,57 +114,35 @@ C    taking into account the lower_R Boundary (Bathymetrie / Top of Atmos)
 C      o Non-dimensional distance between grid bound. and domain lower_R bound.
 #if defined(ALLOW_DEPTH_CONTROL) && !(defined ALLOW_GENARR2D_CONTROL)
 
-           ! xx_r_low = r_low + xx_depth 
+           ! With old control setup, xx_r_low = r_low + xx_depth 
            hFacCtmp = (rF(K)-xx_r_low(I,J,bi,bj))*recip_drF(K)
 #else
-           ! r_low = r_low_const + xx_depth
+           ! In genarr2d setup, r_low = r_low_const + xx_depth
+           ! i.e. TAF is differentiating w.r.t. anomaly not full field
            hFacCtmp = (rF(K)-R_low(I,J,bi,bj))*recip_drF(K)
 #endif /* ALLOW_DEPTH_CONTROL && !ALLOW_GENARR2D_CONTROL */
-Cml           IF ( hFacCtmp .LE. 0. _d 0 ) THEN
-CmlC           IF ( hFacCtmp .LT. 0.5*hfacMnSz ) THEN
-Cml            hFacCtmp2 = 0. _d 0
-Cml           ELSE
-Cml            hFacCtmp2 = hFacCtmp + hFacMnSz*(
-Cml     &           EXP(-hFacCtmp/hFacMnSz)-EXP(-1./hFacMnSz) )
-Cml           ENDIF
-Cml           CALL limit_hfacc_to_one( hFacCtmp2 )
-Cml           hFacC(I,J,K,bi,bj) = hFacCtmp2
-           IF ( hFacCtmp .LE. 0. _d 0 ) THEN
-C           IF ( hFacCtmp .LT. 0.5*hfacMnSz ) THEN
-            hFacC(I,J,K,bi,bj) = 0. _d 0
-           ELSEIF ( hFacCtmp .GT. 1. _d 0 ) THEN
-            hFacC(I,J,K,bi,bj) = 1. _d 0
-           ELSE
-            hFacC(I,J,K,bi,bj) = hFacCtmp + hFacMnSz*(
-     &           EXP(-hFacCtmp/hFacMnSz)-EXP(-1./hFacMnSz) )
-           ENDIF
-Cml           print '(A,3I5,F20.16)', 'ml-hfac:', I,J,K,hFacC(I,J,K,bi,bj)
-CmlC      o Select between, closed, open or partial (0,1,0-1)
-Cml            hFacCtmp=min( max( hFacCtmp, 0. _d 0) , 1. _d 0)
-CmlC      o Impose minimum fraction and/or size (dimensional)
-Cml            IF (hFacCtmp.LT.hFacMnSz) THEN
-Cml             IF (hFacCtmp.LT.hFacMnSz*0.5) THEN
-Cml              hFacC(I,J,K,bi,bj)=0.
-Cml             ELSE
-Cml              hFacC(I,J,K,bi,bj)=hFacMnSz
-Cml             ENDIF
-Cml            ELSE
-Cml             hFacC(I,J,K,bi,bj)=hFacCtmp
-Cml            ENDIF
-Cml           ENDIF
-Cml           print '(A,F15.4,F20.16)', 'ml-hfac:', R_low(i,j,bi,bj),hFacC(I,J,K,bi,bj)
-          ENDDO
-         ENDDO
-        ENDDO
-C - end bi,bj loops.
-       ENDDO
-      ENDDO
 
-C      _EXCH_XYZ_RS(hFacC,myThid)
+C      o Select between closed, open, or partial (0, 1, 0-1)
+           hFacCtmp = min(max(hFacCtmp,zeroRL),oneRL)
 
-C-  Re-calculate lower-R Boundary position, taking into account hFacC
-      DO bj=myByLo(myThid), myByHi(myThid)
-       DO bi=myBxLo(myThid), myBxHi(myThid)
+C      o Impose min. fraction and/or size (dimensional
+           if ( hFacCtmp.lt.hFacMnSz ) then
+            if ( hFacCtmp.lt.hFacMnSz*halfRL ) then
+             hFacC(i,j,k,bi,bj) = 0. 
+            else
+             hFacC(i,j,k,bi,bj) = hFacMnSz
+            endif
+           else
+            hFacC(i,j,k,bi,bj) = hFacCtmp
+           endif
+          enddo
+         enddo
+        enddo
+
+Cts ---
+C   Still inside bi,bj loop
+C   Re-calculate lower-R Boundary position, taking into account hFacC
+Cts ---
         DO J=1-OLy,sNy+OLy
          DO I=1-OLx,sNx+OLx
           R_low(i,j,bi,bj) = rF(1)
@@ -152,36 +156,93 @@ C-  Re-calculate lower-R Boundary position, taking into account hFacC
           ENDDO
          ENDDO
         ENDDO
-C - end bi,bj loops.
+
+Cts --- 
+C   Still inside bi,bj loop
+C   Compute hFacC from Ro_surf
+C   This is important when useShelfice=.true. since the call to
+C   shelfice_init_depths resets Ro_surf based on ice shelf draft. 
+C   This may not be necessary when useShelfice=.false., but will still
+C   produce correct results.
+Cts ---
+        DO k=1, Nr
+         hFacMnSz = MAX( hFacMin, MIN(hFacMinDr*recip_drF(k),oneRL) )
+         DO j=1-OLy,sNy+OLy
+          DO i=1-OLx,sNx+OLx
+C      o Non-dimensional distance between grid boundary and model surface
+           hFacCtmp = (rF(k)-Ro_surf(i,j,bi,bj))*recip_drF(k)
+C      o Reduce the previous fraction : substract the outside part.
+           hFacCtmp = hFacC(i,j,k,bi,bj) - MAX( hFacCtmp, zeroRL )
+C      o set to zero if empty Column :
+           hFacCtmp = MAX( hFacCtmp, zeroRL )
+C      o Impose minimum fraction and/or size (dimensional)
+           IF ( hFacCtmp.LT.hFacMnSz ) THEN
+            IF ( hFacCtmp.LT.hFacMnSz*halfRL ) THEN
+             hFacC(i,j,k,bi,bj) = 0.
+            ELSE
+             hFacC(i,j,k,bi,bj) = hFacMnSz
+            ENDIF
+           ELSE
+             hFacC(i,j,k,bi,bj) = hFacCtmp
+           ENDIF
+          ENDDO
+         ENDDO
+        ENDDO
+
+Cts ---
+C   Still inside bi,bj loop
+C   Recompute Ro_surf, kSurfC, kLowC from hFacC updates
+Cts ---
+        DO j=1-OLy,sNy+OLy
+         DO i=1-OLx,sNx+OLx
+          tmpVar(i,j) = 0.
+          tmpFld(i,j,bi,bj) = 0.
+          kSurfC(i,j,bi,bj) = Nr+1
+          kLowC (i,j,bi,bj) = 0
+         ENDDO
+        ENDDO
+        DO k=1,Nr
+         DO j=1-OLy,sNy+OLy
+          DO i=1-OLx,sNx+OLx
+           tmpVar(i,j) = tmpVar(i,j) + drF(k)*hFacC(i,j,k,bi,bj)
+           tmpFld(i,j,bi,bj) = tmpFld(i,j,bi,bj) + 1.
+           IF ( hFacC(i,j,k,bi,bj).NE.zeroRS ) kLowC(i,j,bi,bj) = k
+          ENDDO
+         ENDDO
+        ENDDO
+        DO k=Nr,1,-1
+         DO j=1-OLy,sNy+OLy
+          DO i=1-OLx,sNx+OLx
+           IF ( hFacC(i,j,k,bi,bj).NE.zeroRS ) kSurfC(i,j,bi,bj) = k
+          ENDDO
+         ENDDO
+        ENDDO
+        DO j=1-OLy,sNy+OLy
+         DO i=1-OLx,sNx+OLx
+          Ro_surf(i,j,bi,bj) = R_low(i,j,bi,bj) + tmpVar(i,j)
+          maskInC(i,j,bi,bj) = 0.
+          IF ( kSurfC(i,j,bi,bj).LE.Nr ) maskInC(i,j,bi,bj) = 1.
+         ENDDO
+        ENDDO
+
+C-    end bi,bj loops.
        ENDDO
       ENDDO
 
-Cml      DO bj=myByLo(myThid), myByHi(myThid)
-Cml       DO bi=myBxLo(myThid), myBxHi(myThid)
-CmlC-  Re-calculate Reference surface position, taking into account hFacC
-Cml        DO J=1-OLy,sNy+OLy
-Cml         DO I=1-OLx,sNx+OLx
-Cml          Ro_surf(I,J,bi,bj) = R_low(I,J,bi,bj)
-Cml          DO K=Nr,1,-1
-Cml           Ro_surf(I,J,bi,bj) = Ro_surf(I,J,bi,bj)
-Cml     &                        + drF(k)*hFacC(I,J,K,bi,bj)
-Cml          ENDDO
-Cml         ENDDO
-Cml        ENDDO
-CmlC     - end bi,bj loops.
-Cml       ENDDO
-Cml      ENDDO
 
       IF ( plotLevel.GE.debLevC ) THEN
         _BARRIER
         CALL PLOT_FIELD_XYRS( R_low,
      &         'Model R_low (update_masks_etc)', 1, myThid )
-CML I assume that Ro_surf is not changed anywhere else in the code
-CML and since it is not changed in this routine, we do not need to
-CML print it again.
-CML     CALL PLOT_FIELD_XYRS( Ro_surf,
-CML  &         'Model Ro_surf (update_masks_etc)', 1, myThid )
+Cts ---
+C   Need to print out b/c ice shelf modifies Ro_surf
+C   (To be consistent with ini_masks_etc)
+Cts ---
+        CALL PLOT_FIELD_XYRS( Ro_surf,
+     &         'Model Ro_surf (update_masks_etc)', 1, myThid )
       ENDIF
+
+C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
 
 C     Calculate quantities derived from XY depth map
       DO bj = myByLo(myThid), myByHi(myThid)
@@ -198,81 +259,176 @@ C         Inverse of fluid column thickness (1/r_unit)
           ENDIF
          ENDDO
         ENDDO
-       ENDDO
-      ENDDO
-C     _EXCH_XY_RS(   recip_Rcol, myThid )
 
-C     hFacW and hFacS (at U and V points)
-CML   This will be the crucial part of the code, because here the minimum
-CML   function MIN is involved which does not have a continuous derivative
-CML   for MIN(x,y) at y=x.
-CML   The thin walls representation has been moved into this loop, that is
-CML   before the call to EXCH_UV_XVY_RS, because TAMC will prefer it this
-CML   way. On the other hand, this might cause difficulties in some
-CML   configurations.
-      DO bj=myByLo(myThid), myByHi(myThid)
-       DO bi=myBxLo(myThid), myBxHi(myThid)
-        DO K=1, Nr
-         DO J=1-OLy,sNy+OLy
-          DO I=1-OLx,sNx+OLx
-           Im1=MAX(I-1,1-OLx)
-           Jm1=MAX(J-1,1-OLy)
-           IF (DYG(I,J,bi,bj).EQ.0.) THEN
-C     thin walls representation of non-periodic
-C     boundaries such as happen on the lat-lon grid at the N/S poles.
-C     We should really supply a flag for doing this.
-              hFacW(I,J,K,bi,bj)=0.
-           ELSE
-              hFacW(I,J,K,bi,bj)=maskW(I,J,K,bi,bj)*
-#ifdef USE_SMOOTH_MIN
-     &           SMOOTHMIN_RS(hFacC(I,J,K,bi,bj),hFacC(Im1,J,K,bi,bj))
-#else
-     &                    MIN(hFacC(I,J,K,bi,bj),hFacC(Im1,J,K,bi,bj))
-#endif /* USE_SMOOTH_MIN */
-           ENDIF
-           IF (DXG(I,J,bi,bj).EQ.0.) THEN
-              hFacS(I,J,K,bi,bj)=0.
-           ELSE
-              hFacS(I,J,K,bi,bj)=maskS(I,J,K,bi,bj)*
-#ifdef USE_SMOOTH_MIN
-     &           SMOOTHMIN_RS(hFacC(I,J,K,bi,bj),hFacC(I,Jm1,K,bi,bj))
-#else
-     &                    MIN(hFacC(I,J,K,bi,bj),hFacC(I,Jm1,K,bi,bj))
-#endif /* USE_SMOOTH_MIN */
-           ENDIF
+Cts ---
+C   Still in bi,bj loop
+C   Recompute hFacW/S, rSurfW/S, rLow/S with same method as with hFacC
+C   above. This is from method 2 in ini_masks_etc      
+Cts ---
+
+#ifdef ALLOW_AUTODIFF_TAMC
+        act1 = bi - myBxLo(myThid)
+        max1 = myBxHi(myThid) - myBxLo(myThid) + 1
+        act2 = bj - myByLo(myThid)
+        max2 = myByHi(myThid) - myByLo(myThid) + 1
+        act3 = myThid - 1
+        max3 = nTx*nTy
+        act4 = ikey_dynamics - 1 
+        iumekey = (act1 + 1) + act2*max1
+     &            + act3*max1*max2
+     &            + act4*max1*max2*max3
+
+CADJ STORE rLowS(:,:,bi,bj) = 
+CADJ &     comlev1_bibj, key=iumekey, byte=isbyte
+CADJ STORE rLowW(:,:,bi,bj) = 
+CADJ &     comlev1_bibj, key=iumekey, byte=isbyte
+CADJ STORE rSurfS(:,:,bi,bj) = 
+CADJ &     comlev1_bibj, key=iumekey, byte=isbyte
+CADJ STORE rSurfW(:,:,bi,bj) = 
+CADJ &     comlev1_bibj, key=iumekey, byte=isbyte
+#endif 
+
+         DO k=1, Nr
+          hFacMnSz = MAX( hFacMin, MIN(hFacMinDr*recip_drF(k),oneRL) )
+          DO j=1-OLy,sNy+OLy
+           DO i=1-OLx,sNx+OLx
+C      o Non-dimensional distance between grid bound. and domain lower_R bound.
+            hFac1tmp = ( rF(k) - rLowW(i,j,bi,bj) )*recip_drF(k)
+            hFacCtmp = MIN( hFac1tmp, oneRL )
+C      o Impose minimum fraction and/or size (dimensional)
+            IF ( hFacCtmp.LT.hFacMnSz*halfRL ) THEN
+              hFac1tmp = 0.
+            ELSE
+              hFac1tmp = MAX( hFacCtmp, hFacMnSz )
+            ENDIF
+C      o Reduce the previous fraction : substract the outside fraction
+C        (i.e., beyond reference (=at rest) surface position rSurfW)
+            hFac2tmp = ( rF(k) -rSurfW(i,j,bi,bj) )*recip_drF(k)
+            hFacCtmp = hFac1tmp - MAX( hFac2tmp, zeroRL )
+C      o Impose minimum fraction and/or size (dimensional)
+            IF ( hFacCtmp.LT.hFacMnSz*halfRL ) THEN
+              hFacW(i,j,k,bi,bj) = 0.
+            ELSE
+              hFacW(i,j,k,bi,bj) = MAX( hFacCtmp, hFacMnSz )
+            ENDIF
+           ENDDO
+          ENDDO
+          DO j=1-OLy,sNy+OLy
+           DO i=1-OLx,sNx+OLx
+C      o Non-dimensional distance between grid bound. and domain lower_R bound.
+            hFac1tmp = ( rF(k) - rLowS(i,j,bi,bj) )*recip_drF(k)
+            hFacCtmp = MIN( hFac1tmp, oneRL )
+C      o Impose minimum fraction and/or size (dimensional)
+            IF ( hFacCtmp.LT.hFacMnSz*halfRL ) THEN
+              hFac1tmp = 0.
+            ELSE
+              hFac1tmp = MAX( hFacCtmp, hFacMnSz )
+            ENDIF
+C      o Reduce the previous fraction : substract the outside fraction
+C        (i.e., beyond reference (=at rest) surface position rSurfS)
+            hFac2tmp = ( rF(k) -rSurfS(i,j,bi,bj) )*recip_drF(k)
+            hFacCtmp = hFac1tmp - MAX( hFac2tmp, zeroRL )
+C      o Impose minimum fraction and/or size (dimensional)
+            IF ( hFacCtmp.LT.hFacMnSz*halfRL ) THEN
+              hFacS(i,j,k,bi,bj) = 0.
+            ELSE
+              hFacS(i,j,k,bi,bj) = MAX( hFacCtmp, hFacMnSz )
+            ENDIF
+           ENDDO
           ENDDO
          ENDDO
+
+Cts ---
+C   Still in bi,bj loop
+C   Update rLow, rSurf @ West/South edges accounting for adjusted R_low
+C   & Ro_surf due to hFacMin constraint on hFacC.
+Cts ---
+        DO j=1-OLy,sNy+OLy
+         DO i=2-OLx,sNx+OLx
+           rLowW(i,j,bi,bj)  =
+     &           MAX(   R_low(i-1,j,bi,bj),   R_low(i,j,bi,bj) )
+           rSurfW(i,j,bi,bj) =
+     &           MIN( Ro_surf(i-1,j,bi,bj), Ro_surf(i,j,bi,bj) )
+           rSurfW(i,j,bi,bj) =
+     &           MAX( rSurfW(i,j,bi,bj), rLowW(i,j,bi,bj) )
+         ENDDO
         ENDDO
+        DO j=2-OLy,sNy+OLy
+         DO i=1-OLx,sNx+OLx
+           rLowS(i,j,bi,bj)  =
+     &           MAX(   R_low(i,j-1,bi,bj),   R_low(i,j,bi,bj) )
+           rSurfS(i,j,bi,bj) =
+     &           MIN( Ro_surf(i,j-1,bi,bj), Ro_surf(i,j,bi,bj) )
+           rSurfS(i,j,bi,bj) =
+     &           MAX( rSurfS(i,j,bi,bj), rLowS(i,j,bi,bj) )
+         ENDDO
+        ENDDO
+
+Cts ---
+C   Still in bi,bj loop
+C   The following seems only important for useShelfice=.true., but is
+C   kept in general in ini_masks_etc, so I'll keep it here too.
+Cts ---
+
+C   Adjust rLow & reference rSurf at Western & Southern edges (U & V pts)
+C   to get consistent column thickness from Sum_k(hFac*drF) and rSurf-rLow
+
+C   1. Compute total column thickness at Western & Southern edges
+         DO j=1-OLy,sNy+OLy
+          DO i=1-OLx,sNx+OLx
+            tmpVar1(i,j) = 0. _d 0
+            tmpVar2(i,j) = 0. _d 0
+          ENDDO
+         ENDDO
+         DO k=1,Nr
+          DO j=1-OLy,sNy+OLy
+           DO i=1-OLx,sNx+OLx
+            tmpVar1(i,j) = tmpVar1(i,j) + drF(k)*hFacW(i,j,k,bi,bj)
+            tmpVar2(i,j) = tmpVar2(i,j) + drF(k)*hFacS(i,j,k,bi,bj)
+           ENDDO
+          ENDDO
+         ENDDO
+
+C   2. Adjust both rLow and rSurf at W & S edges (split correction by half)
+C   adjust rSurfW and rLowW:
+         DO j=1-OLy,sNy+OLy
+          DO i=1-OLx,sNx+OLx
+           tmpVar1(i,j) = rLowW(i,j,bi,bj) + tmpVar1(i,j)
+           tmpVar1(i,j) = ( tmpVar1(i,j) -rSurfW(i,j,bi,bj) )*halfRL
+          ENDDO
+         ENDDO
+         DO j=1-OLy,sNy+OLy
+          DO i=1-OLx,sNx+OLx
+           rSurfW(i,j,bi,bj) = rSurfW(i,j,bi,bj) + tmpVar1(i,j)
+           rLowW (i,j,bi,bj) = rLowW (i,j,bi,bj) - tmpVar1(i,j)
+          ENDDO
+         ENDDO
+
+C   3. Adjust rSurfS and rLowS:
+         DO j=1-OLy,sNy+OLy
+          DO i=1-OLx,sNx+OLx
+           tmpVar2(i,j) = rLowS(i,j,bi,bj) + tmpVar2(i,j)
+           tmpVar2(i,j) = ( tmpVar2(i,j) -rSurfS(i,j,bi,bj) )*halfRL
+          ENDDO
+         ENDDO
+         DO j=1-OLy,sNy+OLy
+          DO i=1-OLx,sNx+OLx
+           rSurfS(i,j,bi,bj) = rSurfS(i,j,bi,bj) + tmpVar2(i,j)
+           rLowS (i,j,bi,bj) = rLowS (i,j,bi,bj) - tmpVar2(i,j)
+          ENDDO
+         ENDDO
+
+C-    end bi,bj loops.
        ENDDO
       ENDDO
-#if ( defined (ALLOW_AUTODIFF) && \
-      defined (ALLOW_AUTODIFF_MONITOR) && \
-      defined (ALLOW_DEPTH_CONTROL) )
-C     Include call to a dummy routine. Its adjoint will be called at the proper
-C     place in the adjoint code. The adjoint routine will print out adjoint
-C     values if requested. The location of the call is important, it has to be
-C     after the adjoint of the exchanges (DO_GTERM_BLOCKING_EXCHANGES).
-Cml      CALL DUMMY_IN_HFAC( 'W', 0, myThid )
-Cml      CALL DUMMY_IN_HFAC( 'S', 0, myThid )
-#endif
-      CALL EXCH_UV_XYZ_RS(hFacW,hFacS,.FALSE.,myThid)
-#if ( defined (ALLOW_AUTODIFF) && \
-      defined (ALLOW_AUTODIFF_MONITOR) && \
-      defined (ALLOW_DEPTH_CONTROL) )
-C     Include call to a dummy routine. Its adjoint will be called at the proper
-C     place in the adjoint code. The adjoint routine will print out adjoint
-C     values if requested. The location of the call is important, it has to be
-C     after the adjoint of the exchanges (DO_GTERM_BLOCKING_EXCHANGES).
-Cml      CALL DUMMY_IN_HFAC( 'W', 1, myThid )
-Cml      CALL DUMMY_IN_HFAC( 'S', 1, myThid )
-#endif
 
-C-    Write to disk: Total Column Thickness & hFac(C,W,S):
-      WRITE(suff,'(I10.10)') optimcycle
-      CALL WRITE_FLD_XY_RS( 'Depth.',suff,tmpfld,optimcycle,myThid)
-      CALL WRITE_FLD_XYZ_RS( 'hFacC.',suff,hFacC,optimcycle,myThid)
-      CALL WRITE_FLD_XYZ_RS( 'hFacW.',suff,hFacW,optimcycle,myThid)
-      CALL WRITE_FLD_XYZ_RS( 'hFacS.',suff,hFacS,optimcycle,myThid)
+Cts ---
+C   Note this is done after kSurfW/S & maskInW/S computation in
+C   ini_masks_etc. Not sure if important, following ML's version here.
+Cts ---
+      CALL EXCH_UV_XYZ_RS(hFacW,hFacS,.FALSE.,myThid)
+      CALL EXCH_UV_XY_RS(rSurfW,rSurfS,.FALSE.,myThid)
+      CALL EXCH_UV_XY_RS(rLowW,rLowS,.FALSE.,myThid)
 
       IF ( plotLevel.GE.debLevC ) THEN
         _BARRIER
@@ -285,57 +441,57 @@ C--   Write to monitor file (standard output)
      &                                          Nr, 1, myThid )
       ENDIF
 
+C--   Calculate surface k index for interface W & S (U & V points)
+      DO bj=myByLo(myThid), myByHi(myThid)
+       DO bi=myBxLo(myThid), myBxHi(myThid)
+        DO j=1-OLy,sNy+OLy
+         DO i=1-OLx,sNx+OLx
+          kSurfW(i,j,bi,bj) = Nr+1
+          kSurfS(i,j,bi,bj) = Nr+1
+          DO k=Nr,1,-1
+           IF (hFacW(i,j,k,bi,bj).NE.zeroRS) kSurfW(i,j,bi,bj) = k
+           IF (hFacS(i,j,k,bi,bj).NE.zeroRS) kSurfS(i,j,bi,bj) = k
+          ENDDO
+          maskInW(i,j,bi,bj)= 0.
+          IF ( kSurfW(i,j,bi,bj).LE.Nr ) maskInW(i,j,bi,bj)= 1.
+          maskInS(i,j,bi,bj)= 0.
+          IF ( kSurfS(i,j,bi,bj).LE.Nr ) maskInS(i,j,bi,bj)= 1.
+         ENDDO
+        ENDDO
+       ENDDO
+      ENDDO
+
 C     Masks and reciprocals of hFac[CWS]
-Cml   The masks should stay constant, so they are not recomputed at this time
-Cml   implicitly implying that no cell that is wet in the begin will ever dry
-Cml   up! This is a strong constraint and should be implementent as a hard
-Cml   inequality contraint when performing optimization (m1qn3 cannot do that)
-Cml   Also, I am assuming here that the new hFac(s) never become zero during
-Cml   optimization!
       DO bj = myByLo(myThid), myByHi(myThid)
        DO bi = myBxLo(myThid), myBxHi(myThid)
         DO K=1,Nr
          DO J=1-OLy,sNy+OLy
           DO I=1-OLx,sNx+OLx
            IF (hFacC(I,J,K,bi,bj) .NE. 0. ) THEN
-Cml           IF (maskC(I,J,K,bi,bj) .NE. 0. ) THEN
             recip_hFacC(I,J,K,bi,bj) = 1. _d 0 / hFacC(I,J,K,bi,bj)
-Cml            maskC(I,J,K,bi,bj) = 1.
+            maskC(I,J,K,bi,bj) = 1.
            ELSE
             recip_hFacC(I,J,K,bi,bj) = 0.
-Cml            maskC(I,J,K,bi,bj) = 0.
+            maskC(I,J,K,bi,bj) = 0.
            ENDIF
            IF (hFacW(I,J,K,bi,bj) .NE. 0. ) THEN
-Cml           IF (maskW(I,J,K,bi,bj) .NE. 0. ) THEN
             recip_hFacW(I,J,K,bi,bj) = 1. _d 0 / hFacw(I,J,K,bi,bj)
-Cml            maskW(I,J,K,bi,bj) = 1.
+            maskW(I,J,K,bi,bj) = 1.
            ELSE
             recip_hFacW(I,J,K,bi,bj) = 0.
-Cml            maskW(I,J,K,bi,bj) = 0.
+            maskW(I,J,K,bi,bj) = 0.
            ENDIF
            IF (hFacS(I,J,K,bi,bj) .NE. 0. ) THEN
-Cml           IF (maskS(I,J,K,bi,bj) .NE. 0. ) THEN
             recip_hFacS(I,J,K,bi,bj) = 1. _d 0 / hFacS(I,J,K,bi,bj)
-Cml            maskS(I,J,K,bi,bj) = 1.
+            maskS(I,J,K,bi,bj) = 1.
            ELSE
             recip_hFacS(I,J,K,bi,bj) = 0.
-Cml            maskS(I,J,K,bi,bj) = 0.
+            maskS(I,J,K,bi,bj) = 0.
            ENDIF
           ENDDO
          ENDDO
         ENDDO
-CmlCml(
-Cml       ENDDO
-Cml      ENDDO
-Cml      _EXCH_XYZ_RS(recip_hFacC    , myThid )
-Cml      _EXCH_XYZ_RS(recip_hFacW    , myThid )
-Cml      _EXCH_XYZ_RS(recip_hFacS    , myThid )
-Cml      _EXCH_XYZ_RS(maskC    , myThid )
-Cml      _EXCH_XYZ_RS(maskW    , myThid )
-Cml      _EXCH_XYZ_RS(maskS    , myThid )
-Cml      DO bj = myByLo(myThid), myByHi(myThid)
-Cml       DO bi = myBxLo(myThid), myBxHi(myThid)
-CmlCml)
+
 #ifdef NONLIN_FRSURF
 C--   Save initial geometrical hFac factor into h0Fac (fixed in time):
 C     Note: In case 1 pkg modifies hFac (from packages_init_fixed, called
@@ -467,40 +623,3 @@ c
       RETURN
       END
 #endif /* USE_SMOOTH_MIN */
-
-Cml#ifdef ALLOW_DEPTH_CONTROL
-Cmlcadj SUBROUTINE limit_hfacc_to_one INPUT   = 1
-Cmlcadj SUBROUTINE limit_hfacc_to_one OUTPUT  = 1
-Cmlcadj SUBROUTINE limit_hfacc_to_one ACTIVE  = 1
-Cmlcadj SUBROUTINE limit_hfacc_to_one DEPEND  = 1
-Cmlcadj SUBROUTINE limit_hfacc_to_one REQUIRED
-Cmlcadj SUBROUTINE limit_hfacc_to_one ADNAME  = adlimit_hfacc_to_one
-Cml#endif /* ALLOW_DEPTH_CONTROL */
-Cml      SUBROUTINE LIMIT_HFACC_TO_ONE( hf )
-Cml
-Cml      _RL hf
-Cml
-Cml      IF ( hf .GT. 1. _d 0 ) THEN
-Cml       hf = 1. _d 0
-Cml      ENDIF
-Cml
-Cml      RETURN
-Cml      END
-Cml
-Cml      SUBROUTINE ADLIMIT_HFACC_TO_ONE( hf, adhf )
-Cml
-Cml      _RL hf, adhf
-Cml
-Cml      RETURN
-Cml      END
-
-#ifdef ALLOW_DEPTH_CONTROL
-cadj SUBROUTINE dummy_in_hfac INPUT   = 1, 2, 3
-cadj SUBROUTINE dummy_in_hfac OUTPUT  =
-cadj SUBROUTINE dummy_in_hfac ACTIVE  =
-cadj SUBROUTINE dummy_in_hfac DEPEND  = 1, 2, 3
-cadj SUBROUTINE dummy_in_hfac REQUIRED
-cadj SUBROUTINE dummy_in_hfac INFLUENCED
-cadj SUBROUTINE dummy_in_hfac ADNAME  = addummy_in_hfac
-cadj SUBROUTINE dummy_in_hfac FTLNAME = g_dummy_in_hfac
-#endif /* ALLOW_DEPTH_CONTROL */

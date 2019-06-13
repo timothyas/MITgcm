@@ -1,4 +1,7 @@
 #include "OBCS_OPTIONS.h"
+#ifdef ALLOW_CTRL
+# include "CTRL_OPTIONS.h"
+#endif
 
 C--  File obcs_monitor.F : write statistics of dynamical fields at OB section
 C--   Contents
@@ -52,6 +55,9 @@ C     !LOCAL VARIABLES:
 C     msgBuf       :: Informational/error message buffer
       CHARACTER*(MAX_LEN_MBUF) msgBuf
       _RL fldStats(0:4,4)
+      _RS hFac_tmpW(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
+      _RS hFac_tmpS(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
+      INTEGER i,j,k,bi,bj
 
       IF ( DIFFERENT_MULTIPLE( OBCS_monitorFreq,myTime,deltaTClock )
      &   ) THEN
@@ -98,19 +104,40 @@ C--   endif master cpu io
 
         CALL MON_SET_PREF('obc_',myThid)
 
+C--ts Set hFacW/S with mask, if necessary
+#ifdef ALLOW_DEPTH_CONTROL
+      DO bj=myByLo(myThid),myByHi(myThid)
+       DO bi=myBxLo(myThid),myBxHi(myThid)
+        DO k=1,Nr
+         DO j=1,sNy
+          DO i=1,sNx
+            hFac_tmpW(i,j,k,bi,bj) = 
+     &            _hFacW(i,j,k,bi,bj)
+            hFac_tmpS(i,j,k,bi,bj) = 
+     &            _hFacS(i,j,k,bi,bj)
+          ENDDO
+         ENDDO
+        ENDDO
+       ENDDO
+      ENDDO
+
+        
+#endif /* ALLOW_DEPTH_CONTROL */
+
+
 C--     Calculate and print Flow field Stats:
         IF ( OBCS_monSelect.GE.0 ) THEN
 
          CALL OBCS_MON_STATS_EW_RL(
      I             tileHasOBE, tileHasOBW,
      I             OB_Ie, OB_Iw, OB_indexNone,
-     I             Nr, Nr, 1, uVel, hFacW, dyG, drF, maskInC,
+     I             Nr, Nr, 1, uVel, hFac_tmpW, dyG, drF, maskInC,
      O             fldStats(0,1),
      I             myThid )
          CALL OBCS_MON_STATS_NS_RL(
      I             tileHasOBN, tileHasOBS,
      I             OB_Jn, OB_Js, OB_indexNone,
-     I             Nr, Nr, 2, vVel, hFacS, dxG, drF, maskInC,
+     I             Nr, Nr, 2, vVel, hFac_tmpS, dxG, drF, maskInC,
      O             fldStats(0,3),
      I             myThid )
 
@@ -126,13 +153,13 @@ C--     Calculate and print Temp. field Stats:
          CALL OBCS_MON_STATS_EW_RL(
      I             tileHasOBE, tileHasOBW,
      I             OB_Ie, OB_Iw, OB_indexNone,
-     I             Nr, Nr, 0, theta, hFacW, dyG, drF, maskInC,
+     I             Nr, Nr, 0, theta, hFac_tmpW, dyG, drF, maskInC,
      O             fldStats(0,1),
      I             myThid )
          CALL OBCS_MON_STATS_NS_RL(
      I             tileHasOBN, tileHasOBS,
      I             OB_Jn, OB_Js, OB_indexNone,
-     I             Nr, Nr, 0, theta, hFacS, dxG, drF, maskInC,
+     I             Nr, Nr, 0, theta, hFac_tmpS, dxG, drF, maskInC,
      O             fldStats(0,3),
      I             myThid )
 
@@ -148,13 +175,13 @@ C--     Calculate and print Salt field Stats:
          CALL OBCS_MON_STATS_EW_RL(
      I             tileHasOBE, tileHasOBW,
      I             OB_Ie, OB_Iw, OB_indexNone,
-     I             Nr, Nr, 0, salt, hFacW, dyG, drF, maskInC,
+     I             Nr, Nr, 0, salt, hFac_tmpW, dyG, drF, maskInC,
      O             fldStats(0,1),
      I             myThid )
          CALL OBCS_MON_STATS_NS_RL(
      I             tileHasOBN, tileHasOBS,
      I             OB_Jn, OB_Js, OB_indexNone,
-     I             Nr, Nr, 0, salt, hFacS, dxG, drF, maskInC,
+     I             Nr, Nr, 0, salt, hFac_tmpS, dxG, drF, maskInC,
      O             fldStats(0,3),
      I             myThid )
 
