@@ -42,7 +42,7 @@ C     i, j, bi, bj :: Loop counters
       CHARACTER*16  diagUnits
       CHARACTER*(80) diagTitle
 #endif /* ALLOW_DIAGNOSTICS */
-#ifdef ALLOW_SHIFWFLX_CONTROL
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
       INTEGER k
 # ifdef ALLOW_SHIFWFLX_COST_CONTRIBUTION
       _RL dummy
@@ -110,6 +110,35 @@ C     like ctrl_get_gen and ctrl_set_unpack_xy require 3D masks.
        ENDDO
       ENDDO
 #endif /* ALLOW_SHIFWFLX_CONTROL */
+
+#ifdef ALLOW_SHI2D_CONTROL
+C     maskSHIWet is a similar hack to maskSHI, only differing in
+C     surface layer. Here, it is non-obcs wet points (maskInC) to give
+C     control of 2D fields under the ice shelf (e.g. bottomdrag or depth).
+      DO bj = myByLo(myThid), myByHi(myThid)
+       DO bi = myBxLo(myThid), myBxHi(myThid)
+        DO k=1,Nr
+         DO j=1-OLy,sNy+OLy
+          DO i=1-OLx,sNx+OLx
+           maskSHIWet(i,j,k,bi,bj) = 0. _d 0
+          ENDDO
+         ENDDO
+        ENDDO
+        DO j=1-OLy,sNy+OLy
+         DO i=1-OLx,sNx+OLx
+          maskSHIWet(i,j,1,bi,bj) = maskInC(i,j,bi,bj)
+         ENDDO
+        ENDDO
+        DO k=2,Nr
+         DO j=1-OLy,sNy+OLy
+          DO i=1-OLx,sNx+OLx
+           maskSHIWet(i,j,k,bi,bj) = maskC(i,j,k,bi,bj)
+          ENDDO
+         ENDDO
+        ENDDO
+       ENDDO
+      ENDDO
+#endif /* ALLOW_SHI2D_CONTROL */
 
 #ifdef ALLOW_COST
 #if  (defined (ALLOW_SHIFWFLX_COST_CONTRIBUTION) && \
