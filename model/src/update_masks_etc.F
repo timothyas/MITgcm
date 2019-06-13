@@ -10,8 +10,14 @@
 C--  File update_masks_etc.F:
 C--   Contents
 C--   o S/R UPDATE_MASKS_ETC
+C--   o FCT REG_hFac_RL( hFac, hFacMin )
+C       -> the regular, if statement version of computing hFac
+C--   o FCT smooth_hFac_RL( hFac, hFacMin )
+C       -> the smooth version of computing hFac
 C--   o FCT SMOOTHMIN_RS( a, b )
 C--   o FCT SMOOTHMIN_RL( a, b )
+C--   o FCT SMOOTHMAX_RS( a, b )
+C--   o FCT SMOOTHMAX_RL( a, b )
 C--   o FCT SMOOTHABS_RS( x )
 C--   o FCT SMOOTHABS_RL( x )
 Cml   o S/R LIMIT_HFACC_TO_ONE
@@ -33,8 +39,7 @@ C     | the topography of the domain through masks (0s and 1s)
 C     | and fractional height factors (0<hFac<1). The latter
 C     | distinguish between the lopped-cell and full-step
 C     | topographic representations.
-C     |
-C     | Updated by Tim Smith 
+C     | Updated by Tim Smith
 C     |   Note: This was rewritten closely following ini_masks_etc 
 C     |   to work when shelfice package is used. 
 C     |   The following is assumed:
@@ -73,8 +78,14 @@ C     myThid -  Number of this instance of INI_MASKS_ETC
 
 #ifdef ALLOW_DEPTH_CONTROL
 C     !FUNCTIONS:
-      _RS SMOOTHMIN_RS
-      EXTERNAL SMOOTHMIN_RS
+      _RL smooth_hFac_RL
+      EXTERNAL smooth_hFac_RL
+      _RL reg_hFac_RL
+      EXTERNAL reg_hFac_RL
+      _RL SMOOTHMIN_RL
+      EXTERNAL SMOOTHMIN_RL
+      _RL SMOOTHMAX_RL
+      EXTERNAL SMOOTHMAX_RL
 
 C     !LOCAL VARIABLES:
 C     == Local variables ==
@@ -83,7 +94,7 @@ C     I,J,K
 C     tmpfld  :: Temporary array used to compute & write Total Depth
       INTEGER bi, bj
       INTEGER I, J, K
-      _RS tmpfld(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL tmpfld(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL tmpVar(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL tmpVar1(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL tmpVar2(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
@@ -122,19 +133,14 @@ C      o Non-dimensional distance between grid bound. and domain lower_R bound.
            hFacCtmp = (rF(K)-R_low(I,J,bi,bj))*recip_drF(K)
 #endif /* ALLOW_DEPTH_CONTROL && !ALLOW_GENARR2D_CONTROL */
 
-C      o Select between closed, open, or partial (0, 1, 0-1)
-           hFacCtmp = min(max(hFacCtmp,zeroRL),oneRL)
+C     o Impose min. fraction and/or size (dimensional)
+#ifdef USE_SMOOTH_MIN
+           hFacC(i,j,k,bi,bj) = 
+     &          smooth_hFac_rl( hFacCtmp, hFacMnSz, smoothHFacEps )
+#else /* ndef smooth_min */
+           hFacC(i,j,k,bi,bj) = reg_hFac_rl( hFacCtmp, hFacMnSz )
+#endif
 
-C      o Impose min. fraction and/or size (dimensional
-           if ( hFacCtmp.lt.hFacMnSz ) then
-            if ( hFacCtmp.lt.hFacMnSz*halfRL ) then
-             hFacC(i,j,k,bi,bj) = 0. 
-            else
-             hFacC(i,j,k,bi,bj) = hFacMnSz
-            endif
-           else
-            hFacC(i,j,k,bi,bj) = hFacCtmp
-           endif
           enddo
          enddo
         enddo
@@ -171,20 +177,25 @@ Cts ---
           DO i=1-OLx,sNx+OLx
 C      o Non-dimensional distance between grid boundary and model surface
            hFacCtmp = (rF(k)-Ro_surf(i,j,bi,bj))*recip_drF(k)
+
 C      o Reduce the previous fraction : substract the outside part.
-           hFacCtmp = hFacC(i,j,k,bi,bj) - MAX( hFacCtmp, zeroRL )
 C      o set to zero if empty Column :
+#ifdef USE_SMOOTH_MIN
+           hFacCtmp = hFacC(i,j,k,bi,bj) - 
+     &                smoothmax_rl( hFacCtmp, zeroRL )
+           hFacCtmp = smoothmax_rl( hFacCtmp, zeroRL )
+#else /* ndef smooth_min */
+           hFacCtmp = hFacC(i,j,k,bi,bj) - MAX( hFacCtmp, zeroRL )
            hFacCtmp = MAX( hFacCtmp, zeroRL )
-C      o Impose minimum fraction and/or size (dimensional)
-           IF ( hFacCtmp.LT.hFacMnSz ) THEN
-            IF ( hFacCtmp.LT.hFacMnSz*halfRL ) THEN
-             hFacC(i,j,k,bi,bj) = 0.
-            ELSE
-             hFacC(i,j,k,bi,bj) = hFacMnSz
-            ENDIF
-           ELSE
-             hFacC(i,j,k,bi,bj) = hFacCtmp
-           ENDIF
+#endif
+
+
+#ifdef USE_SMOOTH_MIN
+           hFacC(i,j,k,bi,bj) = 
+     &          smooth_hFac_rl( hFacCtmp, hFacMnSz, smoothHFacEps )
+#else /* ndef smooth_min */
+           hFacC(i,j,k,bi,bj) = reg_hFac_rl( hFacCtmp, hFacMnSz )
+#endif
           ENDDO
          ENDDO
         ENDDO
@@ -297,55 +308,80 @@ CADJ STORE rSurfW(:,:,bi,bj) =
 CADJ &     comlev1_bibj, key=iumekey, byte=isbyte
 #endif 
 
+
          DO k=1, Nr
           hFacMnSz = MAX( hFacMin, MIN(hFacMinDr*recip_drF(k),oneRL) )
+Cts ---
+C   West faces
+Cts ---
           DO j=1-OLy,sNy+OLy
            DO i=1-OLx,sNx+OLx
+
 C      o Non-dimensional distance between grid bound. and domain lower_R bound.
             hFac1tmp = ( rF(k) - rLowW(i,j,bi,bj) )*recip_drF(k)
-            hFacCtmp = MIN( hFac1tmp, oneRL )
+
 C      o Impose minimum fraction and/or size (dimensional)
-            IF ( hFacCtmp.LT.hFacMnSz*halfRL ) THEN
-              hFac1tmp = 0.
-            ELSE
-              hFac1tmp = MAX( hFacCtmp, hFacMnSz )
-            ENDIF
+#ifdef USE_SMOOTH_MIN
+           hFac1tmp = 
+     &          smooth_hFac_rl( hFac1tmp, hFacMnSz, smoothHFacEps )
+#else /* ndef smooth_min */
+            hFac1tmp = reg_hFac_rl( hFac1tmp, hFacMnSz )
+#endif
+
 C      o Reduce the previous fraction : substract the outside fraction
 C        (i.e., beyond reference (=at rest) surface position rSurfW)
             hFac2tmp = ( rF(k) -rSurfW(i,j,bi,bj) )*recip_drF(k)
-            hFacCtmp = hFac1tmp - MAX( hFac2tmp, zeroRL )
-C      o Impose minimum fraction and/or size (dimensional)
-            IF ( hFacCtmp.LT.hFacMnSz*halfRL ) THEN
-              hFacW(i,j,k,bi,bj) = 0.
-            ELSE
-              hFacW(i,j,k,bi,bj) = MAX( hFacCtmp, hFacMnSz )
-            ENDIF
+#ifdef USE_SMOOTH_MIN
+            hFac2tmp = hFac1tmp - smoothmax_rl( hFac2tmp, zeroRL )
+#else /* ndef smooth_min */
+            hFac2tmp = hFac1tmp - MAX( hFac2tmp, zeroRL )
+#endif
+
+#ifdef USE_SMOOTH_MIN
+            hFacW(i,j,k,bi,bj) = 
+     &          smooth_hFac_rl( hFac2tmp, hFacMnSz, smoothHFacEps )
+#else /* ndef smooth_min */
+            hFacW(i,j,k,bi,bj) = reg_hFac_rl( hFac2tmp, hFacMnSz )
+#endif
            ENDDO
           ENDDO
+
+Cts ---
+C   South faces
+Cts ---
           DO j=1-OLy,sNy+OLy
            DO i=1-OLx,sNx+OLx
 C      o Non-dimensional distance between grid bound. and domain lower_R bound.
             hFac1tmp = ( rF(k) - rLowS(i,j,bi,bj) )*recip_drF(k)
-            hFacCtmp = MIN( hFac1tmp, oneRL )
+
 C      o Impose minimum fraction and/or size (dimensional)
-            IF ( hFacCtmp.LT.hFacMnSz*halfRL ) THEN
-              hFac1tmp = 0.
-            ELSE
-              hFac1tmp = MAX( hFacCtmp, hFacMnSz )
-            ENDIF
+#ifdef USE_SMOOTH_MIN
+           hFac1tmp = 
+     &          smooth_hFac_rl( hFac1tmp, hFacMnSz, smoothHFacEps )
+#else /* ndef smooth_min */
+            hFac1tmp = reg_hFac_rl( hFac1tmp, hFacMnSz )
+#endif
+
 C      o Reduce the previous fraction : substract the outside fraction
 C        (i.e., beyond reference (=at rest) surface position rSurfS)
             hFac2tmp = ( rF(k) -rSurfS(i,j,bi,bj) )*recip_drF(k)
-            hFacCtmp = hFac1tmp - MAX( hFac2tmp, zeroRL )
-C      o Impose minimum fraction and/or size (dimensional)
-            IF ( hFacCtmp.LT.hFacMnSz*halfRL ) THEN
-              hFacS(i,j,k,bi,bj) = 0.
-            ELSE
-              hFacS(i,j,k,bi,bj) = MAX( hFacCtmp, hFacMnSz )
-            ENDIF
+#ifdef USE_SMOOTH_MIN
+            hFac2tmp = hFac1tmp - smoothmax_rl( hFac2tmp, zeroRL )
+#else /* ndef smooth_min */
+            hFac2tmp = hFac1tmp - MAX( hFac2tmp, zeroRL )
+#endif
+
+#ifdef USE_SMOOTH_MIN
+            hFacS(i,j,k,bi,bj) = 
+     &          smooth_hFac_rl( hFac2tmp, hFacMnSz, smoothHFacEps )
+#else /* ndef smooth_min */
+           hFacS(i,j,k,bi,bj) = reg_hFac_rl( hFac2tmp, hFacMnSz )
+#endif
            ENDDO
           ENDDO
          ENDDO
+
+
 
 Cts ---
 C   Still in bi,bj loop
@@ -354,22 +390,40 @@ C   & Ro_surf due to hFacMin constraint on hFacC.
 Cts ---
         DO j=1-OLy,sNy+OLy
          DO i=2-OLx,sNx+OLx
+#ifdef USE_SMOOTH_MIN
+           rLowW(i,j,bi,bj)  =
+     &           smoothmax_rl(R_low(i-1,j,bi,bj), R_low(i,j,bi,bj))
+           rSurfW(i,j,bi,bj) =
+     &           smoothmin_rl(Ro_surf(i-1,j,bi,bj), Ro_surf(i,j,bi,bj))
+           rSurfW(i,j,bi,bj) =
+     &           smoothmax_rl(rSurfW(i,j,bi,bj), rLowW(i,j,bi,bj))
+#else /* ndef smooth_min */
            rLowW(i,j,bi,bj)  =
      &           MAX(   R_low(i-1,j,bi,bj),   R_low(i,j,bi,bj) )
            rSurfW(i,j,bi,bj) =
      &           MIN( Ro_surf(i-1,j,bi,bj), Ro_surf(i,j,bi,bj) )
            rSurfW(i,j,bi,bj) =
      &           MAX( rSurfW(i,j,bi,bj), rLowW(i,j,bi,bj) )
+#endif
          ENDDO
         ENDDO
         DO j=2-OLy,sNy+OLy
          DO i=1-OLx,sNx+OLx
+#ifdef USE_SMOOTH_MIN
+           rLowS(i,j,bi,bj)  =
+     &           smoothmax_rl(R_low(i,j-1,bi,bj),   R_low(i,j,bi,bj))
+           rSurfS(i,j,bi,bj) =
+     &           smoothmin_rl(Ro_surf(i,j-1,bi,bj), Ro_surf(i,j,bi,bj))
+           rSurfS(i,j,bi,bj) =
+     &           smoothmax_rl(rSurfS(i,j,bi,bj), rLowS(i,j,bi,bj))
+#else /* ndef smooth_min */
            rLowS(i,j,bi,bj)  =
      &           MAX(   R_low(i,j-1,bi,bj),   R_low(i,j,bi,bj) )
            rSurfS(i,j,bi,bj) =
      &           MIN( Ro_surf(i,j-1,bi,bj), Ro_surf(i,j,bi,bj) )
            rSurfS(i,j,bi,bj) =
      &           MAX( rSurfS(i,j,bi,bj), rLowS(i,j,bi,bj) )
+#endif
          ENDDO
         ENDDO
 
@@ -430,6 +484,7 @@ C   3. Adjust rSurfS and rLowS:
 C-    end bi,bj loops.
        ENDDO
       ENDDO
+
 
 #if ( defined (ALLOW_AUTODIFF) && \
       defined (ALLOW_AUTODIFF_MONITOR) && \
@@ -547,6 +602,61 @@ C - end bi,bj loops.
 #ifdef USE_SMOOTH_MIN
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
 
+      _RL FUNCTION smooth_hFac_rl( hFac, hFacMin, hFacEps )
+C     o Impose 1,0, or hFacMin restriction smoothly
+C     o Here use spline representation ...
+
+      IMPLICIT NONE
+#include "EEPARAMS.h"
+
+      _RL hFac, hFacMin, hFacEps
+      _RL low_threshold
+
+      _RL hFac_spline_rl
+      EXTERNAL hFac_spline_rl
+
+      low_threshold = (5. _d -1) * hFacMin
+
+      IF ( hFac .LE. low_threshold ) THEN
+          smooth_hFac_rl = zeroRL
+      ELSEIF ( hFac .LE. hFacMin ) THEN
+          smooth_hFac_rl = hFacMin
+      ELSEIF ( hFac .LE. hFacMin + hFacEps ) THEN
+          smooth_hFac_rl = 
+     &          hFac_spline_rl( hFac, hFacMin, hFacEps )
+      ELSEIF ( hFac .LE. oneRL ) THEN
+          smooth_hFac_rl = hFac
+      ELSE
+          smooth_hFac_rl = oneRL
+      ENDIF
+
+      RETURN
+      END
+
+C --------------------------
+
+      _RL FUNCTION hFac_spline_rl( x, x0, eps )
+
+      IMPLICIT NONE
+#include "EEPARAMS.h"
+
+      _RL x, x0, eps
+      _RL a, b, d, del_x
+
+      a = - oneRL / (eps**2)
+      b = (2. _d 0) / eps
+      d = x0
+
+      del_x = x - x0
+
+      hFac_spline_rl = a * (del_x**3) + b * (del_x**2) + d
+
+      RETURN
+      END
+
+
+C --------------------------
+
       _RS FUNCTION SMOOTHMIN_RS( a, b )
 
       IMPLICIT NONE
@@ -556,12 +666,12 @@ C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
       _RS SMOOTHABS_RS
       EXTERNAL SMOOTHABS_RS
 
-Cml      smoothMin_R4 = .5*(a+b)
       SMOOTHMIN_RS = .5*( a+b - SMOOTHABS_RS(a-b) )
-CML      smoothMin_R4 = MIN(a,b)
 
       RETURN
       END
+
+C --------------------------
 
       _RL FUNCTION SMOOTHMIN_RL( a, b )
 
@@ -572,12 +682,44 @@ CML      smoothMin_R4 = MIN(a,b)
       _RL SMOOTHABS_RL
       EXTERNAL SMOOTHABS_RL
 
-Cml      smoothMin_R8 = .5*(a+b)
       SMOOTHMIN_RL = .5*( a+b - SMOOTHABS_RL(a-b) )
-Cml      smoothMin_R8 = MIN(a,b)
 
       RETURN
       END
+
+C --------------------------
+
+      _RS FUNCTION SMOOTHMAX_RS( a, b )
+
+      IMPLICIT NONE
+
+      _RS a, b
+
+      _RS SMOOTHABS_RS
+      EXTERNAL SMOOTHABS_RS
+
+      SMOOTHMAX_RS = .5*( a+b + SMOOTHABS_RS(a-b) )
+
+      RETURN
+      END
+
+C --------------------------
+
+      _RL FUNCTION SMOOTHMAX_RL( a, b )
+
+      IMPLICIT NONE
+
+      _RL a, b
+
+      _RL SMOOTHABS_RL
+      EXTERNAL SMOOTHABS_RL
+
+      SMOOTHMAX_RL = .5*( a+b + SMOOTHABS_RL(a-b) )
+
+      RETURN
+      END
+
+C --------------------------
 
       _RS FUNCTION SMOOTHABS_RS( x )
 
@@ -616,6 +758,8 @@ c
       RETURN
       END
 
+C --------------------------
+
       _RL FUNCTION SMOOTHABS_RL( x )
 
       IMPLICIT NONE
@@ -652,4 +796,32 @@ c
 
       RETURN
       END
+
+C --------------------------
+#else
+
+      _RL FUNCTION reg_hFac_rl( hFac, hFacMin )
+C     o Impose 1,0, or hFacMin restriction 
+C     o as in ini_masks_etc 
+
+      IMPLICIT NONE
+#include "EEPARAMS.h"
+
+      _RL hFac, hFacMin
+
+C     o Select between closed, open, or partial (0, 1, 0-1)
+      hFac = min(max(hFac,zeroRL),oneRL)
+
+C     o Now apply min size constraint
+      if ( hFac.lt.hFacMin ) then
+       if ( hFac.lt.hFacMin*halfRL ) then
+         reg_hFac_rl = zeroRL
+       else
+         reg_hFac_rl = hFacMin
+       endif
+      else
+       reg_hFac_rl = hFac
+      endif
+      END
+
 #endif /* USE_SMOOTH_MIN */

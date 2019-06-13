@@ -236,6 +236,7 @@ C--   Continuous equation parameters
      & temp_EvPrRn, salt_EvPrRn, trac_EvPrRn,
      & temp_addMass, salt_addMass, zonal_filt_lat,
      & smoothAbsFuncRange,
+     & smoothHFacEps,
      & balanceEmPmR, balanceQnet, balancePrintMean,
      & balanceThetaClimRelax, balanceSaltClimRelax
 
