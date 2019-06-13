@@ -215,9 +215,7 @@ C     == local variables ==
       integer ilgen
       logical doglobalread
       logical ladinit
-#ifdef ALLOW_SHI2D_CONTROL
       _RL localmask  (1-olx:snx+olx,1-oly:sny+oly,nr,nsx,nsy)
-#endif
 CEOP
 
 c--   Now, read the control vector.
