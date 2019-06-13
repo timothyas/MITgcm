@@ -1,4 +1,7 @@
 #include "OBCS_OPTIONS.h"
+#ifdef ALLOW_CTRL
+# include "CTRL_OPTIONS.h"
+#endif
 
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
 CBOP
@@ -99,7 +102,7 @@ C--   Integrate the transport through each OB
 C-    If 1 OB location is on 2 tiles (@ edge of 2 tiles), select the one which
 C     communicates with tile interior (sNx+1) rather than with halo region (i=1)
            IF ( iB.NE.OB_indexNone .AND. iB.GT.1 ) THEN
-            tmpA = drF(k)*hFacW(iB,j,k,bi,bj)*dyG(iB,j,bi,bj)
+            tmpA = drF(k)*_hFacW(iB,j,k,bi,bj)*dyG(iB,j,bi,bj)
      &                   *maskInW(iB,j,bi,bj)
             tileArea(bi,bj) = tileArea(bi,bj) + tmpA
             tileFlow(bi,bj) = tileFlow(bi,bj) + tmpA*OBEu(j,k,bi,bj)
@@ -148,7 +151,7 @@ c    &   'OBCS_balance it,areaE,flowE=', myIter, areaE, flowE
 C-    If 1 OB location is on 2 tiles (@ edge of 2 tiles), select the one which
 C     communicates with tile interior (i=0) rather than with halo region (i=sNx)
            IF ( iB.NE.OB_indexNone .AND. iB.LT.sNx ) THEN
-            tmpA = drF(k)*hFacW(1+iB,j,k,bi,bj)*dyG(1+iB,j,bi,bj)
+            tmpA = drF(k)*_hFacW(1+iB,j,k,bi,bj)*dyG(1+iB,j,bi,bj)
      &                   *maskInW(1+iB,j,bi,bj)
             tileArea(bi,bj) = tileArea(bi,bj) + tmpA
             tileFlow(bi,bj) = tileFlow(bi,bj) + tmpA*OBWu(j,k,bi,bj)
@@ -197,7 +200,7 @@ c    &   'OBCS_balance it,areaW,flowW=', myIter, areaW, flowW
 C-    If 1 OB location is on 2 tiles (@ edge of 2 tiles), select the one which
 C     communicates with tile interior (sNy+1) rather than with halo region (j=1)
            IF ( jB.NE.OB_indexNone .AND. jB.GT.1 ) THEN
-            tmpA = drF(k)*hFacS(i,jB,k,bi,bj)*dxG(i,jB,bi,bj)
+            tmpA = drF(k)*_hFacS(i,jB,k,bi,bj)*dxG(i,jB,bi,bj)
      &                   *maskInS(i,jB,bi,bj)
             tileArea(bi,bj) = tileArea(bi,bj) + tmpA
             tileFlow(bi,bj) = tileFlow(bi,bj) + tmpA*OBNv(i,k,bi,bj)
@@ -246,7 +249,7 @@ c    &   'OBCS_balance it,areaN,flowN=', myIter, areaN, flowN
 C-    If 1 OB location is on 2 tiles (@ edge of 2 tiles), select the one which
 C     communicates with tile interior (j=0) rather than with halo region (j=sNy)
            IF ( jB.NE.OB_indexNone .AND. jB.LT.sNy ) THEN
-            tmpA = drF(k)*hFacS(i,1+jB,k,bi,bj)*dxG(i,1+jB,bi,bj)
+            tmpA = drF(k)*_hFacS(i,1+jB,k,bi,bj)*dxG(i,1+jB,bi,bj)
      &                   *maskInS(i,1+jB,bi,bj)
             tileArea(bi,bj) = tileArea(bi,bj) + tmpA
             tileFlow(bi,bj) = tileFlow(bi,bj) + tmpA*OBSv(i,k,bi,bj)
