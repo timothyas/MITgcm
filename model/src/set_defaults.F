@@ -174,6 +174,7 @@ C-    viscosity and diffusivity default value:
       buoyancyRelation    = 'OCEANIC'
       selectP_inEOS_Zc    = UNSET_I
       smoothAbsFuncRange  = 0. _d 0
+      smoothHFacEps       = 1. _d -1
       hFacMin             = 1. _d 0
       hFacMinDrDefault    = 0. _d 0
       implicitIntGravWave = .FALSE.
