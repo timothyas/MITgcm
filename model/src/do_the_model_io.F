@@ -268,5 +268,10 @@ C-- added by RPA
      &     CALL DIAGNOSTICS_WRITE( modelEnd, myTime, myIter, myThid )
 #endif
 
+#ifdef ALLOW_DEPTH_CONTROL
+C--   Write grid after depth control modifications      
+      IF ( myIter.EQ.nIter0 )
+     &  CALL WRITE_GRID( myThid )
+#endif
       RETURN
       END
