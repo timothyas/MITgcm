@@ -787,6 +787,10 @@ C               (if using zcoordinate, units becomes linear: m/s, quadratic: [-]
 C     smoothAbsFuncRange :: 1/2 of interval around zero, for which FORTRAN ABS
 C                           is to be replace by a smoother function
 C                           (affects myabs, mymin, mymax)
+C     smoothHFacEps :: parameter controlling smooth spline representation of
+C                      thresholding if statements for determining hFac (near hFacMin)
+C                      Default = 0.1 so no division by zero
+C                      See update_masks_etc.F and smooth_hFac_rl
 C     nh_Am2        :: scales the non-hydrostatic terms and changes internal scales
 C                      (i.e. allows convection at different Rayleigh numbers)
 C     tCylIn        :: Temperature of the cylinder inner boundary
@@ -837,6 +841,7 @@ C     psiEuler      :: Euler angle, rotation about new z-axis
      & ivdc_kappa, hMixCriteria, dRhoSmall, hMixSmooth,
      & sideDragFactor, bottomDragLinear, bottomDragQuadratic, nh_Am2,
      & smoothAbsFuncRange,
+     & smoothHFacEps,
      & tCylIn, tCylOut,
      & phiEuler, thetaEuler, psiEuler
 
@@ -977,6 +982,7 @@ C     psiEuler      :: Euler angle, rotation about new z-axis
       _RL bottomDragLinear
       _RL bottomDragQuadratic
       _RL smoothAbsFuncRange
+      _RL smoothHFacEps
       _RL nh_Am2
       _RL tCylIn, tCylOut
       _RL phiEuler, thetaEuler, psiEuler
