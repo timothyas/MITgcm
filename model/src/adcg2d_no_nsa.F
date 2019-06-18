@@ -143,7 +143,7 @@ C     msgBuf     :: Informational/error message buffer
       cg2dtolerance = 1. _d -15
       
       CALL CG2D_NO_NSA(
-     U                cg2d_x_d, cg2d_b_d,
+     U                cg2d_x_d, cg2d_b_d, ac2d_v, as2d_v, aw2d_v,
      O                firstResidual, minResidualSq, lastResidual,
      U                numIterTemp, nIterMinTemp,
      I                myThid )
@@ -151,7 +151,6 @@ C     msgBuf     :: Informational/error message buffer
       cg2dtolerance = tmp_tolerance
       
       _EXCH_XY_RL( cg2d_b_d, myThid )
-      _EXCH_XY_RL( cg2d_x_v, myThid )
       
       DO bj = myByLo(myThid), myByHi(myThid)
        DO bi = myBxLo(myThid), myBxHi(myThid)
