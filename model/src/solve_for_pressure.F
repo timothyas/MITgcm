@@ -309,6 +309,9 @@ C--   Call the single reduce CG solver
 C--   Call the default CG solver
 #endif /* ALLOW_SRCG */
 #ifdef ALLOW_DIFFERENTIATE_CG2D_MATRIX
+C      Need this for TAF (and OpenAD?) to recognize that it needs
+C      to rebuild cg2d_x in reverse mode. Note that a store 
+C      statement will store cg2d_x before it is solved for.
        cg2d_x(1,1,1,1) =  cg2d_x(1,1,1,1)+0.*AC2D(1,1,1,1) +
      &   0.*AW2D(1,1,1,1) + 0.*AS2D(1,1,1,1)
        CALL CG2D_NO_NSA(
