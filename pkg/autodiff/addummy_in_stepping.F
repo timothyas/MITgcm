@@ -139,6 +139,13 @@ C--   need to all the correct OpenAD EXCH S/R ; left empty for now
 # ifdef ALLOW_BOTTOMDRAG_CONTROL
         call adexch_xy_rl( myThid,adbottomdragfld)
 # endif
+# ifdef ALLOW_DEPTH_CONTROL
+        call adexch_xyz_rl( myThid,adhFacC)
+        call adexch_uv_xyz_rl( .true., myThid,adhFacW, adhFacS)
+        call adexch_xyz_rl( myThid,adrecip_hFacC)
+        call adexch_uv_xyz_rl( .true., myThid,
+     &                         adrecip_hFacW, adrecip_hFacS)
+# endif
 # else /* ndfef AUTODIFF_TAMC_COMPATIBILITY */
 
 #  ifndef ALLOW_BULK_OFFLINE
@@ -170,6 +177,13 @@ C--   need to all the correct OpenAD EXCH S/R ; left empty for now
 # endif
 # ifdef ALLOW_BOTTOMDRAG_CONTROL
         CALL ADEXCH_3D_RL( adBottomDragFld, 1 , myThid )
+# endif
+# ifdef ALLOW_DEPTH_CONTROL
+        call adexch_3D_rl(adhFacC,Nr,myThid)
+        call adexch_uv_3D_rl( adhFacW, adhFacS, .true., Nr, myThid)
+        call adexch_3D_rl( adrecip_hFacC, Nr, myThid)
+        call adexch_uv_3D_rl( adrecip_hFacW, adrecip_hFacS, 
+     &                         .true., Nr, myThid)
 # endif
 
 #endif /* AUTODIFF_TAMC_COMPATIBILITY */
@@ -218,6 +232,43 @@ C --- 2. Fill up diagnostics from local copy (after exch)
 # endif
          CALL DIAGNOSTICS_FILL( var3Du, 'ADJuvel ', 0,Nr,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( var3Dv, 'ADJvvel ', 0,Nr,0,1,1,myThid )
+# ifdef ALLOW_DEPTH_CONTROL
+#  ifdef ALLOW_OPENAD
+         CALL COPY_ADVAR_OUTP( dumRS, hFacC%d, var3Du, Nr, 12, myThid )
+#  else
+         CALL COPY_ADVAR_OUTP( dumRS, adhFacC, var3Du, Nr, 12, myThid )
+#  endif
+         CALL DIAGNOSTICS_FILL( var3Du, 'ADJhFacC', 0,Nr,0,1,1,myThid )
+
+#  ifdef ALLOW_OPENAD
+         CALL COPY_AD_UV_OUTP( dumRS, dumRS, hFacW%d, hFacS%d,
+     &                                var3Du, var3Dv, Nr, 34, myThid )
+#  else
+         CALL COPY_AD_UV_OUTP( dumRS, dumRS, adhFacW, adhFacS,
+     &                                var3Du, var3Dv, Nr, 34, myThid )
+#  endif
+         CALL DIAGNOSTICS_FILL( var3Du, 'ADJhFacW', 0,Nr,0,1,1,myThid )
+         CALL DIAGNOSTICS_FILL( var3Dv, 'ADJhFacS', 0,Nr,0,1,1,myThid )
+
+#  ifdef ALLOW_OPENAD
+         CALL COPY_ADVAR_OUTP( dumRS, recip_hFacC%d, var3Du, Nr, 12, 
+     &                          myThid )
+#  else
+         CALL COPY_ADVAR_OUTP( dumRS, adrecip_hFacC, var3Du, Nr, 12, 
+     &                          myThid )
+#  endif
+         CALL DIAGNOSTICS_FILL( var3Du, 'ADJrhFaC', 0,Nr,0,1,1,myThid )
+
+#  ifdef ALLOW_OPENAD
+         CALL COPY_AD_UV_OUTP( dumRS, dumRS, recip_hFacW%d, hFacS%d,
+     &                                var3Du, var3Dv, Nr, 34, myThid )
+#  else
+         CALL COPY_AD_UV_OUTP( dumRS, dumRS, adrecip_hFacW, adhFacS,
+     &                                var3Du, var3Dv, Nr, 34, myThid )
+#  endif
+         CALL DIAGNOSTICS_FILL( var3Du, 'ADJrhFaW', 0,Nr,0,1,1,myThid )
+         CALL DIAGNOSTICS_FILL( var3Dv, 'ADJrhFaS', 0,Nr,0,1,1,myThid )
+# endif
 
         ELSE
 C --- 3. Fill up diagnostics directly
@@ -229,6 +280,18 @@ C -     OpenAD
          CALL DIAGNOSTICS_FILL( wVel%d, 'ADJwvel ', 0,Nr,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( uVel%d, 'ADJuvel ', 0,Nr,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( vVel%d, 'ADJvvel ', 0,Nr,0,1,1,myThid )
+#   ifdef ALLOW_DEPTH_CONTROL
+         CALL DIAGNOSTICS_FILL( hFacC%d, 'ADJhFacC', 0,Nr,0,1,1,myThid )
+         CALL DIAGNOSTICS_FILL( hFacW%d, 'ADJhFacW', 0,Nr,0,1,1,myThid )
+         CALL DIAGNOSTICS_FILL( hFacS%d, 'ADJhFacS', 0,Nr,0,1,1,myThid )
+         CALL DIAGNOSTICS_FILL( recip_hFacC%d, 'ADJrhFaC', 
+     &                          0,Nr,0,1,1,myThid )
+         CALL DIAGNOSTICS_FILL( recip_hFacW%d, 'ADJrhFaW', 
+     &                          0,Nr,0,1,1,myThid )
+         CALL DIAGNOSTICS_FILL( recip_hFacS%d, 'ADJrhFaS', 
+     &                          0,Nr,0,1,1,myThid )
+#   endif
+
 #  else /* ALLOW_OPENAD */
 C -     TAF
          CALL DIAGNOSTICS_FILL( adTheta,'ADJtheta', 0,Nr,0,1,1,myThid )
@@ -236,6 +299,18 @@ C -     TAF
          CALL DIAGNOSTICS_FILL( adwVel, 'ADJwvel ', 0,Nr,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( aduVel, 'ADJuvel ', 0,Nr,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( advVel, 'ADJvvel ', 0,Nr,0,1,1,myThid )
+
+#   ifdef ALLOW_DEPTH_CONTROL
+         CALL DIAGNOSTICS_FILL( adhFacC, 'ADJhFacC', 0,Nr,0,1,1,myThid )
+         CALL DIAGNOSTICS_FILL( adhFacW, 'ADJhFacW', 0,Nr,0,1,1,myThid )
+         CALL DIAGNOSTICS_FILL( adhFacS, 'ADJhFacS', 0,Nr,0,1,1,myThid )
+         CALL DIAGNOSTICS_FILL( adrecip_hFacC, 'ADJrhFaC', 
+     &                          0,Nr,0,1,1,myThid )
+         CALL DIAGNOSTICS_FILL( adrecip_hFacW, 'ADJrhFaW', 
+     &                          0,Nr,0,1,1,myThid )
+         CALL DIAGNOSTICS_FILL( adrecip_hFacS, 'ADJrhFaS', 
+     &                          0,Nr,0,1,1,myThid )
+#   endif
 #  endif /* ALLOW_OPENAD */
         ENDIF
 
@@ -325,6 +400,20 @@ c    &                             adGGL90DiffKr, myIter, myThid )
           CALL WRITE_FLD_XY_RL ( 'ADJbottomdrag.', suff,
      &                           adBottomDragFld, myIter, myThid )
 #endif
+#ifdef ALLOW_DEPTH_CONTROL
+          CALL WRITE_FLD_XYZ_RL ( 'ADJhFacC.', suff,
+     &                           adhFacC, myIter, myThid )
+          CALL WRITE_FLD_XYZ_RL ( 'ADJhFacW.', suff,
+     &                           adhFacW, myIter, myThid )
+          CALL WRITE_FLD_XYZ_RL ( 'ADJhFacS.', suff,
+     &                           adhFacS, myIter, myThid )
+          CALL WRITE_FLD_XYZ_RL ( 'ADJrhFaC.', suff,
+     &                           adrecip_hFacC, myIter, myThid )
+          CALL WRITE_FLD_XYZ_RL ( 'ADJrhFaW.', suff,
+     &                           adrecip_hFacW, myIter, myThid )
+          CALL WRITE_FLD_XYZ_RL ( 'ADJrhFaS.', suff,
+     &                           adrecip_hFacS, myIter, myThid )
+#endif
 
         ELSEIF ( ( dumpAdVarExch.NE.2 ).AND.(dumpAdByRec) ) THEN
 
@@ -389,6 +478,20 @@ c    &         adGGL90DiffKr, dumpAdRecMn, myIter, myThid )
 #ifdef ALLOW_BOTTOMDRAG_CONTROL
           CALL WRITE_REC_XY_RL ( 'ADJbottomdrag',
      &         adBottomDragFld, dumpAdRecMn, myIter, myThid )
+#endif
+#ifdef ALLOW_DEPTH_CONTROL
+          CALL WRITE_REC_XYZ_RL ( 'ADJhFacC.', suff,
+     &                           adhFacC, dumpAdRecMn, myIter, myThid )
+          CALL WRITE_REC_XYZ_RL ( 'ADJhFacW.', suff,
+     &                           adhFacW, dumpAdRecMn, myIter, myThid )
+          CALL WRITE_REC_XYZ_RL ( 'ADJhFacS.', suff,
+     &                           adhFacS, dumpAdRecMn, myIter, myThid )
+          CALL WRITE_REC_XYZ_RL ( 'ADJrhFaC.', suff,
+     &                      adrecip_hFacC, dumpAdRecMn, myIter, myThid )
+          CALL WRITE_REC_XYZ_RL ( 'ADJrhFaW.', suff,
+     &                      adrecip_hFacW, dumpAdRecMn, myIter, myThid )
+          CALL WRITE_REC_XYZ_RL ( 'ADJrhFaS.', suff,
+     &                      adrecip_hFacS, dumpAdRecMn, myIter, myThid )
 #endif
 
         ELSE
@@ -510,6 +613,40 @@ C       case dumpAdVarExch = 2
           IF (  dumpAdByRec   ) CALL WRITE_REC_XY_RL( 'ADJbottomdrag',
      &                           var2Du, dumpAdRecMn, myIter, myThid )
 #endif
+#ifdef ALLOW_DEPTH_CONTROL
+          CALL COPY_ADVAR_OUTP( dumRS, adhFacC,var3Du, Nr, 12, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XYZ_RL( 'ADJhFacC.',
+     &                           suff, var3Du, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XYZ_RL( 'ADJhFacC',
+     &                           var3Du, dumpAdRecMn, myIter, myThid )
+          CALL COPY_AD_UV_OUTP( dumRS, dumRS, adhFacW, adhFacS,
+     &                                 var3Du, var3Dv, Nr, 34, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XYZ_RL( 'ADJhFacW.',
+     &                           suff, var3Du, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XYZ_RL( 'ADJhFacW',
+     &                           var3Du, dumpAdRecMn, myIter, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XYZ_RL( 'ADJhFacS.',
+     &                           suff, var3Dv, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XYZ_RL( 'ADJhFacS',
+     &                           var3Dv, dumpAdRecMn, myIter, myThid )
+
+          CALL COPY_ADVAR_OUTP( dumRS, adrecip_hFacC,
+     &                          var3Du, Nr, 12, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XYZ_RL( 'ADJrhFaC.',
+     &                           suff, var3Du, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XYZ_RL( 'ADJrhFaC',
+     &                           var3Du, dumpAdRecMn, myIter, myThid )
+          CALL COPY_AD_UV_OUTP( dumRS, dumRS, 
+     &    adrecip_hFacW, adrecip_hFacS, var3Du, var3Dv, Nr, 34, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XYZ_RL( 'ADJrhFaW.',
+     &                           suff, var3Du, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XYZ_RL( 'ADJrhFaW',
+     &                           var3Du, dumpAdRecMn, myIter, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XYZ_RL( 'ADJrhFaS.',
+     &                           suff, var3Dv, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XYZ_RL( 'ADJrhFaS',
+     &                           var3Dv, dumpAdRecMn, myIter, myThid )
+#endif
 C       end if dumpAdVarExch = 2
         ENDIF
 
@@ -599,6 +736,27 @@ cc     &                           var3Du, myIter, myThid )
           CALL WRITE_FLD_XY_RL ( 'ADJbottomdrag.', suff,
      &                           var2Du, myIter, myThid )
 #endif
+#ifdef ALLOW_DEPTH_CONTROL
+          var3Du = hFacC%d
+          CALL WRITE_FLD_XYZ_RL( 'ADJhFacC.', suff,
+     &                           var3Du, myIter, myThid )
+          var3Du = hFacW%d
+          CALL WRITE_FLD_XYZ_RL( 'ADJhFacW.', suff,
+     &                           var3Du, myIter, myThid )
+          var3Du = hFacS%d
+          CALL WRITE_FLD_XYZ_RL( 'ADJhFacS.', suff,
+     &                           var3Du, myIter, myThid )
+
+          var3Du = recip_hFacC%d
+          CALL WRITE_FLD_XYZ_RL( 'ADJrhFaC.', suff,
+     &                           var3Du, myIter, myThid )
+          var3Du = recip_hFacW%d
+          CALL WRITE_FLD_XYZ_RL( 'ADJrhFaW.', suff,
+     &                           var3Du, myIter, myThid )
+          var3Du = recip_hFacS%d
+          CALL WRITE_FLD_XYZ_RL( 'ADJrhFaS.', suff,
+     &                           var3Du, myIter, myThid )
+#endif
 
         ELSEIF ( ( dumpAdVarExch.NE.2 ).AND.(dumpAdByRec) ) THEN
 
@@ -682,6 +840,27 @@ cc     &         var3Du, dumpAdRecMn, myIter, myThid )
           var2Du = BottomDragFld%d
           CALL WRITE_REC_XY_RL ( 'ADJbottomdrag',
      &         var2Du, dumpAdRecMn, myIter, myThid )
+#endif
+#ifdef ALLOW_DEPTH_CONTROL
+          var3Du = hFacC%d
+          CALL WRITE_REC_XYZ_RL( 'ADJhFacC',
+     &                           var3Du, dumpAdRecMn, myIter, myThid )
+          var3Du = hFacW%d
+          CALL WRITE_REC_XYZ_RL( 'ADJhFacW',
+     &                           var3Du, dumpAdRecMn, myIter, myThid )
+          var3Du = hFacS%d
+          CALL WRITE_REC_XYZ_RL( 'ADJhFacS',
+     &                           var3Du, dumpAdRecMn, myIter, myThid )
+
+          var3Du = recip_hFacC%d
+          CALL WRITE_REC_XYZ_RL( 'ADJrhFaC',
+     &                           var3Du, dumpAdRecMn, myIter, myThid )
+          var3Du = recip_hFacW%d
+          CALL WRITE_REC_XYZ_RL( 'ADJrhFaW',
+     &                           var3Du, dumpAdRecMn, myIter, myThid )
+          var3Du = recip_hFacS%d
+          CALL WRITE_REC_XYZ_RL( 'ADJrhFaS',
+     &                           var3Du, dumpAdRecMn, myIter, myThid )
 #endif
 
         ELSE
@@ -804,6 +983,40 @@ cc     &                           var3Du, dumpAdRecMn, myIter, myThid )
           IF (  dumpAdByRec   ) CALL WRITE_REC_XY_RL( 'ADJbottomdrag',
      &                           var2Du, dumpAdRecMn, myIter, myThid )
 #endif
+#ifdef ALLOW_DEPTH_CONTROL
+          CALL COPY_ADVAR_OUTP( dumRS, hFacC%d,var3Du, Nr, 12, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XYZ_RL( 'ADJhFacC.',
+     &                           suff, var3Du, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XYZ_RL( 'ADJhFacC',
+     &                           var3Du, dumpAdRecMn, myIter, myThid )
+          CALL COPY_AD_UV_OUTP( dumRS, dumRS, hFacW%d, hFacS%d,
+     &                                 var3Du, var3Dv, Nr, 34, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XYZ_RL( 'ADJhFacW.',
+     &                           suff, var3Du, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XYZ_RL( 'ADJhFacW',
+     &                           var3Du, dumpAdRecMn, myIter, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XYZ_RL( 'ADJhFacS.',
+     &                           suff, var3Dv, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XYZ_RL( 'ADJhFacS',
+     &                           var3Dv, dumpAdRecMn, myIter, myThid )
+
+          CALL COPY_ADVAR_OUTP( dumRS, recip_hFacC%d,
+     &                          var3Du, Nr, 12, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XYZ_RL( 'ADJrhFaC.',
+     &                           suff, var3Du, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XYZ_RL( 'ADJrhFaC',
+     &                           var3Du, dumpAdRecMn, myIter, myThid )
+          CALL COPY_AD_UV_OUTP( dumRS, dumRS, 
+     &    recip_hFacW%d, recip_hFacS%d, var3Du, var3Dv, Nr, 34, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XYZ_RL( 'ADJrhFaW.',
+     &                           suff, var3Du, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XYZ_RL( 'ADJrhFaW',
+     &                           var3Du, dumpAdRecMn, myIter, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XYZ_RL( 'ADJrhFaS.',
+     &                           suff, var3Dv, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XYZ_RL( 'ADJrhFaS',
+     &                           var3Dv, dumpAdRecMn, myIter, myThid )
+#endif
 
 C       end if dumpAdVarExch = 2
         ENDIF
@@ -859,6 +1072,22 @@ C-- NOW NMC output
           CALL MNC_CW_RL_W('D','adstate',0,0,
      &                     'adBottomDrag', var2Du, myThid)
 #endif
+#ifdef ALLOW_DEPTH_CONTROL
+          CALL COPY_ADVAR_OUTP( dumRS, adhFacC,var3Du, Nr, 12, myThid )
+          CALL MNC_CW_RL_W('D','adstate',0,0,'adhFacC', var3Du, myThid)
+          CALL COPY_AD_UV_OUTP( dumRS, dumRS, adhFacW, adhFacS,
+     &                          var3Du, var3Dv, Nr, 34, myThid )
+          CALL MNC_CW_RL_W('D','adstate',0,0,'adhFacW', var3Du, myThid)
+          CALL MNC_CW_RL_W('D','adstate',0,0,'adhFacS', var3Dv, myThid)
+
+          CALL COPY_ADVAR_OUTP( dumRS, adrecip_hFacC,
+     &                          var3Du, Nr, 12, myThid )
+          CALL MNC_CW_RL_W('D','adstate',0,0,'adrhFaC', var3Du, myThid)
+          CALL COPY_AD_UV_OUTP( dumRS, dumRS, adrecip_hFacW, 
+     &            adrecip_hFacS, var3Du, var3Dv, Nr, 34, myThid )
+          CALL MNC_CW_RL_W('D','adstate',0,0,'adrhFaW', var3Du, myThid)
+          CALL MNC_CW_RL_W('D','adstate',0,0,'adrhFaS', var3Dv, myThid)
+#endif
 #ifdef ALLOW_DIFFKR_CONTROL
           CALL COPY_ADVAR_OUTP( dumRS, adDiffKr,var3Du, Nr, 12,myThid )
           CALL MNC_CW_RL_W('D','adstate',0,0,
@@ -896,6 +1125,18 @@ C     dumpAdVarExch.NE.2
 #ifdef ALLOW_BOTTOMDRAG_CONTROL
           CALL MNC_CW_RL_W('D','adstate',0,0,
      &                     'adBottomDrag', adbottomdragfld, myThid)
+#endif
+#ifdef ALLOW_DEPTH_CONTROL
+          CALL MNC_CW_RL_W('D','adstate',0,0,'adhFacC', adhFacC, myThid)
+          CALL MNC_CW_RL_W('D','adstate',0,0,'adhFacW', adhFacW, myThid)
+          CALL MNC_CW_RL_W('D','adstate',0,0,'adhFacS', adhFacS, myThid)
+
+          CALL MNC_CW_RL_W('D','adstate',0,0,'adrhFaC', 
+     &                      adrecip_hFacC, myThid)
+          CALL MNC_CW_RL_W('D','adstate',0,0,'adrhFaW',
+     &                      adrecip_hFacW, myThid)
+          CALL MNC_CW_RL_W('D','adstate',0,0,'adrhFaS',
+     &                      adrecip_hFacS, myThid)
 #endif
 #ifdef ALLOW_DIFFKR_CONTROL
           CALL MNC_CW_RL_W('D','adstate',0,0,
