@@ -315,7 +315,7 @@ C      statement will store cg2d_x before it is solved for.
        cg2d_x(1,1,1,1) =  cg2d_x(1,1,1,1)+0.*AC2D(1,1,1,1) +
      &   0.*AW2D(1,1,1,1) + 0.*AS2D(1,1,1,1)
        CALL CG2D_NO_NSA(
-     U           cg2d_b, cg2d_x,
+     U           cg2d_b, cg2d_x, ac2d, as2d, aw2d,
      O           firstResidual, minResidualSq, lastResidual,
      U           numIters, nIterMin,
      I           myThid )
