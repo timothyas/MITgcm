@@ -3,6 +3,9 @@
 #ifdef ALLOW_MOM_COMMON
 # include "MOM_COMMON_OPTIONS.h"
 #endif
+#ifdef ALLOW_CTRL
+# include "CTRL_OPTIONS.h"
+#endif
 
 CBOP
 C     !ROUTINE: CONFIG_CHECK
@@ -411,6 +414,19 @@ C     o Need to use S/R APPLY_FORCING_U,V to get Tidal forcing
         CALL PRINT_ERROR( msgBuf, myThid )
         errCount = errCount + 1
       ENDIF
+#else
+# ifdef ALLOW_DEPTH_CONTROL
+      if (useSRCGSolver) then
+        WRITE(msgBuf,'(A)')
+     &  'CONFIG_CHECK: depth control CG2D algorithms cg2d_nsa and'
+     &  'cg2d_no_nsa not currently implemented for single reduce.'
+        CALL PRINT_ERROR( msgBuf, myThid )
+        WRITE(msgBuf,'(A)')
+     &  'CONFIG_CHECK: Re-compile with ALLOW_SRCG undefined'
+        CALL PRINT_ERROR( msgBuf, myThid )
+        errCount = errCount + 1
+      endif
+# endif
 #endif /* ALLOW_SRCG */
 
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
