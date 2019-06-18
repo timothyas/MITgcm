@@ -1,7 +1,9 @@
+#include "PACKAGES_CONFIG.h"
 #include "CPP_OPTIONS.h"
 #ifdef ALLOW_CTRL
 # include "CTRL_OPTIONS.h"
 #endif
+
 
 CBOP
 C     !ROUTINE: ADCG2D_PASSMAT
@@ -11,12 +13,6 @@ C     !INTERFACE:
      U                cg2d_b_d, ! Right hand side, adjoint (output)
      I                cg2d_x_v, ! scaled eta,      forward 
      U                cg2d_x_d, ! scaled eta,      adjoint (input)
-!      I                AC2D_v,   ! matrix diagonal, forward
-!      U                AC2D_d,   ! matrix diagonal, adjoint
-!      I                AW2D_v,   ! matrix west cell, forward
-!      U                AW2D_d,   ! matrix west cell, adjoint
-!      I                AS2D_v,   ! matrix south cell, forward
-!      U                AS2D_d,   ! matrix south cell, adjoint
      O                firstResidual, 
      O                minResidualSq, 
      O                lastResidual,
@@ -75,14 +71,8 @@ C                  Out: iteration number corresponding to lowest residual
 C     myThid    :: Thread on which I am working.
       _RL  cg2d_b_v(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL  cg2d_x_v(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-!       _RS  aW2d_v  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-!       _RS  aS2d_v  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-!       _RS  aC2d_v  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL  cg2d_b_d(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL  cg2d_x_d(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-!       _RS  aW2d_d  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-!       _RS  aS2d_d  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-!       _RS  aC2d_d  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)   
       _RL xtemp_v  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL btemp_d  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL  firstResidual
@@ -137,14 +127,6 @@ C     msgBuf     :: Informational/error message buffer
       numIterTemp = numIters
       nIterMinTemp = nIterMin
       
-#ifndef ALLOW_OPENAD
-      CALL CG2D_NO_NSA(
-     U                cg2d_b_v, cg2d_x_v,
-     O                firstResidual, minResidualSq, lastResidual,
-     U                numIterTemp, nIterMinTemp,
-     I                myThid )
-#endif
-
       _EXCH_XY_RL( cg2d_x_d, myThid )
       numIterTemp = numIters
       nIterMinTemp = nIterMin
@@ -207,15 +189,6 @@ C     msgBuf     :: Informational/error message buffer
        DO bi = myBxLo(myThid), myBxHi(myThid)
         DO j=1-OLy,sNy+OLy
          DO i=1-OLx,sNx+OLx
-C          if (i.lt.1.or.i.gt.sNx.or.
-C     &        j.lt.1.or.j.gt.sNy) then
-     
-C           cg2d_b_d (i,j,bi,bj) = 0.0           
-C           ac2d_ad(i,j,bi,bj)=0.0
-C           as2d_ad(i,j,bi,bj)=0.0
-C           aw2d_ad(i,j,bi,bj)=0.0
-
-C          endif
           
           cg2d_b_d (i,j,bi,bj) =
      &     cg2d_b_d (i,j,bi,bj) +
