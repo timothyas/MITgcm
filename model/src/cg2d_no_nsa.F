@@ -18,7 +18,7 @@ CBOP
 C     !ROUTINE: CG2D
 C     !INTERFACE:
       SUBROUTINE CG2D_NO_NSA(
-     U                cg2d_b, cg2d_x,
+     U                cg2d_b, cg2d_x, ac2d_in, as2d_in, aw2d_in,
      O                firstResidual, minResidualSq, lastResidual,
      U                numIters, nIterMin,
      I                myThid )
@@ -69,6 +69,9 @@ C                  Out: iteration number corresponding to lowest residual
 C     myThid    :: Thread on which I am working.
       _RL  cg2d_b(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL  cg2d_x(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RS  ac2d_in(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RS  as2d_in(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RS  aw2d_in(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL  firstResidual
       _RL  minResidualSq
       _RL  lastResidual
@@ -173,11 +176,11 @@ C--   Initial residual calculation
         DO j=1,sNy
          DO i=1,sNx
           cg2d_r(i,j,bi,bj) = cg2d_b(i,j,bi,bj) -
-     &    (aW2d(i  ,j  ,bi,bj)*cg2d_x(i-1,j  ,bi,bj)
-     &    +aW2d(i+1,j  ,bi,bj)*cg2d_x(i+1,j  ,bi,bj)
-     &    +aS2d(i  ,j  ,bi,bj)*cg2d_x(i  ,j-1,bi,bj)
-     &    +aS2d(i  ,j+1,bi,bj)*cg2d_x(i  ,j+1,bi,bj)
-     &    +aC2d(i  ,j  ,bi,bj)*cg2d_x(i  ,j  ,bi,bj)
+     &    (aW2d_in(i  ,j  ,bi,bj)*cg2d_x(i-1,j  ,bi,bj)
+     &    +aW2d_in(i+1,j  ,bi,bj)*cg2d_x(i+1,j  ,bi,bj)
+     &    +aS2d_in(i  ,j  ,bi,bj)*cg2d_x(i  ,j-1,bi,bj)
+     &    +aS2d_in(i  ,j+1,bi,bj)*cg2d_x(i  ,j+1,bi,bj)
+     &    +aC2d_in(i  ,j  ,bi,bj)*cg2d_x(i  ,j  ,bi,bj)
      &    )
 #ifdef CG2D_SINGLECPU_SUM
           localBuf(i,j,bi,bj) = cg2d_r(i,j,bi,bj)*cg2d_r(i,j,bi,bj)
@@ -283,11 +286,11 @@ C==    q = A.s
          DO j=1,sNy
           DO i=1,sNx
            cg2d_q(i,j,bi,bj) =
-     &     aW2d(i  ,j  ,bi,bj)*cg2d_s(i-1,j  ,bi,bj)
-     &    +aW2d(i+1,j  ,bi,bj)*cg2d_s(i+1,j  ,bi,bj)
-     &    +aS2d(i  ,j  ,bi,bj)*cg2d_s(i  ,j-1,bi,bj)
-     &    +aS2d(i  ,j+1,bi,bj)*cg2d_s(i  ,j+1,bi,bj)
-     &    +aC2d(i  ,j  ,bi,bj)*cg2d_s(i  ,j  ,bi,bj)
+     &     aW2d_in(i  ,j  ,bi,bj)*cg2d_s(i-1,j  ,bi,bj)
+     &    +aW2d_in(i+1,j  ,bi,bj)*cg2d_s(i+1,j  ,bi,bj)
+     &    +aS2d_in(i  ,j  ,bi,bj)*cg2d_s(i  ,j-1,bi,bj)
+     &    +aS2d_in(i  ,j+1,bi,bj)*cg2d_s(i  ,j+1,bi,bj)
+     &    +aC2d_in(i  ,j  ,bi,bj)*cg2d_s(i  ,j  ,bi,bj)
 #ifdef CG2D_SINGLECPU_SUM
           localBuf(i,j,bi,bj) = cg2d_s(i,j,bi,bj)*cg2d_q(i,j,bi,bj)
 #else
