@@ -201,18 +201,21 @@ c     _RL adgt(1-olx:snx+olx,1-oly:sny+oly,nr,nsx,nsy)
 #endif
 
 #ifdef ALLOW_DEPTH_CONTROL
-      _RL adr_low_control(1-olx:snx+olx,1-oly:sny+oly,nsx,nsy)
-      _RL adhfacc(1-olx:snx+olx,1-oly:sny+oly,1:nr,nsx,nsy)
-      _RL adhfacs(1-olx:snx+olx,1-oly:sny+oly,1:nr,nsx,nsy)
-      _RL adhfacw(1-olx:snx+olx,1-oly:sny+oly,1:nr,nsx,nsy)
-      _RL adrecip_hfacc(1-olx:snx+olx,1-oly:sny+oly,1:nr,nsx,nsy)
-      _RL adrecip_hfacs(1-olx:snx+olx,1-oly:sny+oly,1:nr,nsx,nsy)
-      _RL adrecip_hfacw(1-olx:snx+olx,1-oly:sny+oly,1:nr,nsx,nsy)
-      common /adgrid_r/ adr_low_control,
-     &                  adrecip_hfacc, adrecip_hfacw, adrecip_hfacs
-      common /adgrid_r_c/ adhfacc
-      common /adgrid_r_s/ adhfacs
-      common /adgrid_r_w/ adhfacw
+      _RS adhfacc(1-olx:snx+olx,1-oly:sny+oly,nr,nsx,nsy)
+      _RS adhfacs(1-olx:snx+olx,1-oly:sny+oly,nr,nsx,nsy)
+      _RS adhfacw(1-olx:snx+olx,1-oly:sny+oly,nr,nsx,nsy)
+      _RS adr_low(1-olx:snx+olx,1-oly:sny+oly,nsx,nsy)
+      _RS adrecip_hfacc(1-olx:snx+olx,1-oly:sny+oly,nr,nsx,nsy)
+      _RS adrecip_hfacs(1-olx:snx+olx,1-oly:sny+oly,nr,nsx,nsy)
+      _RS adrecip_hfacw(1-olx:snx+olx,1-oly:sny+oly,nr,nsx,nsy)
+      common /adgrid_rs/ adr_low, 
+     &  adhfacc, adhfacw, adhfacs, 
+     &  adrecip_hfacc, adrecip_hfacw, adrecip_hfacs
+
+      _RS adac2d(1-olx:snx+olx,1-oly:sny+oly,nsx,nsy)
+      _RS adas2d(1-olx:snx+olx,1-oly:sny+oly,nsx,nsy)
+      _RS adaw2d(1-olx:snx+olx,1-oly:sny+oly,nsx,nsy)
+      common /adcg2d_i_r/ adaw2d, adas2d, adac2d
 #endif /* ALLOW_DEPTH_CONTROL */
 
 #endif /* ALLOW_AUTODIFF_MONITOR */
