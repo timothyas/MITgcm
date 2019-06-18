@@ -120,6 +120,25 @@ C--   Read IO error counter
 #ifdef ALLOW_DIAGNOSTICS
        CALL DIAGNOSTICS_FILL( adhFacS, 'ADJhFacS', 0,Nr,0,1,1,myThid )
 #endif
+      else if (myname .eq. 'R' ) then
+       WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac, reciprocals!! '
+       CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
+     &  SQUEEZE_RIGHT, myThid )
+
+         CALL WRITE_FLD_XYZ_RL ( 'ADJrhFaC.', suff, adrecip_hFacC,
+     &        myIter, myThid)
+         CALL WRITE_FLD_XYZ_RL ( 'ADJrhFaW.', suff, adrecip_hFacW,
+     &        myIter, myThid)
+         CALL WRITE_FLD_XYZ_RL ( 'ADJrhFaS.', suff, adrecip_hFacS,
+     &        myIter, myThid)
+#ifdef ALLOW_DIAGNOSTICS
+       CALL DIAGNOSTICS_FILL( adrecip_hFacC, 'ADJrhFaC', 0,Nr,0,1,1,
+     &                        myThid )
+       CALL DIAGNOSTICS_FILL( adrecip_hFacW, 'ADJrhFaW', 0,Nr,0,1,1,
+     &                        myThid )
+       CALL DIAGNOSTICS_FILL( adrecip_hFacS, 'ADJrhFaS', 0,Nr,0,1,1,
+     &                        myThid )
+#endif
       ELSE
          write(*,*) 'addummy_for_hfac: no valid myname specified'
       END IF
