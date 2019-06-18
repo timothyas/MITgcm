@@ -1,4 +1,11 @@
+#include "PACKAGES_CONFIG.h"
 #include "CPP_OPTIONS.h"
+#ifdef ALLOW_AUTODIFF
+# include "AUTODIFF_OPTIONS.h"
+#endif
+#ifdef ALLOW_CTRL
+# include "CTRL_OPTIONS.h"
+#endif
 #ifdef TARGET_NEC_SX
 C     set a sensible default for the outer loop unrolling parameter that can
 C     be overriden in the Makefile with the DEFINES macro or in CPP_OPTIONS.h
@@ -6,9 +13,6 @@ C     be overriden in the Makefile with the DEFINES macro or in CPP_OPTIONS.h
 # define CG2D_OUTERLOOPITERS 10
 #endif
 #endif /* TARGET_NEC_SX */
-#ifdef ALLOW_CTRL
-# include "CTRL_OPTIONS.h"
-#endif
 
 CBOP
 C     !ROUTINE: CG2D
@@ -111,7 +115,7 @@ C--   Initialise auxiliary constant, some output variable and inverter
       cg2dTolerance_sq = cg2dTolerance*cg2dTolerance
       minResidualSq = -1. _d 0
       eta_qrNM1     =  1. _d 0
-      
+
 C--   Normalise RHS
       rhsMax = 0. _d 0
       DO bj=myByLo(myThid),myByHi(myThid)
@@ -186,8 +190,7 @@ C--   Initial residual calculation
         ENDDO
        ENDDO
       ENDDO
-!      CALL EXCH_S3D_RL( cg2d_r, 1, myThid )
-      CALL EXCH_XY_RL( cg2d_r, myThid )
+      CALL EXCH_S3D_RL( cg2d_r, 1, myThid )
 #ifdef CG2D_SINGLECPU_SUM
       CALL GLOBAL_SUM_SINGLECPU_RL(localBuf, err_sq, 0, 0, myThid)
       CALL GLOBAL_SUM_SINGLECPU_RL(cg2d_b, sumRHS, OLx, OLy, myThid)
@@ -195,6 +198,7 @@ C--   Initial residual calculation
       CALL GLOBAL_SUM_TILE_RL( errTile,    err_sq, myThid )
       CALL GLOBAL_SUM_TILE_RL( sumRHStile, sumRHS, myThid )
 #endif
+
       actualIts = 0
       firstResidual = SQRT(err_sq)
       IF ( nIterMin.GE.0 ) THEN
@@ -253,10 +257,6 @@ CcnhDebugEnds
        CALL GLOBAL_SUM_TILE_RL( eta_qrNtile,eta_qrN,myThid )
 #endif
        cgBeta   = eta_qrN/eta_qrNM1
-CcnhDebugStarts
-c      WRITE(*,*) ' CG2D: Iteration ', it2d-1,
-c    &            ' eta_qrN=', eta_qrN, ' beta=', cgBeta
-CcnhDebugEnds
        eta_qrNM1 = eta_qrN
 
        DO bj=myByLo(myThid),myByHi(myThid)
@@ -271,8 +271,7 @@ CcnhDebugEnds
        ENDDO
 
 C--    Do exchanges that require messages i.e. between processes.
-!        CALL EXCH_S3D_RL( cg2d_s, 1, myThid )
-       CALL EXCH_XY_RL( cg2d_s, myThid )
+       CALL EXCH_S3D_RL( cg2d_s, 1, myThid )
 C==    Evaluate laplace operator on conjugate gradient vector
 C==    q = A.s
        DO bj=myByLo(myThid),myByHi(myThid)
@@ -304,10 +303,6 @@ C==    q = A.s
 #else
        CALL GLOBAL_SUM_TILE_RL( alphaTile,  alpha,  myThid )
 #endif
-CcnhDebugStarts
-c      WRITE(*,*) ' CG2D: Iteration ', it2d-1,
-c    &            ' SUM(s*q)=', alpha, ' alpha=', eta_qrN/alpha
-CcnhDebugEnds
        alpha = eta_qrN/alpha
 
 C==    Update simultaneously solution and residual vectors (and Iter number)
@@ -360,8 +355,7 @@ C-     Store lowest residual solution
          ENDDO
        ENDIF
 
-!       CALL EXCH_S3D_RL( cg2d_r, 1, myThid )
-       CALL EXCH_XY_RL( cg2d_r, myThid )
+       CALL EXCH_S3D_RL( cg2d_r, 1, myThid )
 
    10 CONTINUE
    11 CONTINUE
@@ -395,30 +389,6 @@ C--   Un-normalise the answer
 C--   Return parameters to caller
       lastResidual = SQRT(err_sq)
       numIters = actualIts
-
-CcnhDebugStarts
-c     _EXCH_XY_RL(cg2d_x, myThid )
-c     CALL PLOT_FIELD_XYRL( cg2d_x, 'CALC_MOM_RHS CG2D_X' , 1, myThid )
-c     err_sq = 0. _d 0
-c     DO bj=myByLo(myThid),myByHi(myThid)
-c      DO bi=myBxLo(myThid),myBxHi(myThid)
-c       DO j=1,sNy
-c        DO i=1,sNx
-c         cg2d_r(i,j,bi,bj) = cg2d_b(i,j,bi,bj) -
-c    &    (aW2d(i  ,j  ,bi,bj)*cg2d_x(i-1,j  ,bi,bj)
-c    &    +aW2d(i+1,j  ,bi,bj)*cg2d_x(i+1,j  ,bi,bj)
-c    &    +aS2d(i  ,j  ,bi,bj)*cg2d_x(i  ,j-1,bi,bj)
-c    &    +aS2d(i  ,j+1,bi,bj)*cg2d_x(i  ,j+1,bi,bj)
-c    &    +aC2d(i  ,j  ,bi,bj)*cg2d_x(i  ,j  ,bi,bj)
-c    &    )
-c         err_sq = err_sq + cg2d_r(i,j,bi,bj)*cg2d_r(i,j,bi,bj)
-c        ENDDO
-c       ENDDO
-c      ENDDO
-c     ENDDO
-c     _GLOBAL_SUM_RL( err_sq, myThid )
-c     write(*,*) 'cg2d: Ax - b = ',SQRT(err_sq)
-CcnhDebugEnds
 
       RETURN
       END
