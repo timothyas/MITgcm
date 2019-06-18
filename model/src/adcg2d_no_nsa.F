@@ -13,6 +13,12 @@ C     !INTERFACE:
      U                cg2d_b_d, ! Right hand side, adjoint (output)
      I                cg2d_x_v, ! scaled eta,      forward 
      U                cg2d_x_d, ! scaled eta,      adjoint (input)
+     I                aC2d_v,   ! matrix diagonal, forward
+     U                aC2d_d,   ! matrix diagonal, adjoint
+     I                aS2d_v,   ! matrix south cell, forward
+     U                aS2d_d,   ! matrix south cell, adjoint
+     I                aW2d_v,   ! matrix west cell, forward
+     U                aW2d_d,   ! matrix west cell, adjoint
      O                firstResidual, 
      O                minResidualSq, 
      O                lastResidual,
@@ -52,11 +58,6 @@ C     === Global data ===
 #include "PARAMS.h"
 #include "CG2D.h"
 
-      double precision ac2d_ad(1-olx:snx+olx,1-oly:sny+oly,nsx,nsy)
-      double precision as2d_ad(1-olx:snx+olx,1-oly:sny+oly,nsx,nsy)
-      double precision aw2d_ad(1-olx:snx+olx,1-oly:sny+oly,nsx,nsy)
-      common /cg2d_i_r_ad/ aw2d_ad, as2d_ad, ac2d_ad
-
 C     !INPUT/OUTPUT PARAMETERS:
 C     === Routine arguments ===
 C     cg2d_b    :: The source term or "right hand side" (output: normalised RHS)
@@ -71,8 +72,15 @@ C                  Out: iteration number corresponding to lowest residual
 C     myThid    :: Thread on which I am working.
       _RL  cg2d_b_v(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL  cg2d_x_v(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RS  aS2d_v  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RS  aW2d_v  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RS  aC2d_v  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL  cg2d_b_d(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL  cg2d_x_d(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RS  aS2d_d  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RS  aW2d_d  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RS  aC2d_d  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+
       _RL xtemp_v  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL btemp_d  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL  firstResidual
@@ -150,32 +158,32 @@ C     msgBuf     :: Informational/error message buffer
         DO j=1,sNy
          DO i=1,sNx
 
-            ac2d_ad(i,j,bi,bj) =
-     &       ac2d_ad(i,j,bi,bj) -
+            ac2d_d(i,j,bi,bj) =
+     &       ac2d_d(i,j,bi,bj) -
      &       cg2d_b_d(i,j,bi,bj) *
      &       cg2d_x_v(i,j,bi,bj) * 
      &       recip_cg2dNorm 
      
-            aw2d_ad(i,j,bi,bj) =
-     &       aw2d_ad(i,j,bi,bj) -
+            aw2d_d(i,j,bi,bj) =
+     &       aw2d_d(i,j,bi,bj) -
      &       cg2d_b_d(i,j,bi,bj) *
      &       cg2d_x_v(i-1,j,bi,bj) * 
      &       recip_cg2dNorm 
      
-            aw2d_ad(i+1,j,bi,bj) =
-     &       aw2d_ad(i+1,j,bi,bj) -
+            aw2d_d(i+1,j,bi,bj) =
+     &       aw2d_d(i+1,j,bi,bj) -
      &       cg2d_b_d(i,j,bi,bj) *
      &       cg2d_x_v(i+1,j,bi,bj) * 
      &       recip_cg2dNorm 
             
-            as2d_ad(i,j,bi,bj) =
-     &       as2d_ad(i,j,bi,bj) -
+            as2d_d(i,j,bi,bj) =
+     &       as2d_d(i,j,bi,bj) -
      &       cg2d_b_d(i,j,bi,bj) *
      &       cg2d_x_v(i,j-1,bi,bj) * 
      &       recip_cg2dNorm 
       
-            as2d_ad(i,j+1,bi,bj) =
-     &       as2d_ad(i,j+1,bi,bj) -
+            as2d_d(i,j+1,bi,bj) =
+     &       as2d_d(i,j+1,bi,bj) -
      &       cg2d_b_d(i,j,bi,bj) *
      &       cg2d_x_v(i,j+1,bi,bj) * 
      &       recip_cg2dNorm 
