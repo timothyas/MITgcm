@@ -512,6 +512,16 @@ C     Masks and reciprocals of hFac[CWS]
          ENDDO
         ENDDO
 
+#if ( defined (ALLOW_AUTODIFF) && \
+      defined (ALLOW_AUTODIFF_MONITOR) && \
+      defined (ALLOW_DEPTH_CONTROL) )
+C     Include call to a dummy routine. Its adjoint will be called at the proper
+C     place in the adjoint code. The adjoint routine will print out adjoint
+C     values if requested. The location of the call is important, it has to be
+C     after the adjoint of the exchanges (DO_GTERM_BLOCKING_EXCHANGES).
+      CALL DUMMY_FOR_HFAC( 'R', 0, myThid )
+#endif
+
 #ifdef NONLIN_FRSURF
 C--   Save initial geometrical hFac factor into h0Fac (fixed in time):
 C     Note: In case 1 pkg modifies hFac (from packages_init_fixed, called
