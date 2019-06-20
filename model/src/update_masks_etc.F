@@ -96,26 +96,94 @@ C     tmpfld  :: Temporary array used to compute & write Total Depth
       INTEGER I, J, K
       _RL tmpfld(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL tmpVar(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
+      _RL tmpVarW(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
+      _RL tmpVarS(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL tmpVar1(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL tmpVar2(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       CHARACTER*(MAX_LEN_MBUF) suff
 
       INTEGER Im1, Jm1
-      _RL hFacCtmp
+      _RL hFacCtmp, hFacWtmp, hFacStmp
       _RL hFac1tmp, hFac2tmp
       _RL hFacMnSz
 
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
-
-
-      
-
-Cts ---
-C   Calculate hFacC from rLow
-C   Here we see the first impact of r_low as a control vector.
-Cts ---
+C   Calculate hFac from rLow
 CADJ STORE r_low = tapelev_init, key = 1
 CADJ STORE ro_surf = tapelev_init, key = 1
+
+C   Re-Initialise rLow & reference rSurf at Western & Southern edges (U & V pts)
+C   Note: not final value since these estimates ignore hFacMin constrain
+      DO bj=myByLo(myThid), myByHi(myThid)
+       DO bi=myBxLo(myThid), myBxHi(myThid)
+        i = 1-OLx
+        DO j=1-OLy,sNy+OLy
+           rLowW (i,j,bi,bj) = rF(1)
+           rSurfW(i,j,bi,bj) = rF(1)
+        ENDDO
+        j = 1-OLy
+        DO i=1-OLx,sNx+OLx
+           rLowS (i,j,bi,bj) = rF(1)
+           rSurfS(i,j,bi,bj) = rF(1)
+        ENDDO
+
+        DO j=1-OLy,sNy+OLy
+         DO i=2-OLx,sNx+OLx
+           rLowW(i,j,bi,bj)  =
+#ifdef USE_SMOOTH_MIN
+     &  smoothmax_rl(   R_low(i-1,j,bi,bj),   R_low(i,j,bi,bj) )
+#else
+     &           MAX(   R_low(i-1,j,bi,bj),   R_low(i,j,bi,bj) )
+#endif
+
+           rSurfW(i,j,bi,bj) =
+#ifdef USE_SMOOTH_MIN
+     &  smoothmin_rl( Ro_surf(i-1,j,bi,bj), Ro_surf(i,j,bi,bj) )
+#else
+     &           MIN( Ro_surf(i-1,j,bi,bj), Ro_surf(i,j,bi,bj) )
+#endif
+           rSurfW(i,j,bi,bj) =
+#ifdef USE_SMOOTH_MIN
+     &  smoothmax_rl( rSurfW(i,j,bi,bj), rLowW(i,j,bi,bj) )
+#else
+     &           MAX( rSurfW(i,j,bi,bj), rLowW(i,j,bi,bj) )
+#endif
+         ENDDO
+        ENDDO
+        DO j=2-OLy,sNy+OLy
+         DO i=1-OLx,sNx+OLx
+
+           rLowS(i,j,bi,bj)  =
+#ifdef USE_SMOOTH_MIN
+     &  smoothmax_rl(   R_low(i,j-1,bi,bj),   R_low(i,j,bi,bj) )
+#else
+     &           MAX(   R_low(i,j-1,bi,bj),   R_low(i,j,bi,bj) )
+#endif
+           rSurfS(i,j,bi,bj) =
+#ifdef USE_SMOOTH_MIN
+     &  smoothmin_rl( Ro_surf(i,j-1,bi,bj), Ro_surf(i,j,bi,bj) )
+#else
+     &           MIN( Ro_surf(i,j-1,bi,bj), Ro_surf(i,j,bi,bj) )
+#endif
+           rSurfS(i,j,bi,bj) =
+#ifdef USE_SMOOTH_MIN
+     &  smoothmax_rl( rSurfS(i,j,bi,bj), rLowS(i,j,bi,bj) )
+#else
+     &           MAX( rSurfS(i,j,bi,bj), rLowS(i,j,bi,bj) )
+#endif
+         ENDDO
+        ENDDO
+       ENDDO
+      ENDDO
+
+C   Calculate hFac from rLow
+CADJ STORE rloww = tapelev_init, key = 1
+CADJ STORE rlows = tapelev_init, key = 1
+CADJ STORE rsurfw = tapelev_init, key = 1
+CADJ STORE rsurfs = tapelev_init, key = 1
+CADJ STORE hfacc = tapelev_init, key = 1
+CADJ STORE hfacw = tapelev_init, key = 1
+CADJ STORE hfacs = tapelev_init, key = 1
       DO bj=myByLo(myThid), myByHi(myThid)
        DO bi=myBxLo(myThid), myBxHi(myThid)
         DO K=1, Nr
@@ -131,14 +199,25 @@ C      o Non-dimensional distance between grid bound. and domain lower_R bound.
            ! In genarr2d setup, r_low = r_low_const + xx_depth
            ! i.e. TAF is differentiating w.r.t. anomaly not full field
            hFacCtmp = (rF(K)-R_low(I,J,bi,bj))*recip_drF(K)
+           hFacWtmp = (rF(K)-rLowW(I,J,bi,bj))*recip_drF(K)
+           hFacStmp = (rF(K)-rLowS(I,J,bi,bj))*recip_drF(K)
 #endif /* ALLOW_DEPTH_CONTROL && !ALLOW_GENARR2D_CONTROL */
 
 C     o Impose min. fraction and/or size (dimensional)
 #ifdef USE_SMOOTH_MIN
            hFacC(i,j,k,bi,bj) = 
      &          smooth_hFac_rl( hFacCtmp, hFacMnSz, smoothHFacEps )
+           hFacW(i,j,k,bi,bj) = 
+     &          smooth_hFac_rl( hFacWtmp, hFacMnSz, smoothHFacEps )
+           hFacS(i,j,k,bi,bj) = 
+     &          smooth_hFac_rl( hFacStmp, hFacMnSz, smoothHFacEps )
 #else /* ndef smooth_min */
+           hFacCtmp = min( max( hFacCtmp, zeroRL ) , oneRL )
+           hFacWtmp = min( hFacWtmp, oneRL )
+           hFacStmp = min( hFacStmp, oneRL )
            hFacC(i,j,k,bi,bj) = reg_hFac_rl( hFacCtmp, hFacMnSz )
+           hFacW(i,j,k,bi,bj) = reg_hFac_rl( hFacWtmp, hFacMnSz )
+           hFacS(i,j,k,bi,bj) = reg_hFac_rl( hFacStmp, hFacMnSz )
 #endif
 
           enddo
@@ -147,11 +226,13 @@ C     o Impose min. fraction and/or size (dimensional)
 
 Cts ---
 C   Still inside bi,bj loop
-C   Re-calculate lower-R Boundary position, taking into account hFacC
+C   Re-calculate lower-R Boundary position, taking into account hFac
 Cts ---
         DO J=1-OLy,sNy+OLy
          DO I=1-OLx,sNx+OLx
           R_low(i,j,bi,bj) = rF(1)
+          rLowW(i,j,bi,bj) = rF(1)
+          rLowS(i,j,bi,bj) = rF(1)
          ENDDO
         ENDDO
         DO K=Nr,1,-1
@@ -159,13 +240,17 @@ Cts ---
           DO I=1-OLx,sNx+OLx
            R_low(I,J,bi,bj) = R_low(I,J,bi,bj)
      &                      - drF(K)*hFacC(I,J,K,bi,bj)
+           rLowW(I,J,bi,bj) = rLowW(I,J,bi,bj)
+     &                      - drF(K)*hFacW(I,J,K,bi,bj)
+           rLowS(I,J,bi,bj) = rLowS(I,J,bi,bj)
+     &                      - drF(K)*hFacS(I,J,K,bi,bj)
           ENDDO
          ENDDO
         ENDDO
 
 Cts --- 
 C   Still inside bi,bj loop
-C   Compute hFacC from Ro_surf
+C   Compute hFac from rSurf
 C   This is important when useShelfice=.true. since the call to
 C   shelfice_init_depths resets Ro_surf based on ice shelf draft. 
 C   This may not be necessary when useShelfice=.false., but will still
@@ -177,24 +262,44 @@ Cts ---
           DO i=1-OLx,sNx+OLx
 C      o Non-dimensional distance between grid boundary and model surface
            hFacCtmp = (rF(k)-Ro_surf(i,j,bi,bj))*recip_drF(k)
+           hFacWtmp = (rF(k)-rSurfW(i,j,bi,bj))*recip_drF(k)
+           hFacStmp = (rF(k)-rSurfS(i,j,bi,bj))*recip_drF(k)
 
-C      o Reduce the previous fraction : substract the outside part.
+C      o Reduce the previous fraction : subtract the outside part.
 C      o set to zero if empty Column :
 #ifdef USE_SMOOTH_MIN
            hFacCtmp = hFacC(i,j,k,bi,bj) - 
      &                smoothmax_rl( hFacCtmp, zeroRL )
            hFacCtmp = smoothmax_rl( hFacCtmp, zeroRL )
+
+           hFacWtmp = hFacW(i,j,k,bi,bj) - 
+     &                smoothmax_rl( hFacWtmp, zeroRL )
+
+           hFacStmp = hFacS(i,j,k,bi,bj) - 
+     &                smoothmax_rl( hFacStmp, zeroRL )
 #else /* ndef smooth_min */
            hFacCtmp = hFacC(i,j,k,bi,bj) - MAX( hFacCtmp, zeroRL )
            hFacCtmp = MAX( hFacCtmp, zeroRL )
+
+           hFacWtmp = hFacW(i,j,k,bi,bj) - MAX( hFacWtmp, zeroRL )
+
+           hFacStmp = hFacS(i,j,k,bi,bj) - MAX( hFacStmp, zeroRL )
 #endif
 
 
 #ifdef USE_SMOOTH_MIN
            hFacC(i,j,k,bi,bj) = 
      &          smooth_hFac_rl( hFacCtmp, hFacMnSz, smoothHFacEps )
+
+           hFacW(i,j,k,bi,bj) = 
+     &          smooth_hFac_rl( hFacWtmp, hFacMnSz, smoothHFacEps )
+
+           hFacS(i,j,k,bi,bj) = 
+     &          smooth_hFac_rl( hFacStmp, hFacMnSz, smoothHFacEps )
 #else /* ndef smooth_min */
            hFacC(i,j,k,bi,bj) = reg_hFac_rl( hFacCtmp, hFacMnSz )
+           hFacW(i,j,k,bi,bj) = reg_hFac_rl( hFacWtmp, hFacMnSz )
+           hFacS(i,j,k,bi,bj) = reg_hFac_rl( hFacStmp, hFacMnSz )
 #endif
           ENDDO
          ENDDO
@@ -207,6 +312,8 @@ Cts ---
         DO j=1-OLy,sNy+OLy
          DO i=1-OLx,sNx+OLx
           tmpVar(i,j) = 0.
+          tmpVarW(i,j) = 0.
+          tmpVarS(i,j) = 0.
           tmpFld(i,j,bi,bj) = 0.
           kSurfC(i,j,bi,bj) = Nr+1
           kLowC (i,j,bi,bj) = 0
@@ -216,6 +323,8 @@ Cts ---
          DO j=1-OLy,sNy+OLy
           DO i=1-OLx,sNx+OLx
            tmpVar(i,j) = tmpVar(i,j) + drF(k)*hFacC(i,j,k,bi,bj)
+           tmpVarW(i,j) = tmpVarW(i,j) + drF(k)*hFacW(i,j,k,bi,bj)
+           tmpVarS(i,j) = tmpVarS(i,j) + drF(k)*hFacS(i,j,k,bi,bj)
            tmpFld(i,j,bi,bj) = tmpFld(i,j,bi,bj) + 1.
            IF ( hFacC(i,j,k,bi,bj).NE.zeroRS ) kLowC(i,j,bi,bj) = k
           ENDDO
@@ -231,6 +340,8 @@ Cts ---
         DO j=1-OLy,sNy+OLy
          DO i=1-OLx,sNx+OLx
           Ro_surf(i,j,bi,bj) = R_low(i,j,bi,bj) + tmpVar(i,j)
+          rSurfW(i,j,bi,bj) = rLowW(i,j,bi,bj) + tmpVarW(i,j)
+          rSurfS(i,j,bi,bj) = rLowS(i,j,bi,bj) + tmpVarS(i,j)
           maskInC(i,j,bi,bj) = 0.
           IF ( kSurfC(i,j,bi,bj).LE.Nr ) maskInC(i,j,bi,bj) = 1.
          ENDDO
@@ -240,24 +351,15 @@ C-    end bi,bj loops.
        ENDDO
       ENDDO
 
-#if ( defined (ALLOW_AUTODIFF) && \
-      defined (ALLOW_AUTODIFF_MONITOR) && \
-      defined (ALLOW_DEPTH_CONTROL) )
-C     Include call to a dummy routine. Its adjoint will be called at the proper
-C     place in the adjoint code. The adjoint routine will print out adjoint
-C     values if requested. The location of the call is important, it has to be
-C     after the adjoint of the exchanges (DO_GTERM_BLOCKING_EXCHANGES).
-      CALL DUMMY_FOR_HFAC( 'C', 0, myThid )
+#if (defined ALLOW_AUTODIFF) && (defined ALLOW_AUTODIFF_MONITOR)
+C     Dummy routine for printing ADJhFac
+      CALL DUMMY_FOR_HFAC( 'C',0, 0, myThid )
 #endif
 
       IF ( plotLevel.GE.debLevC ) THEN
         _BARRIER
         CALL PLOT_FIELD_XYRS( R_low,
      &         'Model R_low (update_masks_etc)', 1, myThid )
-Cts ---
-C   Need to print out b/c ice shelf modifies Ro_surf
-C   (To be consistent with ini_masks_etc)
-Cts ---
         CALL PLOT_FIELD_XYRS( Ro_surf,
      &         'Model Ro_surf (update_masks_etc)', 1, myThid )
       ENDIF
@@ -279,154 +381,6 @@ C         Inverse of fluid column thickness (1/r_unit)
           ENDIF
          ENDDO
         ENDDO
-
-Cts ---
-C   Still in bi,bj loop
-C   Recompute hFacW/S, rSurfW/S, rLow/S with same method as with hFacC
-C   above. This is from method 2 in ini_masks_etc      
-Cts ---
-
-#ifdef ALLOW_AUTODIFF_TAMC
-        act1 = bi - myBxLo(myThid)
-        max1 = myBxHi(myThid) - myBxLo(myThid) + 1
-        act2 = bj - myByLo(myThid)
-        max2 = myByHi(myThid) - myByLo(myThid) + 1
-        act3 = myThid - 1
-        max3 = nTx*nTy
-        act4 = ikey_dynamics - 1 
-        iumekey = (act1 + 1) + act2*max1
-     &            + act3*max1*max2
-     &            + act4*max1*max2*max3
-
-CADJ STORE rLowS(:,:,bi,bj) = 
-CADJ &     comlev1_bibj, key=iumekey, byte=isbyte
-CADJ STORE rLowW(:,:,bi,bj) = 
-CADJ &     comlev1_bibj, key=iumekey, byte=isbyte
-CADJ STORE rSurfS(:,:,bi,bj) = 
-CADJ &     comlev1_bibj, key=iumekey, byte=isbyte
-CADJ STORE rSurfW(:,:,bi,bj) = 
-CADJ &     comlev1_bibj, key=iumekey, byte=isbyte
-#endif 
-
-
-         DO k=1, Nr
-          hFacMnSz = MAX( hFacMin, MIN(hFacMinDr*recip_drF(k),oneRL) )
-Cts ---
-C   West faces
-Cts ---
-          DO j=1-OLy,sNy+OLy
-           DO i=1-OLx,sNx+OLx
-
-C      o Non-dimensional distance between grid bound. and domain lower_R bound.
-            hFac1tmp = ( rF(k) - rLowW(i,j,bi,bj) )*recip_drF(k)
-
-C      o Impose minimum fraction and/or size (dimensional)
-#ifdef USE_SMOOTH_MIN
-           hFac1tmp = 
-     &          smooth_hFac_rl( hFac1tmp, hFacMnSz, smoothHFacEps )
-#else /* ndef smooth_min */
-            hFac1tmp = reg_hFac_rl( hFac1tmp, hFacMnSz )
-#endif
-
-C      o Reduce the previous fraction : substract the outside fraction
-C        (i.e., beyond reference (=at rest) surface position rSurfW)
-            hFac2tmp = ( rF(k) -rSurfW(i,j,bi,bj) )*recip_drF(k)
-#ifdef USE_SMOOTH_MIN
-            hFac2tmp = hFac1tmp - smoothmax_rl( hFac2tmp, zeroRL )
-#else /* ndef smooth_min */
-            hFac2tmp = hFac1tmp - MAX( hFac2tmp, zeroRL )
-#endif
-
-#ifdef USE_SMOOTH_MIN
-            hFacW(i,j,k,bi,bj) = 
-     &          smooth_hFac_rl( hFac2tmp, hFacMnSz, smoothHFacEps )
-#else /* ndef smooth_min */
-            hFacW(i,j,k,bi,bj) = reg_hFac_rl( hFac2tmp, hFacMnSz )
-#endif
-           ENDDO
-          ENDDO
-
-Cts ---
-C   South faces
-Cts ---
-          DO j=1-OLy,sNy+OLy
-           DO i=1-OLx,sNx+OLx
-C      o Non-dimensional distance between grid bound. and domain lower_R bound.
-            hFac1tmp = ( rF(k) - rLowS(i,j,bi,bj) )*recip_drF(k)
-
-C      o Impose minimum fraction and/or size (dimensional)
-#ifdef USE_SMOOTH_MIN
-           hFac1tmp = 
-     &          smooth_hFac_rl( hFac1tmp, hFacMnSz, smoothHFacEps )
-#else /* ndef smooth_min */
-            hFac1tmp = reg_hFac_rl( hFac1tmp, hFacMnSz )
-#endif
-
-C      o Reduce the previous fraction : substract the outside fraction
-C        (i.e., beyond reference (=at rest) surface position rSurfS)
-            hFac2tmp = ( rF(k) -rSurfS(i,j,bi,bj) )*recip_drF(k)
-#ifdef USE_SMOOTH_MIN
-            hFac2tmp = hFac1tmp - smoothmax_rl( hFac2tmp, zeroRL )
-#else /* ndef smooth_min */
-            hFac2tmp = hFac1tmp - MAX( hFac2tmp, zeroRL )
-#endif
-
-#ifdef USE_SMOOTH_MIN
-            hFacS(i,j,k,bi,bj) = 
-     &          smooth_hFac_rl( hFac2tmp, hFacMnSz, smoothHFacEps )
-#else /* ndef smooth_min */
-           hFacS(i,j,k,bi,bj) = reg_hFac_rl( hFac2tmp, hFacMnSz )
-#endif
-           ENDDO
-          ENDDO
-         ENDDO
-
-
-
-Cts ---
-C   Still in bi,bj loop
-C   Update rLow, rSurf @ West/South edges accounting for adjusted R_low
-C   & Ro_surf due to hFacMin constraint on hFacC.
-Cts ---
-        DO j=1-OLy,sNy+OLy
-         DO i=2-OLx,sNx+OLx
-#ifdef USE_SMOOTH_MIN
-           rLowW(i,j,bi,bj)  =
-     &           smoothmax_rl(R_low(i-1,j,bi,bj), R_low(i,j,bi,bj))
-           rSurfW(i,j,bi,bj) =
-     &           smoothmin_rl(Ro_surf(i-1,j,bi,bj), Ro_surf(i,j,bi,bj))
-           rSurfW(i,j,bi,bj) =
-     &           smoothmax_rl(rSurfW(i,j,bi,bj), rLowW(i,j,bi,bj))
-#else /* ndef smooth_min */
-           rLowW(i,j,bi,bj)  =
-     &           MAX(   R_low(i-1,j,bi,bj),   R_low(i,j,bi,bj) )
-           rSurfW(i,j,bi,bj) =
-     &           MIN( Ro_surf(i-1,j,bi,bj), Ro_surf(i,j,bi,bj) )
-           rSurfW(i,j,bi,bj) =
-     &           MAX( rSurfW(i,j,bi,bj), rLowW(i,j,bi,bj) )
-#endif
-         ENDDO
-        ENDDO
-        DO j=2-OLy,sNy+OLy
-         DO i=1-OLx,sNx+OLx
-#ifdef USE_SMOOTH_MIN
-           rLowS(i,j,bi,bj)  =
-     &           smoothmax_rl(R_low(i,j-1,bi,bj),   R_low(i,j,bi,bj))
-           rSurfS(i,j,bi,bj) =
-     &           smoothmin_rl(Ro_surf(i,j-1,bi,bj), Ro_surf(i,j,bi,bj))
-           rSurfS(i,j,bi,bj) =
-     &           smoothmax_rl(rSurfS(i,j,bi,bj), rLowS(i,j,bi,bj))
-#else /* ndef smooth_min */
-           rLowS(i,j,bi,bj)  =
-     &           MAX(   R_low(i,j-1,bi,bj),   R_low(i,j,bi,bj) )
-           rSurfS(i,j,bi,bj) =
-     &           MIN( Ro_surf(i,j-1,bi,bj), Ro_surf(i,j,bi,bj) )
-           rSurfS(i,j,bi,bj) =
-     &           MAX( rSurfS(i,j,bi,bj), rLowS(i,j,bi,bj) )
-#endif
-         ENDDO
-        ENDDO
-
 Cts ---
 C   Still in bi,bj loop
 C   The following seems only important for useShelfice=.true., but is
@@ -485,16 +439,10 @@ C-    end bi,bj loops.
        ENDDO
       ENDDO
 
-
-#if ( defined (ALLOW_AUTODIFF) && \
-      defined (ALLOW_AUTODIFF_MONITOR) && \
-      defined (ALLOW_DEPTH_CONTROL) )
-C     Include call to a dummy routine. Its adjoint will be called at the proper
-C     place in the adjoint code. The adjoint routine will print out adjoint
-C     values if requested. The location of the call is important, it has to be
-C     after the adjoint of the exchanges (DO_GTERM_BLOCKING_EXCHANGES).
-      CALL DUMMY_FOR_HFAC( 'W', 0, myThid )
-      CALL DUMMY_FOR_HFAC( 'S', 0, myThid )
+#if (defined ALLOW_AUTODIFF) && (defined ALLOW_AUTODIFF_MONITOR)
+C     Dummy routine for printing ADJhFac
+      CALL DUMMY_FOR_HFAC( 'W',0, 0, myThid )
+      CALL DUMMY_FOR_HFAC( 'S',0, 0, myThid )
 #endif
 
 Cts ---
@@ -567,16 +515,6 @@ C     Masks and reciprocals of hFac[CWS]
          ENDDO
         ENDDO
 
-#if ( defined (ALLOW_AUTODIFF) && \
-      defined (ALLOW_AUTODIFF_MONITOR) && \
-      defined (ALLOW_DEPTH_CONTROL) )
-C     Include call to a dummy routine. Its adjoint will be called at the proper
-C     place in the adjoint code. The adjoint routine will print out adjoint
-C     values if requested. The location of the call is important, it has to be
-C     after the adjoint of the exchanges (DO_GTERM_BLOCKING_EXCHANGES).
-      CALL DUMMY_FOR_HFAC( 'R', 0, myThid )
-#endif
-
 #ifdef NONLIN_FRSURF
 C--   Save initial geometrical hFac factor into h0Fac (fixed in time):
 C     Note: In case 1 pkg modifies hFac (from packages_init_fixed, called
@@ -617,7 +555,7 @@ C     o Here use spline representation ...
 
       low_threshold = (5. _d -1) * hFacMin
 
-      IF ( hFac .LE. low_threshold ) THEN
+      IF ( hFac .LT. low_threshold ) THEN
           smooth_hFac_rl = zeroRL
       ELSEIF ( hFac .LE. hFacMin ) THEN
           smooth_hFac_rl = hFacMin
@@ -808,9 +746,6 @@ C     o as in ini_masks_etc
 #include "EEPARAMS.h"
 
       _RL hFac, hFacMin
-
-C     o Select between closed, open, or partial (0, 1, 0-1)
-      hFac = min(max(hFac,zeroRL),oneRL)
 
 C     o Now apply min size constraint
       if ( hFac.lt.hFacMin ) then
