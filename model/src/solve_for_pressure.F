@@ -314,6 +314,9 @@ C      to rebuild cg2d_x in reverse mode. Note that a store
 C      statement will store cg2d_x before it is solved for.
        cg2d_x(1,1,1,1) =  cg2d_x(1,1,1,1)+0.*AC2D(1,1,1,1) +
      &   0.*AW2D(1,1,1,1) + 0.*AS2D(1,1,1,1)
+#if (defined ALLOW_AUTODIFF) && (defined ALLOW_AUTODIFF_MONITOR)
+       call dummy_for_hfac('A', myTime, myIter,myThid)
+#endif
        CALL CG2D_NO_NSA(
      U           cg2d_b, cg2d_x, ac2d, as2d, aw2d,
      O           firstResidual, minResidualSq, lastResidual,

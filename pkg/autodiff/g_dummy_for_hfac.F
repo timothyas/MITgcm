@@ -1,6 +1,6 @@
 #include "AUTODIFF_OPTIONS.h"
 
-      subroutine g_dummy_for_hfac( myname, myIter, myThid )
+      subroutine g_dummy_for_hfac( myname, myTime, myIter, myThid )
 
 C     *==========================================================*
 C     | SUBROUTINE g_dummy_for_hfac
@@ -15,6 +15,7 @@ C     == Global variables ===
 C     == Routine arguments ==
 C     myThid - Thread number for this instance of the routine.
       CHARACTER*(*) myname
+      _RL myTime
       INTEGER myIter
       INTEGER myThid
 
