@@ -981,6 +981,25 @@ C     Adjoint state variables
       diagCode  = 'SU A    MR      '
       CALL DIAGNOSTICS_ADDTOLIST( diagNum,
      I          diagName, diagCode, diagUnits, diagTitle, 0, myThid )
+
+      diagName  = 'ADJaC2d'
+      diagTitle = 'dJ/daC2d: Sens. to CG2D mat entries'
+      diagUnits = 'dJ/[]           '
+      diagCode  = 'SM A    M1      '
+      CALL DIAGNOSTICS_ADDTOLIST( diagNum,
+     I          diagName, diagCode, diagUnits, diagTitle, 0, myThid )
+      diagName  = 'ADJaS2d'
+      diagTitle = 'dJ/daS2d: Sens. to CG2D mat entries'
+      diagUnits = 'dJ/[]           '
+      diagCode  = 'SV A    M1      '
+      CALL DIAGNOSTICS_ADDTOLIST( diagNum,
+     I          diagName, diagCode, diagUnits, diagTitle, 0, myThid )
+      diagName  = 'ADJaW2d'
+      diagTitle = 'dJ/daW2d: Sens. to CG2D mat entries'
+      diagUnits = 'dJ/[]           '
+      diagCode  = 'SU A    M1      '
+      CALL DIAGNOSTICS_ADDTOLIST( diagNum,
+     I          diagName, diagCode, diagUnits, diagTitle, 0, myThid )
 # endif /* ALLOW_DEPTH_CONTROL */
 
 #endif /* ALLOW_AUTODIFF */

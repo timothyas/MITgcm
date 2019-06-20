@@ -9,7 +9,7 @@
 
 C     !ROUTINE: addummy_for_hfac
 C     !INTERFACE:
-      subroutine addummy_for_hfac( myname, myIter, myThid )
+      subroutine addummy_for_hfac( myname, myTime, myIter, myThid )
 
 C     !DESCRIPTION: \bv
 C     *==========================================================*
@@ -51,6 +51,7 @@ C     !INPUT/OUTPUT PARAMETERS:
 C     == Routine arguments ==
 C     myThid - Thread number for this instance of the routine.
       CHARACTER*(1) myname
+      _RL myTime
       integer myIter
       integer myThid
 
@@ -65,7 +66,6 @@ C     msgBuf - Error message buffer
       INTEGER beginIOErrCount
       INTEGER endIOErrCount
       CHARACTER*(MAX_LEN_MBUF) msgBuf
-      _RL mytime
       CHARACTER*(5) myfullname
 
 c     == end of interface ==
@@ -73,97 +73,120 @@ CEOP
 
 #ifdef ALLOW_DEPTH_CONTROL
 
-      WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac '
-      CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
-     &  SQUEEZE_RIGHT, myThid )
+      if (
+     & different_multiple(adjDumpFreq, myTime, deltaTClock)) then
 
-      CALL TIMER_START('I/O (WRITE)        [ADJOINT LOOP]', myThid )
+        WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac '
+        CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
+     &    SQUEEZE_RIGHT, myThid )
 
-C--   Set suffix for this set of data files.
-      WRITE(suff,'(I10.10)') myIter
-      writeBinaryPrec = writeStatePrec
+        CALL TIMER_START('I/O (WRITE)        [ADJOINT LOOP]', myThid )
 
-C--   Read IO error counter
-      beginIOErrCount = IO_ERRCOUNT(myThid)
-       WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac, if statement 1 '
-       CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
-     &  SQUEEZE_RIGHT, myThid )
+C--     Set suffix for this set of data files.
+        WRITE(suff,'(I10.10)') myIter
+        writeBinaryPrec = writeStatePrec
 
-      IF ( myname .eq. 'C' ) THEN
-       WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac, if hFacC!! '
-       CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
-     &  SQUEEZE_RIGHT, myThid )
-         myfullname = 'hFacC'
-         CALL WRITE_FLD_XYZ_RL ( 'ADJhFacC.', suff, adhfacc,
-     &        myIter, myThid)
+C--     Read IO error counter
+        beginIOErrCount = IO_ERRCOUNT(myThid)
+        WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac, if statement 1 '
+         CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
+     &    SQUEEZE_RIGHT, myThid )
+
+        IF ( myname .eq. 'C' ) THEN
+         WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac, if hFacC!! '
+         CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
+     &    SQUEEZE_RIGHT, myThid )
+           myfullname = 'hFacC'
+           CALL WRITE_FLD_XYZ_RL ( 'ADJhFacC.', suff, adhfacc,
+     &          myIter, myThid)
 #ifdef ALLOW_DIAGNOSTICS
-       CALL DIAGNOSTICS_FILL( adhFacC, 'ADJhFacC', 0,Nr,0,1,1,myThid )
+         CALL DIAGNOSTICS_FILL( adhFacC, 'ADJhFacC', 0,Nr,0,1,1,myThid )
 #endif
 
-      ELSE IF ( myname .eq. 'W' ) THEN
-       WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac, if hFacW!! '
-       CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
-     &  SQUEEZE_RIGHT, myThid )
-         myfullname = 'hFacW'
-         CALL WRITE_FLD_XYZ_RL ( 'ADJhFacW.', suff, adhfacw,
-     &        myIter, myThid)
+        ELSE IF ( myname .eq. 'W' ) THEN
+         WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac, if hFacW!! '
+         CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
+     &    SQUEEZE_RIGHT, myThid )
+           myfullname = 'hFacW'
+           CALL WRITE_FLD_XYZ_RL ( 'ADJhFacW.', suff, adhfacw,
+     &          myIter, myThid)
 #ifdef ALLOW_DIAGNOSTICS
-       CALL DIAGNOSTICS_FILL( adhFacW, 'ADJhFacW', 0,Nr,0,1,1,myThid )
+         CALL DIAGNOSTICS_FILL( adhFacW, 'ADJhFacW', 0,Nr,0,1,1,myThid )
 #endif
-      ELSE IF ( myname .eq. 'S' ) THEN
-       WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac, if hFacS!! '
-       CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
-     &  SQUEEZE_RIGHT, myThid )
-         myfullname = 'hFacS'
-         CALL WRITE_FLD_XYZ_RL ( 'ADJhFacS.', suff, adhfacs,
-     &        myIter, myThid)
+        ELSE IF ( myname .eq. 'S' ) THEN
+         WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac, if hFacS!! '
+         CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
+     &    SQUEEZE_RIGHT, myThid )
+           myfullname = 'hFacS'
+           CALL WRITE_FLD_XYZ_RL ( 'ADJhFacS.', suff, adhfacs,
+     &          myIter, myThid)
 #ifdef ALLOW_DIAGNOSTICS
-       CALL DIAGNOSTICS_FILL( adhFacS, 'ADJhFacS', 0,Nr,0,1,1,myThid )
+         CALL DIAGNOSTICS_FILL( adhFacS, 'ADJhFacS', 0,Nr,0,1,1,myThid )
 #endif
-      else if (myname .eq. 'R' ) then
-       WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac, reciprocals!! '
-       CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
-     &  SQUEEZE_RIGHT, myThid )
+        else if (myname .eq. 'R' ) then
+         WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac, reciprocals!! '
+         CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
+     &    SQUEEZE_RIGHT, myThid )
 
-         CALL WRITE_FLD_XYZ_RL ( 'ADJrhFaC.', suff, adrecip_hFacC,
-     &        myIter, myThid)
-         CALL WRITE_FLD_XYZ_RL ( 'ADJrhFaW.', suff, adrecip_hFacW,
-     &        myIter, myThid)
-         CALL WRITE_FLD_XYZ_RL ( 'ADJrhFaS.', suff, adrecip_hFacS,
-     &        myIter, myThid)
+           CALL WRITE_FLD_XYZ_RL ( 'ADJrhFaC.', suff, adrecip_hFacC,
+     &          myIter, myThid)
+           CALL WRITE_FLD_XYZ_RL ( 'ADJrhFaW.', suff, adrecip_hFacW,
+     &          myIter, myThid)
+           CALL WRITE_FLD_XYZ_RL ( 'ADJrhFaS.', suff, adrecip_hFacS,
+     &          myIter, myThid)
 #ifdef ALLOW_DIAGNOSTICS
-       CALL DIAGNOSTICS_FILL( adrecip_hFacC, 'ADJrhFaC', 0,Nr,0,1,1,
+         CALL DIAGNOSTICS_FILL( adrecip_hFacC, 'ADJrhFaC', 0,Nr,0,1,1,
      &                        myThid )
-       CALL DIAGNOSTICS_FILL( adrecip_hFacW, 'ADJrhFaW', 0,Nr,0,1,1,
+         CALL DIAGNOSTICS_FILL( adrecip_hFacW, 'ADJrhFaW', 0,Nr,0,1,1,
      &                        myThid )
-       CALL DIAGNOSTICS_FILL( adrecip_hFacS, 'ADJrhFaS', 0,Nr,0,1,1,
+         CALL DIAGNOSTICS_FILL( adrecip_hFacS, 'ADJrhFaS', 0,Nr,0,1,1,
      &                        myThid )
 #endif
-      ELSE
-         write(*,*) 'addummy_for_hfac: no valid myname specified'
-      END IF
-C--   Reread IO error counter
-      endIOErrCount = IO_ERRCOUNT(myThid)
+        else if (myname .eq. 'A' ) then
+         WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac, A matrix!! '
+         CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
+     &    SQUEEZE_RIGHT, myThid )
 
-C--   Check for IO errors
-      IF ( endIOErrCount .NE. beginIOErrCount ) THEN
-       WRITE(msgBuf,'(A)')  'S/R WRITE_STATE'
-       CALL PRINT_ERROR( msgBuf, 1 )
-       WRITE(msgBuf,'(A)')  'Error writing out model state'
-       CALL PRINT_ERROR( msgBuf, 1 )
-       WRITE(msgBuf,'(A,I10)') 'Timestep ',myIter
-       CALL PRINT_ERROR( msgBuf, 1 )
-      ELSE
-       WRITE(msgBuf,'(A,I10)')
-     &  '// ad'//myfullname//' written, timestep', myIter
-       CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
-     &  SQUEEZE_RIGHT, 1 )
-       WRITE(msgBuf,'(A)')  ' '
-       CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
-     &  SQUEEZE_RIGHT, 1 )
-      ENDIF
+           CALL WRITE_FLD_XY_RL ( 'ADJaC2d.', suff, adac2d,
+     &          myIter, myThid)
+           CALL WRITE_FLD_XY_RL ( 'ADJaW2d.', suff, adaw2d,
+     &          myIter, myThid)
+           CALL WRITE_FLD_XY_RL ( 'ADJaS2d.', suff, adas2d,
+     &          myIter, myThid)
+#ifdef ALLOW_DIAGNOSTICS
+         CALL DIAGNOSTICS_FILL( adac2d, 'ADJaC2d', 0,1,0,1,1,
+     &                        myThid )
+         CALL DIAGNOSTICS_FILL( adaw2d, 'ADJaW2d', 0,1,0,1,1,
+     &                        myThid )
+         CALL DIAGNOSTICS_FILL( adas2d, 'ADJaS2d', 0,1,0,1,1,
+     &                        myThid )
+#endif
+        ELSE
+           write(*,*) 'addummy_for_hfac: no valid myname specified'
+        END IF
+C--     Reread IO error counter
+        endIOErrCount = IO_ERRCOUNT(myThid)
 
-      CALL TIMER_STOP( 'I/O (WRITE)        [ADJOINT LOOP]', myThid )
+C--     Check for IO errors
+        IF ( endIOErrCount .NE. beginIOErrCount ) THEN
+         WRITE(msgBuf,'(A)')  'S/R WRITE_STATE'
+         CALL PRINT_ERROR( msgBuf, 1 )
+         WRITE(msgBuf,'(A)')  'Error writing out model state'
+         CALL PRINT_ERROR( msgBuf, 1 )
+         WRITE(msgBuf,'(A,I10)') 'Timestep ',myIter
+         CALL PRINT_ERROR( msgBuf, 1 )
+        ELSE
+         WRITE(msgBuf,'(A,I10)')
+     &    '// ad'//myfullname//' written, timestep', myIter
+         CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
+     &    SQUEEZE_RIGHT, 1 )
+         WRITE(msgBuf,'(A)')  ' '
+         CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
+     &    SQUEEZE_RIGHT, 1 )
+        ENDIF
+
+        CALL TIMER_STOP( 'I/O (WRITE)        [ADJOINT LOOP]', myThid )
+      endif ! different_multiple
 
 #endif /* ALLOW_DEPTH_CONTROL */
 #endif /* ALLOW_AUTODIFF_MONITOR */

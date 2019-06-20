@@ -113,6 +113,11 @@ CEOP
 C--   Intialize the depth for TAF/TAMC
       CALL INI_DEPTHS( myThid )
 
+C--   Get control parameter depth
+CADJ STORE maskC = tapelev_init, key = 1
+CADJ STORE r_low = tapelev_init, key = 1
+      CALL CTRL_DEPTH_INI( myThid )
+
 #if defined(ALLOW_SHELFICE) 
       IF ( useShelfIce ) THEN
 C--   Modify  ocean upper boundary position according to ice-shelf topography
@@ -122,22 +127,7 @@ C--   Modify  ocean upper boundary position according to ice-shelf topography
       ENDIF
 #endif /* ALLOW_SHELFICE */
 
-Cts ---
-C     Re-initialize West/South rLow and rSurf. Needs to be after
-C     shelfice_init_depths and before ctrl_depth_ini for generic ctrls
-CADJ STORE r_low = tapelev_init, key = 1
-CADJ STORE ro_surf = tapelev_init, key = 1
-      call ini_sw_depths( myThid )
-
-C--   Get control parameter depth
-CADJ STORE maskC = tapelev_init, key = 1
-CADJ STORE r_low = tapelev_init, key = 1
-      CALL CTRL_DEPTH_INI( myThid )
-
 C--   Re-calculate hFacS/W and some other parameters from hFacC
-CADJ STORE maskC   = tapelev_init, key = 1
-CADJ STORE maskInC = tapelev_init, key = 1
-CADJ STORE r_low   = tapelev_init, key = 1
       CALL UPDATE_MASKS_ETC( myThid )
 
 Cts ---
