@@ -351,11 +351,6 @@ C-    end bi,bj loops.
        ENDDO
       ENDDO
 
-#if (defined ALLOW_AUTODIFF) && (defined ALLOW_AUTODIFF_MONITOR)
-C     Dummy routine for printing ADJhFac
-      CALL DUMMY_FOR_HFAC( 'C',0, 0, myThid )
-#endif
-
       IF ( plotLevel.GE.debLevC ) THEN
         _BARRIER
         CALL PLOT_FIELD_XYRS( R_low,
@@ -441,6 +436,7 @@ C-    end bi,bj loops.
 
 #if (defined ALLOW_AUTODIFF) && (defined ALLOW_AUTODIFF_MONITOR)
 C     Dummy routine for printing ADJhFac
+      CALL DUMMY_FOR_HFAC( 'C',0, 0, myThid )
       CALL DUMMY_FOR_HFAC( 'W',0, 0, myThid )
       CALL DUMMY_FOR_HFAC( 'S',0, 0, myThid )
 #endif
@@ -532,6 +528,11 @@ C     later in sequence of calls) this pkg would need also to update h0Fac.
 C - end bi,bj loops.
        ENDDO
       ENDDO
+
+#if (defined ALLOW_AUTODIFF) && (defined ALLOW_AUTODIFF_MONITOR)
+C     Dummy routine for printing ADJ recip_hFac
+      CALL DUMMY_FOR_HFAC( 'R',0, 0, myThid )
+#endif
 
 #endif /* ALLOW_DEPTH_CONTROL */
       RETURN
