@@ -108,6 +108,25 @@ C     tmpfld  :: Temporary array used to compute & write Total Depth
       _RL hFacMnSz
 
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
+
+Cts ---
+C   For depth optimization:
+C   Can implement bounds on ctrls so that they don't go above or below
+C   max depth, but in case of ice shelf, need to ensure additional topo
+C   doesn't go past ice shelf geometry
+#ifdef ALLOW_SHELFICE
+      do bj=myByLo(myThid), myByHi(myThid) 
+       do bi=myBxLo(myThid), myBxHi(myThid) 
+        do j=1-OLy,sNy+OLy
+         do i=1-OLx,sNx+OLx
+          r_low(i,j,bi,bj) = min(r_low(i,j,bi,bj),ro_surf(i,j,bi,bj))
+         enddo
+        enddo
+       enddo
+      enddo
+#endif
+
+
 C   Calculate hFac from rLow
 CADJ STORE r_low = tapelev_init, key = 1
 CADJ STORE ro_surf = tapelev_init, key = 1
