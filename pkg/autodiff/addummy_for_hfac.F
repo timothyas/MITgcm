@@ -50,7 +50,7 @@ C     == Global variables ===
 C     !INPUT/OUTPUT PARAMETERS:
 C     == Routine arguments ==
 C     myThid - Thread number for this instance of the routine.
-      CHARACTER*(1) myname
+      CHARACTER*(30) myname
       _RL myTime
       integer myIter
       integer myThid
@@ -66,15 +66,30 @@ C     msgBuf - Error message buffer
       INTEGER beginIOErrCount
       INTEGER endIOErrCount
       CHARACTER*(MAX_LEN_MBUF) msgBuf
-      CHARACTER*(5) myfullname
+      CHARACTER*(30) myfullname
+# ifdef ALLOW_DIAGNOSTICS
+      logical modelEnd, modelStart
+# endif
 
 c     == end of interface ==
 CEOP
 
 #ifdef ALLOW_DEPTH_CONTROL
+        WRITE(msgBuf,'(2A)')  'addummy_for_hfac, myname ',
+     &  myname
+        CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
+     &    SQUEEZE_RIGHT, myThid )
 
       if (
      & different_multiple(adjDumpFreq, myTime, deltaTClock)) then
+
+#ifdef ALLOW_DIAGNOSTICS
+        if ( useDiag4AdjOutp ) then
+          modelEnd = myTime.eq.endTime .or. myIter.eq.nEndIter
+          modelStart = myTime.eq.startTime .or. myIter.eq.nIter0
+          call diagnostics_switch_onoff( myTime, myIter, myThid )
+        endif
+#endif
 
         WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac '
         CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
@@ -92,7 +107,7 @@ C--     Read IO error counter
          CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
      &    SQUEEZE_RIGHT, myThid )
 
-        IF ( myname .eq. 'C' ) THEN
+        IF ( myname(1:1) .eq. 'C' ) THEN
          WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac, if hFacC!! '
          CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
      &    SQUEEZE_RIGHT, myThid )
@@ -103,7 +118,7 @@ C--     Read IO error counter
          CALL DIAGNOSTICS_FILL( adhFacC, 'ADJhFacC', 0,Nr,0,1,1,myThid )
 #endif
 
-        ELSE IF ( myname .eq. 'W' ) THEN
+        ELSE IF ( myname(1:1) .eq. 'W' ) THEN
          WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac, if hFacW!! '
          CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
      &    SQUEEZE_RIGHT, myThid )
@@ -113,7 +128,7 @@ C--     Read IO error counter
 #ifdef ALLOW_DIAGNOSTICS
          CALL DIAGNOSTICS_FILL( adhFacW, 'ADJhFacW', 0,Nr,0,1,1,myThid )
 #endif
-        ELSE IF ( myname .eq. 'S' ) THEN
+        ELSE IF ( myname(1:1) .eq. 'S' ) THEN
          WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac, if hFacS!! '
          CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
      &    SQUEEZE_RIGHT, myThid )
@@ -123,7 +138,7 @@ C--     Read IO error counter
 #ifdef ALLOW_DIAGNOSTICS
          CALL DIAGNOSTICS_FILL( adhFacS, 'ADJhFacS', 0,Nr,0,1,1,myThid )
 #endif
-        else if (myname .eq. 'R' ) then
+        else if (myname(1:1) .eq. 'R' ) then
          WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac, reciprocals!! '
          CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
      &    SQUEEZE_RIGHT, myThid )
@@ -142,7 +157,7 @@ C--     Read IO error counter
          CALL DIAGNOSTICS_FILL( adrecip_hFacS, 'ADJrhFaS', 0,Nr,0,1,1,
      &                        myThid )
 #endif
-        else if (myname .eq. 'A' ) then
+        else if (myname(1:1) .eq. 'A' ) then
          WRITE(msgBuf,'(A)')  ' inside addummy_for_hfac, A matrix!! '
          CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
      &    SQUEEZE_RIGHT, myThid )
@@ -161,9 +176,21 @@ C--     Read IO error counter
          CALL DIAGNOSTICS_FILL( adas2d, 'ADJaS2d', 0,1,0,1,1,
      &                        myThid )
 #endif
-        ELSE
-           write(*,*) 'addummy_for_hfac: no valid myname specified'
-        END IF
+
+#ifdef ALLOW_DIAGNOSTICS
+C--
+C   For now, this is a hack to print these variables through
+C   the diagnostics package. I don't want the write statement
+C   to conflict with addummy_in_stepping.
+C   This only happens for iter0 (the final adjoint step)
+C   and at this stage I want to print everything that's been filled.
+       else if (myname(1:17) .eq. 'writeAdjHfacDiags') then
+        if ( modelStart )
+     &   call diagnostics_write_adj(modelStart, myTime, myIter, myThid)
+#endif
+       ELSE
+          write(*,*) 'addummy_for_hfac: no valid myname specified'
+       END IF
 C--     Reread IO error counter
         endIOErrCount = IO_ERRCOUNT(myThid)
 
