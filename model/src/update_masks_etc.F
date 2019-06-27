@@ -436,6 +436,7 @@ C-    end bi,bj loops.
 
 #if (defined ALLOW_AUTODIFF) && (defined ALLOW_AUTODIFF_MONITOR)
 C     Dummy routine for printing ADJhFac
+      CALL DUMMY_FOR_HFAC( 'writeAdjHfacDiags', 0, 0, myThid )
       CALL DUMMY_FOR_HFAC( 'C',0, 0, myThid )
       CALL DUMMY_FOR_HFAC( 'W',0, 0, myThid )
       CALL DUMMY_FOR_HFAC( 'S',0, 0, myThid )

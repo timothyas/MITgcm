@@ -92,7 +92,7 @@ c     CHARACTER*(MAX_LEN_MBUF) msgBuf
       _RL dumRL(1)
       LOGICAL doExch
 #ifdef ALLOW_DIAGNOSTICS
-      LOGICAL modelEnd
+      LOGICAL modelEnd, modelStart
 #endif
 CEOP
 
@@ -198,6 +198,7 @@ C-----------------------------------------------------------------------
 
 C --- 1. Grab modelEnd, necessary input for diagnostics routines
         modelEnd = myTime.EQ.endTime .OR. myIter.EQ.nEndIter
+        modelStart = myTime.EQ.startTime .OR. myIter.EQ.nIter0
         CALL DIAGNOSTICS_SWITCH_ONOFF( myTime, myIter, myThid )
 
         IF ( dumpAdVarExch.EQ.2 ) THEN
@@ -315,7 +316,8 @@ C -     TAF
         ENDIF
 
 C --- 4. Write the fields out
-        CALL DIAGNOSTICS_WRITE_ADJ( modelEnd, myTime, myIter, myThid )
+        if (.not. modelStart)
+     &  CALL DIAGNOSTICS_WRITE_ADJ( modelStart, myTime, myIter, myThid )
       ENDIF
 #endif /* ALLOW_DIAGNOSTICS */
 
