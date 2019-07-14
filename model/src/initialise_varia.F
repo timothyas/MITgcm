@@ -118,6 +118,15 @@ CADJ STORE maskC = tapelev_init, key = 1
 CADJ STORE r_low = tapelev_init, key = 1
       CALL CTRL_DEPTH_INI( myThid )
 
+# ifdef ALLOW_OBCS
+      IF ( useOBCS ) THEN
+C     check for inconsistent topography along boundaries and fix it
+       CALL OBCS_CHECK_DEPTHS( myThid )
+C     update the overlaps
+       _EXCH_XY_RS( R_low, myThid )
+      ENDIF
+# endif /* ALLOW_OBCS */
+
 #if defined(ALLOW_SHELFICE) 
       IF ( useShelfIce ) THEN
 C--   Modify  ocean upper boundary position according to ice-shelf topography
