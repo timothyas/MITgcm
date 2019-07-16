@@ -88,7 +88,8 @@ C contribution from r_low and ctrl file.
       enddo
 
       ! r_low = r_low + xx_depth.*.data
-      call ctrl_map_genarr2d(r_low, igen_depth, myThid)
+      if (igen_depth.gt.0)
+     & call ctrl_map_genarr2d(r_low, igen_depth, myThid)
 
 cts ---
 #else
