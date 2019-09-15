@@ -165,10 +165,15 @@ CEOP
       _RS
      &   shelfIceMassDynTendency(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
 
-#ifdef ALLOW_SHIFWFLX_CONTROL
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
+C   maskSHI           ::  Mask=1 where ice shelf is present on surface
+C                           layer, showing full 2D ice shelf extent.
+C                           =maskC for rest of k values
+C                           Used with ice shelf fwflx 
+C                           or shiTransCoeffT/S ctrl.
       COMMON /SHELFICE_MASKS_CTRL/ maskSHI
       _RS maskSHI  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
-#endif /* ALLOW_SHIFWFLX_CONTROL */
+#endif /* ALLOW_SHIFWFLX_CONTROL || ALLOW_SHI2D_CONTROL */
 
 #ifdef ALLOW_DIAGNOSTICS
       COMMON /SHELFICE_DIAG_DRAG/ shelficeDragU, shelficeDragV
