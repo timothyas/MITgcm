@@ -153,14 +153,14 @@ cph)
                         icomptest = icomptest + 1
                      endif
                      wetlocal = _maskW(i,j,k,bi,bj)
-#ifdef ALLOW_SHIFWFLX_CONTROL
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
 c--             Ice shelf mask.
                   else if ( ncvargrd(grdchkvarindex) .eq. 'i' ) then
                      if ( maskSHI(i,j,k,bi,bj) .gt. 0.) then
                         icomptest = icomptest + 1
                      endif
                      wetlocal = maskSHI(i,j,k,bi,bj)
-#endif /* ALLOW_SHIFWFLX_CONTROL */
+#endif /* ALLOW_SHIFWFLX_CONTROL || ALLOW_SHI2D_CONTROL */
                   else if ( ncvargrd(grdchkvarindex) .eq. 'm' ) then
                      if ( grdchkvarindex .EQ. 11 ) then
 #ifdef ALLOW_OBCSN_CONTROL
