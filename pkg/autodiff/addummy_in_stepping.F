@@ -171,6 +171,10 @@ C--   need to all the correct OpenAD EXCH S/R ; left empty for now
 # ifdef ALLOW_BOTTOMDRAG_CONTROL
         CALL ADEXCH_3D_RL( adBottomDragFld, 1 , myThid )
 # endif
+# ifdef ALLOW_SHI2D_CONTROL
+        CALL ADEXCH_XY_RL( adshiTransCoeffT, myThid )
+        CALL ADEXCH_XY_RL( adshiTransCoeffS, myThid )
+# endif
 
 #endif /* AUTODIFF_TAMC_COMPATIBILITY */
 #endif /* ALLOW_OPENAD */
@@ -218,25 +222,55 @@ C --- 2. Fill up diagnostics from local copy (after exch)
 # endif
          CALL DIAGNOSTICS_FILL( var3Du, 'ADJuvel ', 0,Nr,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( var3Dv, 'ADJvvel ', 0,Nr,0,1,1,myThid )
+# ifdef ALLOW_SHI2D_CONTROL
+#  ifdef ALLOW_OPENAD
+         CALL COPY_ADVAR_OUTP( dumRL, shiTransCoeffT%d,
+     &                          var2Du, 1, 12, myThid )
+#  else
+         CALL COPY_ADVAR_OUTP( dumRL, adshiTransCoeffT,
+     &                          var2Du, 1, 12, myThid )
+#  endif
+         CALL DIAGNOSTICS_FILL( var2Du, 'ADJshict', 0,1,0,1,1,myThid )
+#  ifdef ALLOW_OPENAD
+         CALL COPY_ADVAR_OUTP( dumRL, shiTransCoeffS%d,
+     &                          var2Du, 1, 12, myThid )
+#  else
+         CALL COPY_ADVAR_OUTP( dumRL, adshiTransCoeffS,
+     &                          var2Du, 1, 12, myThid )
+#  endif
+         CALL DIAGNOSTICS_FILL( var2Du, 'ADJshics', 0,1,0,1,1,myThid )
+# endif
 
         ELSE
 C --- 3. Fill up diagnostics directly
 
-#  ifdef ALLOW_OPENAD
+# ifdef ALLOW_OPENAD
 C -     OpenAD
          CALL DIAGNOSTICS_FILL( theta%d,'ADJtheta', 0,Nr,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( salt%d, 'ADJsalt ', 0,Nr,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( wVel%d, 'ADJwvel ', 0,Nr,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( uVel%d, 'ADJuvel ', 0,Nr,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( vVel%d, 'ADJvvel ', 0,Nr,0,1,1,myThid )
-#  else /* ALLOW_OPENAD */
+#  ifdef ALLOW_SHI2D_CONTROL
+         CALL DIAGNOSTICS_FILL( shiTransCoeffT%d, 
+     &                          'ADJshict', 0,1,0,1,1,myThid )
+         CALL DIAGNOSTICS_FILL( shiTransCoeffS%d, 
+     &                          'ADJshics', 0,1,0,1,1,myThid )
+#  endif
+# else /* ALLOW_OPENAD */
 C -     TAF
          CALL DIAGNOSTICS_FILL( adTheta,'ADJtheta', 0,Nr,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( adSalt, 'ADJsalt ', 0,Nr,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( adwVel, 'ADJwvel ', 0,Nr,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( aduVel, 'ADJuvel ', 0,Nr,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( advVel, 'ADJvvel ', 0,Nr,0,1,1,myThid )
-#  endif /* ALLOW_OPENAD */
+#  ifdef ALLOW_SHI2D_CONTROL
+         CALL DIAGNOSTICS_FILL( adshiTransCoeffT, 
+     &                          'ADJshict', 0,1,0,1,1,myThid )
+         CALL DIAGNOSTICS_FILL( adshiTransCoeffS, 
+     &                          'ADJshics', 0,1,0,1,1,myThid )
+#  endif
+# endif /* ALLOW_OPENAD */
         ENDIF
 
 C --- 4. Write the fields out
@@ -325,6 +359,12 @@ c    &                             adGGL90DiffKr, myIter, myThid )
           CALL WRITE_FLD_XY_RL ( 'ADJbottomdrag.', suff,
      &                           adBottomDragFld, myIter, myThid )
 #endif
+#ifdef ALLOW_SHI2D_CONTROL
+          CALL WRITE_FLD_XY_RL ( 'ADJshict.', suff,
+     &                           adshiTransCoeffT, myIter, myThid )
+          CALL WRITE_FLD_XY_RL ( 'ADJshics.', suff,
+     &                           adshiTransCoeffS, myIter, myThid )
+#endif
 
         ELSEIF ( ( dumpAdVarExch.NE.2 ).AND.(dumpAdByRec) ) THEN
 
@@ -389,6 +429,12 @@ c    &         adGGL90DiffKr, dumpAdRecMn, myIter, myThid )
 #ifdef ALLOW_BOTTOMDRAG_CONTROL
           CALL WRITE_REC_XY_RL ( 'ADJbottomdrag',
      &         adBottomDragFld, dumpAdRecMn, myIter, myThid )
+#endif
+#ifdef ALLOW_SHI2D_CONTROL
+          CALL WRITE_REC_XY_RL ( 'ADJshict', 
+     &         adshiTransCoeffT, dumpAdRecMn, myIter, myThid )
+          CALL WRITE_REC_XY_RL ( 'ADJshics',
+     &         adshiTransCoeffS, dumpAdRecMn, myIter, myThid )
 #endif
 
         ELSE
@@ -510,6 +556,20 @@ C       case dumpAdVarExch = 2
           IF (  dumpAdByRec   ) CALL WRITE_REC_XY_RL( 'ADJbottomdrag',
      &                           var2Du, dumpAdRecMn, myIter, myThid )
 #endif
+#ifdef ALLOW_SHI2D_CONTROL
+          CALL COPY_ADVAR_OUTP( dumRS, adshiTransCoeffT,
+     &                                        var2Du, 1, 12, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XY_RL( 'ADJshict.',
+     &                           suff, var2Du, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XY_RL( 'ADJshict',
+     &                           var2Du, dumpAdRecMn, myIter, myThid )
+          CALL COPY_ADVAR_OUTP( dumRS, adshiTransCoeffS,
+     &                                        var2Du, 1, 12, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XY_RL( 'ADJshics.',
+     &                           suff, var2Du, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XY_RL( 'ADJshics',
+     &                           var2Du, dumpAdRecMn, myIter, myThid )
+#endif
 C       end if dumpAdVarExch = 2
         ENDIF
 
@@ -599,6 +659,12 @@ cc     &                           var3Du, myIter, myThid )
           CALL WRITE_FLD_XY_RL ( 'ADJbottomdrag.', suff,
      &                           var2Du, myIter, myThid )
 #endif
+#ifdef ALLOW_SHI2D_CONTROL
+          CALL WRITE_FLD_XY_RL ( 'ADJshict.', suff,
+     &                           shiTransCoeffT%d, myIter, myThid )
+          CALL WRITE_FLD_XY_RL ( 'ADJshics.', suff,
+     &                           shiTransCoeffS%d, myIter, myThid )
+#endif
 
         ELSEIF ( ( dumpAdVarExch.NE.2 ).AND.(dumpAdByRec) ) THEN
 
@@ -682,6 +748,12 @@ cc     &         var3Du, dumpAdRecMn, myIter, myThid )
           var2Du = BottomDragFld%d
           CALL WRITE_REC_XY_RL ( 'ADJbottomdrag',
      &         var2Du, dumpAdRecMn, myIter, myThid )
+#endif
+#ifdef ALLOW_SHI2D_CONTROL
+          CALL WRITE_REC_XY_RL ( 'ADJshict', 
+     &         shiTransCoeffT%d, dumpAdRecMn, myIter, myThid )
+          CALL WRITE_REC_XY_RL ( 'ADJshics',
+     &         shiTransCoeffS%d, dumpAdRecMn, myIter, myThid )
 #endif
 
         ELSE
@@ -804,6 +876,20 @@ cc     &                           var3Du, dumpAdRecMn, myIter, myThid )
           IF (  dumpAdByRec   ) CALL WRITE_REC_XY_RL( 'ADJbottomdrag',
      &                           var2Du, dumpAdRecMn, myIter, myThid )
 #endif
+#ifdef ALLOW_SHI2D_CONTROL
+          CALL COPY_ADVAR_OUTP( dumRS, shiTransCoeffT%d,
+     &                                        var2Du, 1, 12, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XY_RL( 'ADJshict.',
+     &                           suff, var2Du, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XY_RL( 'ADJshict',
+     &                           var2Du, dumpAdRecMn, myIter, myThid )
+          CALL COPY_ADVAR_OUTP( dumRS, shiTransCoeffS%d,
+     &                                        var2Du, 1, 12, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XY_RL( 'ADJshics.',
+     &                           suff, var2Du, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XY_RL( 'ADJshics',
+     &                           var2Du, dumpAdRecMn, myIter, myThid )
+#endif
 
 C       end if dumpAdVarExch = 2
         ENDIF
@@ -908,6 +994,12 @@ C     dumpAdVarExch.NE.2
 #ifdef ALLOW_KAPREDI_CONTROL
           CALL MNC_CW_RL_W('D','adstate',0,0,
      &                     'adkapredi', adkapredi, myThid)
+#endif
+#ifdef ALLOW_SHI2D_CONTROL
+          CALL MNC_CW_RL_W('D','adstate',0,0,
+     &                     'adshict', adshiTransCoeffT, myThid)
+          CALL MNC_CW_RL_W('D','adstate',0,0,
+     &                     'adshics', adshiTransCoeffS, myThid)
 #endif
          ENDIF
 C     endif mnc
