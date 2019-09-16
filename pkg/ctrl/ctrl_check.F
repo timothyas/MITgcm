@@ -34,7 +34,7 @@ C     msgBuf      - Informational/error message buffer
 
 #ifndef ALLOW_OPENAD
 #if (defined (ALLOW_GENARR2D_CONTROL) || defined (ALLOW_GENARR3D_CONTROL) || defined (ALLOW_GENTIM2D_CONTROL))
-      integer iarr
+      integer iarr, k2
 #endif
 #endif
 
