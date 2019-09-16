@@ -174,6 +174,10 @@ C--   need to all the correct OpenAD EXCH S/R ; left empty for now
 # ifdef ALLOW_BOTTOMDRAG_CONTROL
         CALL ADEXCH_3D_RL( adBottomDragFld, 1 , myThid )
 # endif
+# ifdef ALLOW_SHI2D_CONTROL
+        CALL ADEXCH_XY_RL( adshiTransCoeffT, myThid )
+        CALL ADEXCH_XY_RL( adshiTransCoeffS, myThid )
+# endif
 
 #endif /* AUTODIFF_TAMC_COMPATIBILITY */
 #endif /* ALLOW_OPENAD */
@@ -265,6 +269,20 @@ C-----------------------------------------------------------------------
      &     adEddyPsiY,dumRL,'ADJepsiy','ADJeddipsiy.',
      &     33, doDump, dumpAdRecMn, myTime, myIter,myThid)
 # endif
+# ifdef ALLOW_SHI2D_CONTROL
+#  ifndef SHI_ALLOW_GAMMAFRICT
+      CALL DUMP_ADJ_XY(dumRS, adshiTransCoeffT,
+     &                 'ADJshict','ADJshict.',
+     &                 11, doDump, dumpAdRecMn, myTime, myIter,myThid)
+      CALL DUMP_ADJ_XY(dumRS, adshiTransCoeffS,
+     &                 'ADJshics','ADJshics.',
+     &                 11, doDump, dumpAdRecMn, myTime, myIter,myThid)
+#  else
+      CALL DUMP_ADJ_XY(dumRS, adshiCDragFld,
+     &                 'ADJshicd','ADJshicd.',
+     &                 11, doDump, dumpAdRecMn, myTime, myIter,myThid)
+#  endif
+# endif
 
 #else
 C-----------------------------------------------------------------------
@@ -344,6 +362,20 @@ C-----------------------------------------------------------------------
      &     EddyPsiX%d,dumRL,'ADJepsix','ADJeddipsix.',
      &     EddyPsiY%d,dumRL,'ADJepsiy','ADJeddipsiy.',
      &     33, doDump, dumpAdRecMn, myTime, myIter,myThid)
+# endif
+# ifdef ALLOW_SHI2D_CONTROL
+#  ifndef SHI_ALLOW_GAMMAFRICT
+      CALL DUMP_ADJ_XY(dumRS, shiTransCoeffT%d,
+     &                 'ADJshict','ADJshict.',
+     &                 11, doDump, dumpAdRecMn, myTime, myIter,myThid)
+      CALL DUMP_ADJ_XY(dumRS, shiTransCoeffS%d,
+     &                 'ADJshics','ADJshics.',
+     &                 11, doDump, dumpAdRecMn, myTime, myIter,myThid)
+#  else
+      CALL DUMP_ADJ_XY(dumRS, shiCDragFld%d,
+     &                 'ADJshicd','ADJshicd.',
+     &                 11, doDump, dumpAdRecMn, myTime, myIter,myThid)
+#  endif
 # endif
 #endif
 
@@ -445,6 +477,12 @@ C     dumpAdVarExch.NE.2
 #ifdef ALLOW_KAPREDI_CONTROL
           CALL MNC_CW_RL_W('D','adstate',0,0,
      &                     'adkapredi', adkapredi, myThid)
+#endif
+#ifdef ALLOW_SHI2D_CONTROL
+          CALL MNC_CW_RL_W('D','adstate',0,0,
+     &                     'adshict', adshiTransCoeffT, myThid)
+          CALL MNC_CW_RL_W('D','adstate',0,0,
+     &                     'adshics', adshiTransCoeffS, myThid)
 #endif
          ENDIF
 C     endif mnc
