@@ -95,3 +95,12 @@ C----------------------------------------
 CADJ SUBROUTINE write_state  INPUT  = 1,2,3
 CADJ SUBROUTINE write_state  OUTPUT =
 
+C----------------------------------------
+C subroutine  find_rho_2d
+C----------------------------------------
+CADJ SUBROUTINE find_rho_2d ADNAME = find_rho_2d_ad
+CADJ SUBROUTINE find_rho_2d FTLNAME = find_rho_2d
+CADJ SUBROUTINE find_rho_2d INPUT = 1,2,3,4,5,6,7  ,9,10,11,12
+CADJ SUBROUTINE find_rho_2d OUTPUT =              8
+CADJ SUBROUTINE find_rho_2d ACTIVE =          6,7,8
+CADJ SUBROUTINE find_rho_2d DEPEND =1,2,3,4,5,6,7,8,9,10,11,12
