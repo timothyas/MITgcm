@@ -254,10 +254,6 @@ C    U-tendency, if desired:
       CALL CALC_EP_FORCING(myThid)
 #endif
 
-#ifdef ALLOW_AUTODIFF_MONITOR_DIAG
-      CALL DUMMY_IN_DYNAMICS( myTime, myIter, myThid )
-#endif
-
 #ifdef ALLOW_AUTODIFF_TAMC
 C--   HPF directive to help TAMC
 CHPF$ INDEPENDENT
