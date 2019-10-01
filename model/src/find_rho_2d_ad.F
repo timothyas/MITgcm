@@ -13,8 +13,9 @@ C     this was the default, so we keep it that way
      O      tfld_ad, 
      I      sfld, 
      O      sfld_ad, 
+     U      rholoc, 
      U      rholoc_ad, 
-     I      bi, bj, myThid )
+     I      k, bi, bj, myThid )
 C     !DESCRIPTION: \bv
 C     *==========================================================*
 C     | o SUBROUTINE FIND_RHO_2D_AD
@@ -42,11 +43,12 @@ C     == Routine arguments ==
 C     k    :: Level of Theta/Salt slice
 C     kRef :: Pressure reference level
       INTEGER iMin,iMax,jMin,jMax
-      INTEGER kRef
+      INTEGER k,kRef
       _RL tFld  (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL sFld  (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL tFld_ad  (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL sFld_ad  (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
+      _RL rhoLoc (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL rhoLoc_ad(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       INTEGER bi, bj
       INTEGER myThid
