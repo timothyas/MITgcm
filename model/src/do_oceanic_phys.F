@@ -706,12 +706,11 @@ CADJ &                         = comlev1_bibj, key=itdkey, kind=isbyte
 
 C--   Always compute density (stored in common block) here; even when it is not
 C     needed here, will be used anyway in calc_phi_hyd (data flow easier this way)
-#ifdef ALLOW_AUTODIFF_MONITOR_DIAG
-      CALL DUMMY_IN_DYNAMICS( myTime, myIter, myThid )
-#endif
+
 #ifdef ALLOW_DEBUG
         IF (debugMode) CALL DEBUG_CALL('FIND_RHO_2D (xNr)',myThid)
 #endif
+
 #ifdef ALLOW_AUTODIFF
         IF ( fluidIsWater ) THEN
 #endif /* ALLOW_AUTODIFF */
@@ -771,6 +770,9 @@ C-    horizontally uniform (tRef) reference state
           ENDDO
         ENDIF
 #endif /* ALLOW_AUTODIFF */
+#ifdef ALLOW_AUTODIFF_MONITOR_DIAG
+      CALL DUMMY_IN_DYNAMICS( myTime, myIter, myThid )
+#endif
 
 #ifdef ALLOW_DEBUG
         IF (debugMode) THEN
