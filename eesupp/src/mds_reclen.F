@@ -1,6 +1,6 @@
 #include "CPP_EEOPTIONS.h"
 
-      INTEGER FUNCTION MDS_RECLEN( filePrec, nnn, myThid )
+      INTEGER*8 FUNCTION MDS_RECLEN( filePrec, nnn, myThid )
 C IN:
 C   filePrec    integer :: precision of file in bits
 C   nnn         integer :: number of elements in record

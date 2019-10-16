@@ -51,7 +51,7 @@ C !INPUT/OUTPUT PARAMETERS:
 
 C !FUNCTIONS:
       INTEGER ILNBLNK
-      INTEGER MDS_RECLEN
+      INTEGER*8 MDS_RECLEN
       EXTERNAL ILNBLNK
       EXTERNAL MDS_RECLEN
 
@@ -60,7 +60,7 @@ C !LOCAL VARIABLES:
       INTEGER iG, jG, jRec, dUnit, IL, pIL
       LOGICAL exst
       LOGICAL globalFile, fileIsOpen
-      INTEGER length_of_rec
+      INTEGER*8 length_of_rec
       CHARACTER*(MAX_LEN_MBUF) msgBuf
 
 C simple implementation of singleCpuIO without any specific EXCH2

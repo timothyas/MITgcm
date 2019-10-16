@@ -66,7 +66,7 @@ C !LOCAL VARIABLES:
       CHARACTER*(MAX_LEN_FNAM) dataFName, metaFName, pfName
       INTEGER iG, jG, jRec, dUnit, IL, pIL
       INTEGER dimList(3,1), nDims, map2gl(2)
-      INTEGER length_of_rec
+      INTEGER*8 length_of_rec
       CHARACTER*(MAX_LEN_MBUF) msgBuf
 
 C simple implementation of singleCpuIO without any specific EXCH2
@@ -88,6 +88,24 @@ CEOP
       DATA map2gl  / 0, 1 /
 
       vec_size = nSize*nPx*nPy
+         WRITE(msgBuf,'(A,I)')
+     &            ' MDS_WRITE_TAPE: nSize: ', nSize
+        CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
+     &                      SQUEEZE_RIGHT, myThid )
+         WRITE(msgBuf,'(A,I)')
+     &            ' MDS_WRITE_TAPE: vec_size: ', vec_size
+        CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
+     &                      SQUEEZE_RIGHT, myThid )
+         WRITE(msgBuf,'(A,I)')
+     &            ' MDS_WRITE_TAPE: size(gl_buffer_r4): ', 
+     &            size(gl_buffer_r4)
+        CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
+     &                      SQUEEZE_RIGHT, myThid )
+         WRITE(msgBuf,'(A,I)')
+     &            ' MDS_WRITE_TAPE: size(local_r4): ', 
+     &            size(local_r4)
+        CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
+     &                      SQUEEZE_RIGHT, myThid )
 
 C--   Copy input array to local buffer
         IF ( arrType.EQ.'R4' ) THEN
@@ -176,6 +194,11 @@ C--   Master thread of process 0, only, opens a global file
 
          WRITE(dataFName,'(2a)') fName(1:IL),'.data'
          length_of_rec = MDS_RECLEN( filePrec, vec_size, myThid )
+         WRITE(msgBuf,'(A,I)')
+     &            ' MDS_WRITE_TAPE: length_of_rec: ', length_of_rec
+        CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
+     &                      SQUEEZE_RIGHT, myThid )
+         
          IF (iRec .EQ. 1) THEN
           OPEN( dUnit, file=dataFName, status=_NEW_STATUS,
      &          access='direct', recl=length_of_rec )

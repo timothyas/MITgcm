@@ -367,13 +367,13 @@ C-    only use "WHTAPEIO" when type and length match
      &     adTapeDir(1:jl),name(1:il),'.it',optimcycle
       ENDIF
 #ifdef ALLOW_DEBUG
-      IF ( debugLevel .GE. debLevC ) THEN
+      !IF ( debugLevel .GE. debLevC ) THEN
         WRITE(msgBuf,'(2A,3I6,I9,2I3,2A)') 'ADWRITE:',
      &    ' tid,vid, irec, length, prec(x2)=', tid, vid, irec,
      &      length, size, filePrec, ' fname=', fname(1:lenLoc)
         CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
      &                      SQUEEZE_RIGHT, myThid )
-      ENDIF
+      !ENDIF
 #endif
 
 #ifdef ALLOW_AUTODIFF_WHTAPEIO
