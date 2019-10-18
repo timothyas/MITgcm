@@ -1627,5 +1627,19 @@ c#endif /* ECCO_CTRL_DEPRECATED */
      &                    SQUEEZE_RIGHT , mythid)
 #endif
 
+#ifdef ALLOW_GENCOST_VECTOR
+      do num_var = 1,NGENCOST
+        gencost_vector_fc(num_var) = f_gencost(num_var)
+      enddo
+
+      ! using msgBuf as optimcycle file suffix
+      write(msgBuf,'(A,i10.10)')
+     &   '.',optimcycle
+
+      ! testing ... passing 333 as myIter to see what happens...
+      call write_glvec_rl('gencost_vector_fc', msgBuf,
+     &                     gencost_vector_fc, NGENCOST, 333, myThid)
+#endif
+
       return
       end

@@ -229,7 +229,8 @@ c     objf_gencost - gencost user defined contribution
 #endif
      &       gencost_spmin, gencost_spmax, gencost_spzero,
      &       gencost_period, gencost_preproc_r, gencost_posproc_r,
-     &       gencost_wei1d, gencost_1ddata
+     &       gencost_wei1d, gencost_1ddata,
+     &       gencost_vector_fc
 
       _RL  objf_gencost(nsx,nsy,NGENCOST)
       _RL  num_gencost(nsx,nsy,NGENCOST)
@@ -271,6 +272,7 @@ c     objf_gencost - gencost user defined contribution
       _RL gencost_posproc_r(NGENPPROC,NGENCOST)
       _RL gencost_wei1d(NGENCOST)
       _RL gencost_1ddata(N1DDATA, NGENCOST)
+      _RL gencost_vector_fc(NGENCOST)
 
       common /ecco_gencost_i_1/
      &       gencost_nrec, gencost_nrecperiod,

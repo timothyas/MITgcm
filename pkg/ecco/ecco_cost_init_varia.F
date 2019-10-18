@@ -79,10 +79,10 @@ cph(
 cph   The following init. shoud not be applied if in the middle
 cph   of a divided adjoint run
 cph)
-c      inquire( file='costfinal', exist=exst )
-c      if ( .NOT. exst) then
-c         call ecco_cost_init_barfiles( mythid )
-c      endif
+      inquire( file='costfinal', exist=exst )
+      if ( .NOT. exst) then
+         call ecco_cost_init_barfiles( mythid )
+      endif
 #endif
 
 c--   Initialize the tiled cost function contributions.
@@ -248,6 +248,14 @@ c--   Initialize the tiled cost function contributions.
           enddo
 
         enddo
+      enddo
+
+Cts --- gencost_vector_fc is equivalent to f_gencost,
+C     which is filled in ecco_cost_final
+C     the variable is defined initialized here for TAF reasons 
+C     This is being designed for TLM... notes to come...
+      do k=1,NGENCOST
+        gencost_vector_fc(k) = 0. _d 0
       enddo
 
 #ifdef ECCO_CTRL_DEPRECATED
