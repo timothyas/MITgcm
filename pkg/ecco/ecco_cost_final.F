@@ -167,6 +167,9 @@ c the adjoint, pkg/autodiff most likely require cost though.
 
       character*20 cfname
       character*(MAX_LEN_MBUF) msgBuf
+#if (defined ALLOW_GENCOST_VECTOR) && !(defined AUTODIFF)
+      _RS dummyRS
+#endif
 
       INTEGER IL
 C Functions
@@ -1632,13 +1635,18 @@ c#endif /* ECCO_CTRL_DEPRECATED */
         gencost_vector_fc(num_var) = f_gencost(num_var)
       enddo
 
-      ! using msgBuf as optimcycle file suffix
-      write(msgBuf,'(A,i10.10)')
-     &   '.',optimcycle
+      ! hijacking msgBuf for filename stuff
+      write(msgBuf,'(A,A,i10.10)')
+     &   'gencost_vector_fc','.',optimcycle
 
-      ! testing ... passing 333 as myIter to see what happens...
-      call write_glvec_rl('gencost_vector_fc', msgBuf,
-     &                     gencost_vector_fc, NGENCOST, 333, myThid)
+# ifdef ALLOW_AUTODIFF
+      call active_write_1d(msgBuf, gencost_vector_fc, NGENCOST,
+     &                     1, optimcycle, myThid, gencost_dummy )
+# else
+      call mds_writevec_loc(msgBuf, cost_iprec, 0, 'RL', NGENCOST,
+     &                      gencost_vector_fc, dummyRS, 0, 0,
+     &                      1, optimcycle, myThid)
+# endif
 #endif
 
       return
