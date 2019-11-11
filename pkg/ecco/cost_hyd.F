@@ -82,7 +82,7 @@ c     == end of interface ==
       nmonsloc=nmonsrec
       call cost_generic(
      &     nnzbar, tbarfile, xx_tbar_mean_dummy,
-     &     nnzobs, sstdatfile, ssterrfile, mult_sst,
+     &     nnzobs, sstdatfile, ssterrfile, ' ', mult_sst,
      &     nmonsloc, nmonsloc, sststartdate, localperiod,
      &     'C', spminloc, spmaxloc, spzeroloc,
      &     no_preproc, no_preproc_c, no_preproc_i, no_preproc_r, 
@@ -105,7 +105,7 @@ c
       nmonsloc=nmonsrec
       call cost_generic(
      &     nnzbar, sstbarfile, xx_sstbar_mean_dummy,
-     &     nnzobs, sstdatfile, ssterrfile, mult_sst,
+     &     nnzobs, sstdatfile, ssterrfile, ' ', mult_sst,
      &     nrecloc, nmonsloc, sststartdate, localperiod,
      &     'C', spminloc, spmaxloc, spzeroloc,
      &     no_preproc, no_preproc_c, no_preproc_i, no_preproc_r,
@@ -129,7 +129,7 @@ cph      call cost_sst   ( myiter, mytime, mythid )
       nmonsloc=nmonsrec
       call cost_generic(
      &     nnzbar, tbarfile, xx_tbar_mean_dummy,
-     &     nnzobs, argotfile, temperrfile, mult_argot,
+     &     nnzobs, argotfile, temperrfile, ' ', mult_argot,
      &     nmonsloc, nmonsloc, argotstartdate, localperiod,
      &     'C', spminloc, spmaxloc, spzeroloc,
      &     no_preproc, no_preproc_c, no_preproc_i, no_preproc_r, 
@@ -151,7 +151,7 @@ cph      call cost_sst   ( myiter, mytime, mythid )
       nmonsloc=nmonsrec
       call cost_generic(
      &     nnzbar, tbarfile, xx_tbar_mean_dummy,
-     &     nnzobs, ctdtfile, temperrfile, mult_ctdt,
+     &     nnzobs, ctdtfile, temperrfile, ' ', mult_ctdt,
      &     nmonsloc, nmonsloc, ctdtstartdate, localperiod,
      &     'C', spminloc, spmaxloc, spzeroloc,
      &     no_preproc, no_preproc_c, no_preproc_i, no_preproc_r, 
@@ -173,7 +173,7 @@ cph      call cost_sst   ( myiter, mytime, mythid )
       nmonsloc=nmonsrec
       call cost_generic(
      &     nnzbar, tbarfile, xx_tbar_mean_dummy,
-     &     nnzobs, xbtfile, temperrfile, mult_xbt,
+     &     nnzobs, xbtfile, temperrfile, ' ', mult_xbt,
      &     nmonsloc, nmonsloc, xbtstartdate, localperiod,
      &     'C', spminloc, spmaxloc, spzeroloc,
      &     no_preproc, no_preproc_c, no_preproc_i, no_preproc_r, 
@@ -196,7 +196,7 @@ cph      call cost_sst   ( myiter, mytime, mythid )
       nmonsloc=nmonsrec
       call cost_generic(
      &     nnzbar, tbarfile, xx_tbar_mean_dummy,
-     &     nnzobs, tmidatfile, ssterrfile, mult_tmi,
+     &     nnzobs, tmidatfile, ssterrfile, ' ', mult_tmi,
      &     nmonsloc, nmonsloc, tmistartdate, localperiod,
      &     'C', spminloc, spmaxloc, spzeroloc,
      &     no_preproc, no_preproc_c, no_preproc_i, no_preproc_r,
@@ -220,7 +220,7 @@ cph      call cost_tmi( myiter, mytime, mythid )
       nmonsloc=nmonsrec
       call cost_generic(
      &     nnzbar, sbarfile, xx_sbar_mean_dummy,
-     &     nnzobs, sssdatfile, ssterrfile, mult_sss,
+     &     nnzobs, sssdatfile, ssterrfile, ' ', mult_sss,
      &     nmonsloc, nmonsloc, sssstartdate, localperiod,
      &     'C', spminloc, spmaxloc, spzeroloc,
      &     no_preproc, no_preproc_c, no_preproc_i, no_preproc_r,
@@ -243,7 +243,7 @@ cph      call cost_sss   ( myiter, mytime, mythid )
       nmonsloc=nmonsrec
       call cost_generic(
      &     nnzbar, sbarfile, xx_sbar_mean_dummy,
-     &     nnzobs, ctdsfile, salterrfile, mult_ctds,
+     &     nnzobs, ctdsfile, salterrfile, ' ', mult_ctds,
      &     nmonsloc, nmonsloc, ctdsstartdate, localperiod,
      &     'C', spminloc, spmaxloc, spzeroloc,
      &     no_preproc, no_preproc_c, no_preproc_i, no_preproc_r, 
@@ -265,7 +265,7 @@ cph      call cost_sss   ( myiter, mytime, mythid )
       nmonsloc=nmonsrec
       call cost_generic(
      &     nnzbar, sbarfile, xx_sbar_mean_dummy,
-     &     nnzobs, argosfile, salterrfile, mult_argos,
+     &     nnzobs, argosfile, salterrfile, ' ', mult_argos,
      &     nmonsloc, nmonsloc, argosstartdate, localperiod,
      &     'C', spminloc, spmaxloc, spzeroloc,
      &     no_preproc, no_preproc_c, no_preproc_i, no_preproc_r, 
@@ -309,7 +309,7 @@ cph      call cost_sss   ( myiter, mytime, mythid )
       nmonsloc=nmonsrec
       call cost_generic(
      &     nnzbar, tbarfile, xx_tbar_mean_dummy,
-     &     nnzobs, tdatfile, temperrfile, mult_temp,
+     &     nnzobs, tdatfile, temperrfile, ' ', mult_temp,
      &     nmonsloc, nmonsloc, modelstartdate, localperiod,
      &     'C', spminloc, spmaxloc, spzeroloc,
      &     clim_preproc, no_preproc_c, clim_preproc_i, no_preproc_r,
@@ -331,7 +331,7 @@ cph      call cost_sss   ( myiter, mytime, mythid )
       nmonsloc=nmonsrec
       call cost_generic(
      &     nnzbar, sbarfile, xx_sbar_mean_dummy,
-     &     nnzobs, sdatfile, salterrfile, mult_salt,
+     &     nnzobs, sdatfile, salterrfile, ' ', mult_salt,
      &     nmonsloc, nmonsloc, modelstartdate, localperiod,
      &     'C', spminloc, spmaxloc, spzeroloc,
      &     clim_preproc, no_preproc_c, clim_preproc_i, no_preproc_r,

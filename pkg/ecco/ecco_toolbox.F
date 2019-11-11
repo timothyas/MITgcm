@@ -18,6 +18,7 @@ C--   o ecco_mult
 C--   o ecco_multfield
 C--   o ecco_readbar
 C--   o ecco_readwei
+C--   o ecco_readmult
 
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
 CBOP
@@ -1247,3 +1248,92 @@ c--        Convert to weight
       RETURN
       END
 
+C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
+CBOP
+C     !ROUTINE: ecco_readmult
+C     !INTERFACE:
+      subroutine ecco_readmult(
+     I                           localmult_file,
+     O                           localmult,
+     I                           iRec,
+     I                           nnzbar,
+     I                           dosumsq,
+     I                           myThid
+     &                         )
+
+C     !DESCRIPTION: \bv
+C     reads field of factors to multiply cost function by:
+C     so (if nosumsq = true)
+C           sum ( localmult / uncertainty * (model - data) )
+C     and if nosumsq = false,
+C           sum ( localmult^2 / uncertainty^2 * (model - data)^2 )
+C     \ev
+
+C     !USES:
+      IMPLICIT NONE
+
+C     == global variables ==
+#include "EEPARAMS.h"
+#include "SIZE.h"
+#ifdef ALLOW_ECCO
+# include "ecco.h"
+#endif
+
+c     == routine arguments ==
+
+C     localmult_file: filename
+C     localmult:      array
+C     iRec:            record number
+      CHARACTER*(*) localmult_file
+      _RL     localmult(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nnzbar,nSx,nSy)
+      INTEGER iRec
+      INTEGER myThid
+      INTEGER nnzbar
+      LOGICAL dosumsq
+
+#ifdef ALLOW_ECCO
+
+c     == local variables ==
+
+      integer bi,bj
+      integer i,j,k
+      integer itlo,ithi
+      integer jtlo,jthi
+      integer jmin,jmax
+      integer imin,imax
+
+CEOP
+
+      jtlo = myByLo(myThid)
+      jthi = myByHi(myThid)
+      itlo = myBxLo(myThid)
+      ithi = myBxHi(myThid)
+      jmin = 1
+      jmax = sNy
+      imin = 1
+      imax = sNx
+
+      CALL READ_REC_3D_RL( localmult_file, cost_iprec, nnzbar,
+     &                     localmult, iRec, 1, myThid )
+
+      if (dosumsq) then
+       DO bj=jtlo,jthi
+        DO bi=itlo,ithi
+         DO j = jmin,jmax
+          DO i = imin,imax
+           DO k = 1,nnzbar
+c--          Don't test for missing values,
+c--          because these numbers could be anything...
+             localmult(i,j,k,bi,bj) = 
+     &              localmult(i,j,k,bi,bj)*localmult(i,j,k,bi,bj)
+           enddo
+          enddo
+         enddo
+        enddo
+       enddo
+      endif
+
+#endif /* ALLOW_ECCO */
+
+      RETURN
+      END

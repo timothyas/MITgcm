@@ -815,6 +815,14 @@ c
          il = ilnblnk(gencost_errfile(k))
          write(msgbuf,'(a,a)') ' error file = ',gencost_errfile(k)(1:il)
          call print_message( msgbuf, msgunit, SQUEEZE_RIGHT , mythid)
+
+         if (gencost_multfile(k).ne.' ') then
+           il = ilnblnk(gencost_multfile(k))
+           write(msgbuf,'(a,a)') ' spatially varying mult file = ',
+     &           gencost_multfile(k)(1:il)
+           call print_message( msgbuf, msgunit, SQUEEZE_RIGHT , mythid)
+         endif
+
          if (gencost_scalefile(k).NE.' ') then
          il = ilnblnk(gencost_scalefile(k))
          write(msgbuf,'(a,a)') ' scale file = ',

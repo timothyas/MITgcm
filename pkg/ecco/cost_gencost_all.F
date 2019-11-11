@@ -75,6 +75,7 @@ c     == end of interface ==
          call cost_generic(
      &     nnzbar, gencost_barfile(k), gencost_dummy(k),
      &     nnzobs, gencost_datafile(k), gencost_errfile(k),
+     &     gencost_multfile(k),
      &     mult_gencost(k), nrecloc, nrecperiodloc,
      &     gencost_startdate(1,k), gencost_period(k), 'c',
      &     gencost_spmin(k), gencost_spmax(k), gencost_spzero(k),
