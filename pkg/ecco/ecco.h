@@ -314,6 +314,7 @@ c     objf_gencost - gencost user defined contribution
      &       gencost_name,
      &       gencost_scalefile,
      &       gencost_errfile,
+     &       gencost_multfile,
      &       gencost_datafile,
      &       gencost_barfile,
      &       gencost_avgperiod,
@@ -325,6 +326,7 @@ c     objf_gencost - gencost user defined contribution
       character*(MAX_LEN_FNAM) gencost_name(NGENCOST)
       character*(MAX_LEN_FNAM) gencost_scalefile(NGENCOST)
       character*(MAX_LEN_FNAM) gencost_errfile(NGENCOST)
+      character*(MAX_LEN_FNAM) gencost_multfile(NGENCOST)
       character*(MAX_LEN_FNAM) gencost_datafile(NGENCOST)
       character*(MAX_LEN_FNAM) gencost_barfile(NGENCOST)
       character*(5)            gencost_avgperiod(NGENCOST)
