@@ -93,7 +93,7 @@ c--   Compute bottom pressure cost
       call timer_start('cost_bp    [ECCO SPIN-DOWN]', myThid)
       call cost_generic(
      &     1, bpfile, xx_bpbar_mean_dummy,
-     &     1, bpdatfile, bperrfile, mult_bp,
+     &     1, bpdatfile, bperrfile, ' ', mult_bp,
      &     nmonsrec, nmonsrec, bpstartdate, 0. _d 0,
      &     'C', -1. _d 2, 1. _d 2, 0. _d 0,
      &     anom_preproc, no_preproc_c, no_preproc_i, no_preproc_r, 
