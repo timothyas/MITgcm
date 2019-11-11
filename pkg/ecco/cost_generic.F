@@ -7,6 +7,7 @@ C     !INTERFACE:
       subroutine cost_generic(
      &     nnzbar, localbarfile, dummy,
      &     nnzobs, localobsfile, localerrfile,
+     &     localmultfile,
      &     mult_local, nrecloc, nrecobs,
      &     localstartdate, localperiod,
      &     ylocmask, spminloc, spmaxloc, spzeroloc,
@@ -67,6 +68,7 @@ c     == routine arguments ==
       character*(MAX_LEN_FNAM) localbarfile
       character*(MAX_LEN_FNAM) localobsfile
       character*(MAX_LEN_FNAM) localerrfile
+      character*(MAX_LEN_FNAM) localmultfile
       character*(MAX_LEN_FNAM) preproc(NGENPPROC)
       character*(MAX_LEN_FNAM) preproc_c(NGENPPROC)
       character*(MAX_LEN_FNAM) posproc(NGENPPROC)
@@ -118,6 +120,7 @@ C Extra time loop to compute time-mean fields and costs
      &     localdifmean1,localdifmean2,.FALSE.,
      &     nnzbar, localbarfile, dummy,
      &     nnzobs, localobsfile, localerrfile,
+     &     localmultfile,
      &     mult_local, nrecloc, nrecobs,
      &     localstartdate, localperiod,
      &     ylocmask, spminloc, spmaxloc, spzeroloc,
@@ -135,6 +138,7 @@ C Extra time loop to compute time-mean fields and costs
      &     localdifmean2,localdifmean1,.TRUE.,
      &     nnzbar, localbarfile, dummy,
      &     nnzobs, localobsfile, localerrfile,
+     &     localmultfile,
      &     mult_local, nrecloc, nrecobs,
      &     localstartdate, localperiod,
      &     ylocmask, spminloc, spmaxloc, spzeroloc,
@@ -156,6 +160,7 @@ C--------------
      &     localdifmeanIn,localdifmeanOut, addVariaCost,
      &     nnzbar, localbarfile, dummy,
      &     nnzobs, localobsfile, localerrfile,
+     &     localmultfile,
      &     mult_local, nrecloc, nrecobs,
      &     localstartdate, localperiod,
      &     ylocmask, spminloc, spmaxloc, spzeroloc,
@@ -216,6 +221,7 @@ c     == routine arguments ==
       character*(MAX_LEN_FNAM) localbarfile
       character*(MAX_LEN_FNAM) localobsfile
       character*(MAX_LEN_FNAM) localerrfile
+      character*(MAX_LEN_FNAM) localmultfile
       character*(MAX_LEN_FNAM) preproc(NGENPPROC)
       character*(MAX_LEN_FNAM) preproc_c(NGENPPROC)
       character*(MAX_LEN_FNAM) posproc(NGENPPROC)
@@ -239,11 +245,13 @@ c     == local variables ==
       integer localrec, obsrec
       integer nrecloop, nrecclim, k2smooth
       logical domean, doanom, dovarwei, doclim, dosmooth, dosumsq
+      logical domult
 
       _RL localmask  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
 
       _RL localbar   (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL localweight(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
+      _RL localmult  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL localtmp   (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL localobs   (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL localdif   (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
@@ -257,7 +265,7 @@ c     == local variables ==
 
       _RL fac
 
-      character*(128) fname1, fname2, fname3
+      character*(128) fname1, fname2, fname3, fname4
       character*200 msgbuf
 
       logical exst
@@ -291,6 +299,7 @@ CEOP
       doclim=.FALSE.
       nrecclim=nrecloc
       fac=oneRL
+      domult=.false.
 
       do k2 = 1, NGENPPROC
           if (preproc(k2).EQ.'mean') domean=.TRUE.
@@ -305,8 +314,16 @@ CEOP
             doclim=.TRUE.
             nrecclim=preproc_i(k2)
           endif
+
+          ! 'factor' = multiply global misfit by scalar
           if (preproc(k2).EQ.'factor') then
             fac=preproc_r(k2)
+          endif
+
+          ! 'domult' => multiply misfit by spatially varying field
+          ! just like 1/ uncertainty(^2) ... see below
+          if (localmultfile.ne.' ') then
+            domult=.true.
           endif
       enddo
 
@@ -343,6 +360,24 @@ c--     load weights
         if ( (localrec .GT. 0).AND.(obsrec .GT. 0).AND.(exst) )
      &  call ecco_readwei(fname3,localweight,
      &                    localrec,nnzobs,dosumsq,myThid)
+
+c--     load additional factor just like weights
+c--     localmult is applied (if provided) as:
+c--         localweight = localmult*localweight
+c--                     = localmult / uncertainty
+c--                 or  = (localmult)^2 / (uncertainty)^2
+c--     depending on dosumsq
+        call cost_gencal(localbarfile, localmultfile,
+     &     jrec, localstartdate, localperiod, fname1,
+     &     fname4, localrec, obsrec, exst, myThid )
+        call ecco_zero(localmult,nnzobs,zeroRL,myThid)
+        if (domult) then
+         if ( (localrec .GT. 0).AND.(obsrec .GT. 0).AND.(exst) )
+     &   call ecco_readmult(fname4,localmult,
+     &                     localrec,nnzobs,dosumsq,myThid)
+         ! update: localweight <- localmult * localweight
+         call ecco_multfield(localmult, nnzobs, localweight, myThid)
+        endif
 
 c--     determine records and file names
         exst=.FALSE.
