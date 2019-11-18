@@ -717,6 +717,16 @@ CADJ &     kind = isbyte
 # if (defined NONLIN_FRSURF) || (defined ALLOW_DEPTH_CONTROL)
 CADJ STORE theta,salt = comlev1, key = ikey_dynamics, kind = isbyte
 CADJ STORE etaH = comlev1, key = ikey_dynamics, kind = isbyte
+#  ifdef ALLOW_GMREDI
+#   ifdef GM_NON_UNITY_DIAGONAL
+CADJ STORE Kux = comlev1, key = ikey_dynamics, kind = isbyte
+CADJ STORE Kvy = comlev1, key = ikey_dynamics, kind = isbyte
+#   endif
+#   ifdef GM_EXTRA_DIAGONAL
+CADJ STORE Kuz = comlev1, key = ikey_dynamics, kind = isbyte
+CADJ STORE Kvz = comlev1, key = ikey_dynamics, kind = isbyte
+#   endif
+#  endif /* ALLOW_GMREDI */
 #  ifdef ALLOW_CD_CODE
 CADJ STORE etaNm1 = comlev1, key = ikey_dynamics, kind = isbyte
 #  endif
