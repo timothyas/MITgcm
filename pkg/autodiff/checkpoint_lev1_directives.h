@@ -93,7 +93,7 @@ CADJ &     tapelev2, key = ikey_dynamics
 
 #endif /* NONLIN_FRSURF */
 
-#ifdef ALLOW_CG2D_NSA
+#ifdef ALLOW_DEPTH_CONTROL
 CADJ STORE pmepr,surfaceforcingtice
 CADJ &     = comlev1, key=ikey_dynamics,
 CADJ &     kind = isbyte
