@@ -60,7 +60,7 @@ c     == local variables ==
       integer endrec
       integer diffrec
       integer iarr
-      character*(1) ncvargrdTmp(maxcvars)
+      character*(1) ncvargrdTmp
 
       _RL dummy
       _RL loctmp3d (1-olx:snx+olx,1-oly:sny+oly,Nr,nsx,nsy)
