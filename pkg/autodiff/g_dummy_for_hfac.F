@@ -14,7 +14,7 @@ C     == Global variables ===
 
 C     == Routine arguments ==
 C     myThid - Thread number for this instance of the routine.
-      CHARACTER*(*) myname
+      CHARACTER*(1) myname
       _RL myTime
       INTEGER myIter
       INTEGER myThid

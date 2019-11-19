@@ -101,6 +101,7 @@ C     tmpfld  :: Temporary array used to compute & write Total Depth
       _RL tmpVar1(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL tmpVar2(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       CHARACTER*(MAX_LEN_MBUF) suff
+      character*(17) hfac_dummy_name
 
       INTEGER Im1, Jm1
       _RL hFacCtmp, hFacWtmp, hFacStmp
@@ -436,10 +437,10 @@ C-    end bi,bj loops.
 
 #if (defined ALLOW_AUTODIFF) && (defined ALLOW_AUTODIFF_MONITOR)
 C     Dummy routine for printing ADJhFac
-      CALL DUMMY_FOR_HFAC( 'writeAdjHfacDiags', 0, 0, myThid )
-      CALL DUMMY_FOR_HFAC( 'C',0, 0, myThid )
-      CALL DUMMY_FOR_HFAC( 'W',0, 0, myThid )
-      CALL DUMMY_FOR_HFAC( 'S',0, 0, myThid )
+      CALL DUMMY_FOR_HFAC( 'O', 0. _d 0, 0, myThid )
+      CALL DUMMY_FOR_HFAC( 'C', 0. _d 0, 0, myThid )
+      CALL DUMMY_FOR_HFAC( 'W', 0. _d 0, 0, myThid )
+      CALL DUMMY_FOR_HFAC( 'S', 0. _d 0, 0, myThid )
 #endif
 
 Cts ---
@@ -532,7 +533,7 @@ C - end bi,bj loops.
 
 #if (defined ALLOW_AUTODIFF) && (defined ALLOW_AUTODIFF_MONITOR)
 C     Dummy routine for printing ADJ recip_hFac
-      CALL DUMMY_FOR_HFAC( 'R',0, 0, myThid )
+      CALL DUMMY_FOR_HFAC( 'R', 0. _d 0, 0, myThid )
 #endif
 
 #endif /* ALLOW_DEPTH_CONTROL */
