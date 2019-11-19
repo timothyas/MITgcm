@@ -15,11 +15,23 @@ C     !DESCRIPTION: \bv
 C     *==========================================================*
 C     | SUBROUTINE addummy_for_hfac
 C     *==========================================================*
-C     Extract adjoint variable from TAMC/TAF-generated
-C     adjoint common blocks, contained in adcommon.h
-C     and write fields to file;
-C     Make sure common blocks in adcommon.h are up-to-date
-C     w.r.t. current adjoint code.
+C     Extract adjoint variables associated with r_low sensitivites
+C     Including:
+C
+C       myname  variable(s)
+C       ------  -----------
+C       'C'     adhFacC
+C       'W'     adhFacW
+C       'S'     adhFacS
+C       'R'     sensitivities to hFac reciprocals:
+C                   adrecip_hFacC, adrecip_hFacW, adrecip_hFacS
+C       'A'     A matrix components in CG2D solve:
+C                   adAC2d, adAW2d, adAS2d
+C      
+C       'O'     write filled diagnostics out to file
+C
+C     Modified from verification/bottom_ctrl_5x5/code_ad/dummy_in_hfac
+C     by Tim Smith
 C     *==========================================================*
 C     | SUBROUTINE addummy_for_hfac
 C     *==========================================================*
