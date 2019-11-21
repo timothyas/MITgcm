@@ -274,6 +274,12 @@ CADJ  INIT tapelev3 = USER
 CADJ STORE hFacC = tapelev_init, key = 1
 CADJ STORE recip_hFacC = tapelev_init, key = 1
 # endif
+# ifdef ALLOW_SHI2D_CONTROL
+CADJ STORE shelficeFreshwaterFlux = tapelev_init, key=1
+CADJ STORE shelficeHeatFlux = tapelev_init, key=1
+CADJ STORE shiTransCoeffT = tapelev_init, key=1
+CADJ STORE shiTransCoeffS = tapelev_init, key=1
+# endif
 #endif
 
 #ifdef ALLOW_OPENAD
