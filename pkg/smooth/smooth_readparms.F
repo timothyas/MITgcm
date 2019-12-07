@@ -39,7 +39,8 @@ c--   Read the namelist input.
      &                   smooth2D_Lx0,
      &                   smooth2D_Ly0,
      &                   smooth2Dfilter,
-     &                   smooth2DmaskName,
+     &                   smooth2DMaskName,
+     &                   smooth2DAlgorithm,
      &                   smooth3Dnbt,
      &                   smooth3DtypeH,
      &                   smooth3DsizeH,
@@ -49,7 +50,8 @@ c--   Read the namelist input.
      &                   smooth3D_Ly0,
      &                   smooth3D_Lz0,
      &                   smooth3Dfilter,
-     &                   smooth3DmaskName
+     &                   smooth3DMaskName,
+     &                   smooth3DAlgorithm
 
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
 
@@ -73,7 +75,8 @@ c--   Set default values.
         smooth2Dtype(smoothOpNb)=0
         smooth2Dsize(smoothOpNb)=0
         smooth2Dfilter(smoothOpNb)=0
-        smooth2DmaskName(smoothOpNb)='maskC'
+        smooth2DMaskName(smoothOpNb)='maskC'
+        smooth2DAlgorithm(smoothOpNb)='WC01'
 
         smooth3Dnbt(smoothOpNb)=0
         smooth3D_Lx0(smoothOpNb)=0. _d 0
@@ -84,7 +87,8 @@ c--   Set default values.
         smooth3DtypeZ(smoothOpNb)=0
         smooth3DsizeZ(smoothOpNb)=0
         smooth3Dfilter(smoothOpNb)=0
-        smooth3DmaskName(smoothOpNb)='maskC'
+        smooth3DMaskName(smoothOpNb)='maskC'
+        smooth3DAlgorithm(smoothOpNb)='WC01'
       ENDDO
 
 C--   Read settings from model parameter file "data.smooth".
@@ -128,7 +132,8 @@ C--   Print pkg/smooth settings to standard output:
           WRITE(msgBuf,'(A,I2,I6,2f6.0,A)') 'smooth 2D parameters: ',
      &       smoothOpNb,smooth2Dnbt(smoothOpNb),
      &       smooth2D_Lx0(smoothOpNb),smooth2D_Ly0(smoothOpNb),
-     &       smooth2DmaskName(smoothOpNb)
+     &       smooth2DmaskName(smoothOpNb),
+     &       smooth2DAlgorithm(smoothOpNb)
           CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
      &       SQUEEZE_RIGHT , 1)
         ENDIF
@@ -141,7 +146,8 @@ C--   Print pkg/smooth settings to standard output:
      &       smoothOpNb,smooth3Dnbt(smoothOpNb),
      &       smooth3D_Lx0(smoothOpNb),smooth3D_Ly0(smoothOpNb),
      &       smooth3D_Lz0(smoothOpNb),
-     &       smooth3DmaskName(smoothOpNb)
+     &       smooth3DmaskName(smoothOpNb),
+     &       smooth3DAlgorithm(smoothOpNb)
           CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
      &       SQUEEZE_RIGHT , 1)
         ENDIF
