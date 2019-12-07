@@ -133,53 +133,64 @@ c note: the exact method requires the adjoint of smooth_diff2D.F (see below)
        ENDDO
       ENDDO
 
+C --- Check which algorithm is used
+      if (smooth2DAlgorithm(smoothOpNb).eq.'matern') then
+        WRITE(errorMessageUnit,'(A,/,A)' )
+     &   "Exact method for matern prior covariance not "
+     &   "implemented yet... but would be pretty expensive."
+        CALL ALL_PROC_DIE( myThid )
+        STOP 'ABNORMAL END: S/R smooth_filtervar2D'
+
+       else
 c note: as we go to adjoint part, we need to have 0 in overlaps
 c       so we must NOT have done an exchange for smoothTmpFld
 
 c adjoint:
-      WRITE(errorMessageUnit,'(A,/,A)' )
-     & "you need to have adsmooth_diff2D compiled and then:",
-     & "uncomment the line below and comment the stop"
-      CALL ALL_PROC_DIE( myThid )
-      STOP 'ABNORMAL END: S/R smooth_filtervar2D'
-c      call adsmooth_diff2D(smoothTmpFld,smooth2dmask,nbt_in,mythid)
+       WRITE(errorMessageUnit,'(A,/,A)' )
+     &  "you need to have adsmooth_diff2D compiled and then:",
+     &  "uncomment the line below and comment the stop"
+       CALL ALL_PROC_DIE( myThid )
+       STOP 'ABNORMAL END: S/R smooth_filtervar2D'
+c       call adsmooth_diff2D(smoothTmpFld,smooth2dmask,nbt_in,mythid)
 
 c division by sqrt(area)*sqrt(area) [1 to end adj, 1 to begin fwd]
-      DO bj = jtlo,jthi
-       DO bi = itlo,ithi
-        DO j = 1,sNy
-         DO i = 1,sNx
+       DO bj = jtlo,jthi
+        DO bi = itlo,ithi
+         DO j = 1,sNy
+          DO i = 1,sNx
 c division by ~volume:
-      smoothTmpFld(i,j,bi,bj)=smoothTmpFld(i,j,bi,bj)
-     & *recip_rA(i,j,bi,bj)
+       smoothTmpFld(i,j,bi,bj)=smoothTmpFld(i,j,bi,bj)
+     &  *recip_rA(i,j,bi,bj)
+          ENDDO
          ENDDO
         ENDDO
        ENDDO
-      ENDDO
 
 c coming out of adjoint part: overlaps are 0
 c going in fwd part: we need to fill them up
-      CALL EXCH_XY_RL ( smoothTmpFld,myThid )
+       CALL EXCH_XY_RL ( smoothTmpFld,myThid )
 
 c fwd:
-      CALL smooth_diff2D(smoothTmpFld,smooth2dmask,nbt_in,mythid)
+       CALL smooth_diff2D(smoothTmpFld,smooth2dmask,nbt_in,mythid)
 
 c convert variance to normalization factor:
-      DO bj=jtlo,jthi
-       DO bi=itlo,ithi
-         DO j=jj,sNy,djLoc
-          DO i=ii,sNx,diLoc
-           if (smooth2dmask(i,j,bi,bj).NE.0) then
-              smooth2Dnorm(i,j,bi,bj)=
-     &        1/sqrt(smoothTmpFld(i,j,bi,bj))
-           endif
+       DO bj=jtlo,jthi
+        DO bi=itlo,ithi
+          DO j=jj,sNy,djLoc
+           DO i=ii,sNx,diLoc
+            if (smooth2dmask(i,j,bi,bj).NE.0) then
+               smooth2Dnorm(i,j,bi,bj)=
+     &         1/sqrt(smoothTmpFld(i,j,bi,bj))
+            endif
+           ENDDO
           ENDDO
-         ENDDO
+        ENDDO
        ENDDO
-      ENDDO
 
-      ENDDO      !DO ii=1,diLoc
-      ENDDO      !DO jj=1,djLoc
+       ENDDO      !DO ii=1,diLoc
+       ENDDO      !DO jj=1,djLoc
+
+      endif ! algorithm check
 
       ELSEIF (smooth2Dfilter(smoothOpNb).EQ.1) then
 c compute the normalization matrix using the approximate method
@@ -212,8 +223,9 @@ c fill smoothTmpFld with random numbers:
            if (smooth2dmask(i,j,bi,bj).NE.0) then
            smoothTmpFld(i,j,bi,bj)=port_rand_norm()
            endif
-c division by sqrt(area):
-      smoothTmpFld(i,j,bi,bj)=smoothTmpFld(i,j,bi,bj)
+c WC01: division by sqrt(area):
+           if (smooth2DAlgorithm(smoothOpNb).eq.'WC01')
+     & smoothTmpFld(i,j,bi,bj)=smoothTmpFld(i,j,bi,bj)
      & *sqrt(recip_rA(i,j,bi,bj))
           ENDDO
          ENDDO
@@ -223,7 +235,12 @@ c division by sqrt(area):
       CALL EXCH_XY_RL ( smoothTmpFld, myThid )
 
 c smooth random number field
-      call smooth_diff2D(smoothTmpFld,smooth2dmask,nbt_in,mythid)
+      if (smooth2DAlgorithm(smoothOpNb).eq.'WC01')
+     &  call smooth_diff2D(smoothTmpFld,smooth2dmask,nbt_in,mythid)
+
+      if (smooth2DAlgorithm(smoothOpNb).eq.'matern')
+     &  call smooth_inverse_matern_op2d(
+     &          smoothTmpFld,smooth2DMask,smoothOpNb,myThid)
 
 c accumulate statistics (to compute the variance later)
       DO bj=jtlo,jthi

@@ -33,6 +33,7 @@ c fields:
      & smooth3Dnorm (1-Olx:sNx+Olx,1-Oly:sNy+Oly,Nr,nSx,nSy)
 
       character*(5) smooth3DmaskName(smoothOpNbMax)
+      character*(6) smooth3DAlgorithm(smoothOpNbMax)
 
       integer smooth2Dnbt(smoothOpNbMax),
      & smooth2Dtype(smoothOpNbMax),smooth2Dsize(smoothOpNbMax),
@@ -44,6 +45,7 @@ c fields:
      & smooth2Dnorm (1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy)
 
       character*(5) smooth2DmaskName(smoothOpNbMax)
+      character*(6) smooth2DAlgorithm(smoothOpNbMax)
 
       _RL 
      & smooth3D_kappaR (1-Olx:sNx+Olx,1-Oly:sNy+Oly,Nr,nSx,nSy),

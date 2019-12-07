@@ -31,6 +31,19 @@ C     iUnit       - Work variable for IO unit number
 
 c     == end of interface ==
 
+C     TODO:
+C --- Check to make sure operator file exists in this case
+C       when smooth2Dtype .ne.0 and smooth2Dsize.eq.1
+C       when smooth3Dtype .ne.0 and smooth3Dsize.eq.1 or 2
+
+C --- Check to make sure length scale file exists in this case
+C       when smooth2Dtype .ne.0 and smooth2Dsize.eq.2
+C       when smooth3Dtype .ne.0 and smooth3Dsize.eq.3
+
+C --- Check to make sure norm exists if 
+C       smooth2dfilter.eq.1
+C       smooth3dfilter.eq.1
+      
 
 C --- Check for legal mask names
       DO smoothOpNb=1,smoothOpNbMax
