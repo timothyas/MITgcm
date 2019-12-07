@@ -287,6 +287,7 @@ c--   Now, read the control vector.
       dowc01  = .false.
       domatern_regular = .false.
       domatern_precond = .false.
+      domatern_normalize =.true.
       doscaling=.true.
       dolog10ctrl=.false.
       log10initval=0. _d 0
@@ -313,6 +314,9 @@ c--   Now, read the control vector.
              matern_precond=.TRUE.
              if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
      &           numsmo=xx_genarr2d_preproc_i(k2,iarr)
+          endif
+          if (xx_genarr2d_preproc_c(k2,iarr).EQ.'matern_nonorm') then
+             matern_normalize=.FALSE.
           endif
           if (xx_genarr2d_preproc(k2,iarr).EQ.'noscaling') then
              doscaling=.FALSE.
@@ -353,6 +357,10 @@ CADJ STORE mask2D = tapelev_init, key = 1
        IF (dowc01) call smooth_correl2d(xx_gen,mask2D,numsmo,mythid)
 CADJ STORE mask2D = tapelev_init, key = 1
        IF (dosmooth) call smooth2d(xx_gen,mask2D,numsmo,mythid)
+       IF (domatern_regular) call smooth_apply_matern_op2d(
+     &                              x_gen,mask2D,numsmo,mythid)
+       IF (domatern_precond) call smooth_inverse_matern_op2d(
+     &          xx_gen,mask2D,numsmo,matern_normalize,mythid)
       ENDIF
 #endif
 

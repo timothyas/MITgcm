@@ -33,6 +33,7 @@ C     *==========================================================*
       integer diLoc,djLoc,dkLoc
       integer nbRand, nbt_in
       character*( 80) fnamegeneric
+      logical doNormalize
       _RL smoothTmpFld (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL smoothTmpVar (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL smoothTmpMean(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
@@ -43,11 +44,14 @@ C     *==========================================================*
       itlo = mybxlo(mythid)
       ithi = mybxhi(mythid)
 
+      doNormalize=.FALSE.
+
 c --- allow a different mask other than maskC
 c     Note: this is essentially a copy of ctrl_get_mask
 c     but is repeated here for package independence
 c     since this subroutine is typically used simply to get
 c     filter variance without actually running the model
+
       DO bj = jtlo,jthi
        DO bi = itlo,ithi
         DO j = 1,sNy
@@ -239,7 +243,7 @@ c smooth random number field
 
       if (smooth2DAlgorithm(smoothOpNb).eq.'matern')
      &  call smooth_inverse_matern_op2d(
-     &          smoothTmpFld,smooth2DMask,smoothOpNb,myThid)
+     &          smoothTmpFld,smooth2DMask,smoothOpNb,doNormalize,myThid)
 
 c accumulate statistics (to compute the variance later)
       DO bj=jtlo,jthi
