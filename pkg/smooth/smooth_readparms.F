@@ -129,7 +129,7 @@ C--   Print pkg/smooth settings to standard output:
 
       DO smoothOpNb=1,smoothOpNbMax
         IF (smooth2Dtype(smoothOpNb).NE.0) THEN
-          WRITE(msgBuf,'(A,I2,I6,2f6.0,A)') 'smooth 2D parameters: ',
+          WRITE(msgBuf,'(A,I2,I6,2f6.0,2A)') 'smooth 2D parameters: ',
      &       smoothOpNb,smooth2Dnbt(smoothOpNb),
      &       smooth2D_Lx0(smoothOpNb),smooth2D_Ly0(smoothOpNb),
      &       smooth2DmaskName(smoothOpNb),
@@ -142,7 +142,7 @@ C--   Print pkg/smooth settings to standard output:
       DO smoothOpNb=1,smoothOpNbMax
         IF ((smooth3DtypeZ(smoothOpNb).NE.0).OR.
      &      (smooth3DtypeH(smoothOpNb).NE.0)) then
-          WRITE(msgBuf,'(A,I2,I6,3f6.0,A)') 'smooth 3D parameters: ',
+          WRITE(msgBuf,'(A,I2,I6,3f6.0,2A)') 'smooth 3D parameters: ',
      &       smoothOpNb,smooth3Dnbt(smoothOpNb),
      &       smooth3D_Lx0(smoothOpNb),smooth3D_Ly0(smoothOpNb),
      &       smooth3D_Lz0(smoothOpNb),
