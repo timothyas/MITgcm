@@ -305,6 +305,8 @@ c--   Now, read the control vector.
 
       dosmooth=.false.
       dowc01  = .false.
+      domatern_regular = .false.
+      domatern_precond = .false.
       doscaling=.true.
       dolog10ctrl=.false.
       log10initval=0. _d 0
@@ -319,6 +321,16 @@ c--   Now, read the control vector.
           if ((.NOT.dowc01).AND.
      &        (xx_genarr2d_preproc(k2,iarr).EQ.'smooth')) then
              dosmooth=.TRUE.
+             if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
+     &           numsmo=xx_genarr2d_preproc_i(k2,iarr)
+          endif
+          if (xx_genarr2d_preproc(k2,iarr).EQ.'matern_regular') then
+             matern_regular=.TRUE.
+             if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
+     &           numsmo=xx_genarr2d_preproc_i(k2,iarr)
+          endif
+          if (xx_genarr2d_preproc(k2,iarr).EQ.'matern_precond') then
+             matern_precond=.TRUE.
              if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
      &           numsmo=xx_genarr2d_preproc_i(k2,iarr)
           endif
