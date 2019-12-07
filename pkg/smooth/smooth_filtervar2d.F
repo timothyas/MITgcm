@@ -74,17 +74,19 @@ c so this routine does not do anything
 
       IF (smooth2Dfilter(smoothOpNb).NE.0) then
 
-      nbt_in=smooth2Dnbt(smoothOpNb)/2
+      if (smooth2DAlgorithm(smoothOpNb).ne.'matern') then
+       nbt_in=smooth2Dnbt(smoothOpNb)/2
 
 c read smoothing [i.e diffusion] operator:
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth2Doperator',smoothOpNb
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &           1,smooth2D_Kux,1,1,mythid)
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &           1,smooth2D_Kvy,2,1,mythid)
-      CALL EXCH_XY_RL ( smooth2D_Kux, myThid )
-      CALL EXCH_XY_RL ( smooth2D_Kvy, myThid )
+       write(fnamegeneric(1:80),'(1a,i3.3)')
+     &     'smooth2Doperator',smoothOpNb
+       CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
+     &            1,smooth2D_Kux,1,1,mythid)
+       CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
+     &            1,smooth2D_Kvy,2,1,mythid)
+       CALL EXCH_XY_RL ( smooth2D_Kux, myThid )
+       CALL EXCH_XY_RL ( smooth2D_Kvy, myThid )
+      endif
 
 c initialize filter variance field:
       DO bj=jtlo,jthi
