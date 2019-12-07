@@ -113,28 +113,6 @@ c of the approximate method results (that can be predicted).
 c
 c note: the exact method requires the adjoint of smooth_diff2D.F (see below)
 
-      diLoc=15 !int(5*smooth_L/smooth_dx)
-      djLoc=20 !int(5*smooth_L/smooth_dx)
-
-      DO ii=1,diLoc
-      DO jj=1,djLoc
-
-      DO bj=jtlo,jthi
-       DO bi=itlo,ithi
-         DO j=1-OLy,sNy+OLy
-          DO i=1-OLx,sNx+OLx
-           smoothTmpFld(i,j,bi,bj)=0.
-          ENDDO
-         ENDDO
-
-         DO j=jj,sNy,djLoc
-          DO i=ii,sNx,diLoc
-           smoothTmpFld(i,j,bi,bj)=1.
-          ENDDO
-         ENDDO
-       ENDDO
-      ENDDO
-
 C --- Check which algorithm is used
       if (smooth2DAlgorithm(smoothOpNb).eq.'matern') then
         WRITE(errorMessageUnit,'(A,/,A)' )
@@ -144,6 +122,29 @@ C --- Check which algorithm is used
         STOP 'ABNORMAL END: S/R smooth_filtervar2D'
 
        else
+
+        diLoc=15 !int(5*smooth_L/smooth_dx)
+        djLoc=20 !int(5*smooth_L/smooth_dx)
+
+        DO ii=1,diLoc
+        DO jj=1,djLoc
+
+        DO bj=jtlo,jthi
+         DO bi=itlo,ithi
+           DO j=1-OLy,sNy+OLy
+            DO i=1-OLx,sNx+OLx
+             smoothTmpFld(i,j,bi,bj)=0.
+            ENDDO
+           ENDDO
+
+           DO j=jj,sNy,djLoc
+            DO i=ii,sNx,diLoc
+             smoothTmpFld(i,j,bi,bj)=1.
+            ENDDO
+           ENDDO
+         ENDDO
+        ENDDO
+
 c note: as we go to adjoint part, we need to have 0 in overlaps
 c       so we must NOT have done an exchange for smoothTmpFld
 

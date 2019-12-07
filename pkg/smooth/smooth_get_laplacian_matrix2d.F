@@ -71,29 +71,29 @@ C     Note: sign is reversed from smooth_diff2d!
           if (smooth2Dmask(i,j,bi,bj).NE.0.) then
 
       center(i,j,bi,bj)=center(i,j,bi,bj) -
-     & ( dyG(i,j,bi,bj)*recip_dxC(i,j,bi,bj)
+     & ( dyG(i,j,bi,bj)*recip_dxC(i,j,bi,bj)*
      &   smooth2Dmask(i,j,bi,bj)*smooth2Dmask(i-1,j,bi,bj) ) -
-     & ( dyG(i+1,j,bi,bj)*recip_dxC(i+1,j,bi,bj)
+     & ( dyG(i+1,j,bi,bj)*recip_dxC(i+1,j,bi,bj)*
      &   smooth2Dmask(i,j,bi,bj)*smooth2Dmask(i+1,j,bi,bj) ) -
-     & ( dxG(i,j,bi,bj)*recip_dyC(i,j,bi,bj)
+     & ( dxG(i,j,bi,bj)*recip_dyC(i,j,bi,bj)*
      &   smooth2Dmask(i,j,bi,bj)*smooth2Dmask(i,j-1,bi,bj) ) -
-     & ( dxG(i,j+1,bi,bj)*recip_dyC(i,j+1,bi,bj)
+     & ( dxG(i,j+1,bi,bj)*recip_dyC(i,j+1,bi,bj)*
      &   smooth2Dmask(i,j,bi,bj)*smooth2Dmask(i,j+1,bi,bj) )
 
-      west(i,j,bi,bj)=west(i,j,bi,bj)+
-     & dyG(i,j,bi,bj)*recip_dxC(i,j,bi,bj)
+      west(i,j,bi,bj)=west(i,j,bi,bj) +
+     & dyG(i,j,bi,bj)*recip_dxC(i,j,bi,bj)*
      & smooth2Dmask(i,j,bi,bj)*smooth2Dmask(i-1,j,bi,bj)
 
       east(i,j,bi,bj)=east(i,j,bi,bj) +
-     & dyG(i+1,j,bi,bj)*recip_dxC(i+1,j,bi,bj)
+     & dyG(i+1,j,bi,bj)*recip_dxC(i+1,j,bi,bj)*
      & smooth2Dmask(i,j,bi,bj)*smooth2Dmask(i+1,j,bi,bj)
 
       south(i,j,bi,bj)=south(i,j,bi,bj) +
-     & dxG(i,j,bi,bj)*recip_dyC(i,j,bi,bj)
+     & dxG(i,j,bi,bj)*recip_dyC(i,j,bi,bj)*
      & smooth2Dmask(i,j,bi,bj)*smooth2Dmask(i,j-1,bi,bj)
 
       north(i,j,bi,bj)=north(i,j,bi,bj) +
-     & dxG(i,j+1,bi,bj)*recip_dyC(i,j+1,bi,bj)
+     & dxG(i,j+1,bi,bj)*recip_dyC(i,j+1,bi,bj)*
      & smooth2Dmask(i,j,bi,bj)*smooth2Dmask(i,j+1,bi,bj)
 
             endif

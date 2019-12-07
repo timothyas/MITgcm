@@ -66,7 +66,7 @@ C --- Loop counters
 C --- Initialize solver stuff
       jacobi_iter = 0
       n_iter_max = 500
-      TOL = 1.0 _D -8
+      TOL = 1.0 _d -8
       initial_norm = 0. _d 0
       relErr = 100. _d 0
       
@@ -94,14 +94,14 @@ C --- The jacobi iterations
          do j = 1,sNy
           do i = 1,sNx
            if ((smooth2Dmask(i,j,bi,bj).NE.0. _d 0).and.
-     &         (center(i,j,bi,bj).ne.0. _d 0) then
+     &         (center(i,j,bi,bj).ne.0. _d 0) ) then
 
                 ! Update "final" estimate
                 fld_out(i,j,bi,bj) = fld_rhs(i,j,bi,bj) -
      &              north(i,j,bi,bj)*fld_initial(i,j+1,bi,bj) -
      &              south(i,j,bi,bj)*fld_initial(i,j-1,bi,bj) -
      &              east(i,j,bi,bj) *fld_initial(i+1,j,bi,bj) -
-     &              west(i,j,bi,bj) *fld_initial(i-1,j,bi,bj) -
+     &              west(i,j,bi,bj) *fld_initial(i-1,j,bi,bj)
 
                 fld_out(i,j,bi,bj) = 
      &              fld_out(i,j,bi,bj)/center(i,j,bi,bj)
