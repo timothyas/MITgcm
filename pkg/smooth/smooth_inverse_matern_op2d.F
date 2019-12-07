@@ -2,7 +2,7 @@
 
       subroutine smooth_inverse_matern_op2d (
      U     fld_in,
-     I     smooth2DMask,smoothOpNb,mythid)
+     I     smooth2DMask,smoothOpNb,doNormalize,mythid)
 
 C     *==========================================================*
 C     | SUBROUTINE smooth_inverse_matern_op2d
@@ -18,6 +18,9 @@ C     | o This is used as a preconditioner to get an estimate
 C     |   of the prior preconditioned misfit Hessian (Gauss Newton
 C     |   approximation)
 C     |
+C     | o if doNormalize==True, result is multiplied by 1/sqrt(var(A^{-1}))
+C     |   which is written to file as smooth2Dnorm00<smoothOpNb>
+C     |
 C     *==========================================================*
 
       IMPLICIT NONE
@@ -31,6 +34,7 @@ C --- Inputs
       _RL fld_in(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL smooth2DMask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nR,nSx,nSy)
       integer smoothOpNb
+      logical doNormalize
       integer myThid
 
 C --- Local parameters
@@ -84,11 +88,23 @@ C     This is a hack. Provide this file at run time
       CALL EXCH_XY_RL ( kappa_squared, myThid )
 
 c --- read normalization field [i.e. 1/sqrt(var(filter))]:
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth2Dnorm',smoothOpNb
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &           1, smooth2DNorm,1,1,mythid)
-      CALL EXCH_XY_RL ( smooth2DNorm, myThid )
+      if (doNormalize) then
+       write(fnamegeneric(1:80),'(1a,i3.3)')
+     &     'smooth2Dnorm',smoothOpNb
+       CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
+     &            1, smooth2DNorm,1,1,mythid)
+       CALL EXCH_XY_RL ( smooth2DNorm, myThid )
+      else
+       do bj = jtlo,jthi
+        do bi = itlo,ithi
+         do j = 1-OLy,sNy+OLy
+          do i = 1-OLx,sNx+OLx
+           smooth2DNorm(i,j,bi,bj)=1. _d 0
+          enddo
+         enddo
+        enddo
+       enddo
+      endif
 
 C ------------------------------------------------------------------
 C the actual algorithm
@@ -127,6 +143,7 @@ c --- 3. Get jacobi to solve our problem
      &      smooth2DMask, myThid )
 
 c --- 4. Normalize: divide by ~sqrt(var(filter)):
+c        or multiply by 1 if doNormalize==False
       do bj = jtlo,jthi
        do bi = itlo,ithi
         do j = 1,sNy
