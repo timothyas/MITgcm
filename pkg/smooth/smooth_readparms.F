@@ -75,8 +75,8 @@ c--   Set default values.
         smooth2Dtype(smoothOpNb)=0
         smooth2Dsize(smoothOpNb)=0
         smooth2Dfilter(smoothOpNb)=0
-        smooth2DMaskName(smoothOpNb)='maskC'
-        smooth2DAlgorithm(smoothOpNb)='WC01'
+        smooth2DMaskName(smoothOpNb) = 'maskC'
+        smooth2DAlgorithm(smoothOpNb) = 'WC01  '
 
         smooth3Dnbt(smoothOpNb)=0
         smooth3D_Lx0(smoothOpNb)=0. _d 0
@@ -87,8 +87,8 @@ c--   Set default values.
         smooth3DtypeZ(smoothOpNb)=0
         smooth3DsizeZ(smoothOpNb)=0
         smooth3Dfilter(smoothOpNb)=0
-        smooth3DMaskName(smoothOpNb)='maskC'
-        smooth3DAlgorithm(smoothOpNb)='WC01'
+        smooth3DMaskName(smoothOpNb)(1:5) = 'maskC'
+        smooth3DAlgorithm(smoothOpNb)(1:6) = 'WC01  '
       ENDDO
 
 C--   Read settings from model parameter file "data.smooth".
@@ -129,11 +129,11 @@ C--   Print pkg/smooth settings to standard output:
 
       DO smoothOpNb=1,smoothOpNbMax
         IF (smooth2Dtype(smoothOpNb).NE.0) THEN
-          WRITE(msgBuf,'(A,I2,I6,2f6.0,2A)') 'smooth 2D parameters: ',
+          WRITE(msgBuf,'(A,I2,I6,2f6.0,4A)') 'smooth 2D parameters: ',
      &       smoothOpNb,smooth2Dnbt(smoothOpNb),
      &       smooth2D_Lx0(smoothOpNb),smooth2D_Ly0(smoothOpNb),
-     &       smooth2DmaskName(smoothOpNb),
-     &       smooth2DAlgorithm(smoothOpNb)
+     &       '  ', smooth2DmaskName(smoothOpNb),
+     &       '  ', smooth2DAlgorithm(smoothOpNb)
           CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
      &       SQUEEZE_RIGHT , 1)
         ENDIF
@@ -142,12 +142,12 @@ C--   Print pkg/smooth settings to standard output:
       DO smoothOpNb=1,smoothOpNbMax
         IF ((smooth3DtypeZ(smoothOpNb).NE.0).OR.
      &      (smooth3DtypeH(smoothOpNb).NE.0)) then
-          WRITE(msgBuf,'(A,I2,I6,3f6.0,2A)') 'smooth 3D parameters: ',
+          WRITE(msgBuf,'(A,I2,I6,3f6.0,4A)') 'smooth 3D parameters: ',
      &       smoothOpNb,smooth3Dnbt(smoothOpNb),
      &       smooth3D_Lx0(smoothOpNb),smooth3D_Ly0(smoothOpNb),
      &       smooth3D_Lz0(smoothOpNb),
-     &       smooth3DmaskName(smoothOpNb),
-     &       smooth3DAlgorithm(smoothOpNb)
+     &       '  ', smooth3DmaskName(smoothOpNb),
+     &       '  ', smooth3DAlgorithm(smoothOpNb)
           CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
      &       SQUEEZE_RIGHT , 1)
         ENDIF
