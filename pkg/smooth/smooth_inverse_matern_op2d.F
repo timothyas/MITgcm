@@ -32,7 +32,7 @@ C     *==========================================================*
 
 C --- Inputs
       _RL fld_in(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-      _RL smooth2DMask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nR,nSx,nSy)
+      _RL smooth2DMask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       integer smoothOpNb
       logical doNormalize
       integer myThid
@@ -44,6 +44,7 @@ C --- Local parameters
       integer jtlo,jthi
 
       _RL kappa_squared(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL filtervar_norm(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL fld_tmp(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL center(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL north(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
@@ -92,14 +93,14 @@ c --- read normalization field [i.e. 1/sqrt(var(filter))]:
        write(fnamegeneric(1:80),'(1a,i3.3)')
      &     'smooth2Dnorm',smoothOpNb
        CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &            1, smooth2DNorm,1,1,mythid)
-       CALL EXCH_XY_RL ( smooth2DNorm, myThid )
+     &            1, filtervar_norm,1,1,mythid)
+       CALL EXCH_XY_RL ( filtervar_norm, myThid )
       else
        do bj = jtlo,jthi
         do bi = itlo,ithi
          do j = 1-OLy,sNy+OLy
           do i = 1-OLx,sNx+OLx
-           smooth2DNorm(i,j,bi,bj)=1. _d 0
+           filtervar_norm(i,j,bi,bj)=1. _d 0
           enddo
          enddo
         enddo
@@ -116,26 +117,22 @@ c --- 1. Get laplacian matrix elements
      &      smooth2DMask, myThid)
 
 c --- 2. Create A matrix associated with operator A = (k^2 - nabla^2)
+c        operate directly on overlap region, inputs "pre-exchanged"
       do bj = jtlo,jthi
        do bi = itlo,ithi
-        do j = 1,sNy
-         do i = 1,sNx
-          center(i,j,bi,bj) = smooth2D_Kux(i,j,bi,bj) -
+        do j = 1-OLy,sNy+OLy
+         do i = 1-OLx,sNx+OLx
+          center(i,j,bi,bj) = kappa_squared(i,j,bi,bj) -
      &                         center(i,j,bi,bj) 
           north(i,j,bi,bj)  = -north(i,j,bi,bj)
           south(i,j,bi,bj)  = -south(i,j,bi,bj)
           east(i,j,bi,bj)   = -east (i,j,bi,bj)
           west(i,j,bi,bj)   = -west (i,j,bi,bj)
-          enddo
          enddo
         enddo
        enddo
+      enddo
 
-      CALL EXCH_XY_RL ( center, myThid )
-      CALL EXCH_XY_RL ( north, myThid )
-      CALL EXCH_XY_RL ( south, myThid )
-      CALL EXCH_XY_RL ( east, myThid )
-      CALL EXCH_XY_RL ( west, myThid )
 
 c --- 3. Get jacobi to solve our problem
       call smooth_jacobi_2d( fld_in, fld_tmp,
@@ -149,7 +146,7 @@ c        or multiply by 1 if doNormalize==False
         do j = 1,sNy
          do i = 1,sNx
           fld_in(i,j,bi,bj)=fld_tmp(i,j,bi,bj)
-     &    *smooth2DNorm(i,j,bi,bj)
+     &    *filtervar_norm(i,j,bi,bj)
          enddo
         enddo
        enddo
