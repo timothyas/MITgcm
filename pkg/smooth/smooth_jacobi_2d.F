@@ -52,10 +52,13 @@ C --- Local parameters
       integer itlo,ithi
       integer jtlo,jthi
 
-      _RL TOL, initial_norm, relErr
+      _RL TOL, TOL_SQ, initial_norm, relErr, absErr
       integer jacobi_iter, n_iter_max
 
       _RL fld_initial(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL tile_initial_norm(nSx,nSy)
+      _RL tile_absErr(nSx,nSy)
+      character(max_len_mbuf) msgBuf
 
 C --- Loop counters
       jtlo = mybylo(mythid)
@@ -67,13 +70,14 @@ C --- Initialize solver stuff
       jacobi_iter = 0
       n_iter_max = 500
       TOL = 1.0 _d -8
-      initial_norm = 0. _d 0
+      TOL_SQ = TOL*TOL
       relErr = 100. _d 0
+      absErr = 0. _d 0 
       
       do bj = jtlo,jthi
        do bi = itlo,ithi
-        do j = 1,sNy
-         do i = 1,sNx
+        do j = 1-OLy,sNy+OLy
+         do i = 1-OLx,sNx+OLx
           fld_initial(i,j,bi,bj) = 1. _d 0
           fld_out(i,j,bi,bj) = 1. _d 0
          enddo
@@ -82,7 +86,7 @@ C --- Initialize solver stuff
       enddo
     
 C --- The jacobi iterations
-      do while ( (relErr.ge.TOL) .and. (jacobi_iter.lt.n_iter_max))
+      do while ((jacobi_iter.lt.n_iter_max).and.(relErr.ge.TOL_SQ))
 
        ! reset error and update counter
        initial_norm = 0. _d 0
@@ -103,8 +107,11 @@ C --- The jacobi iterations
      &              east(i,j,bi,bj) *fld_initial(i+1,j,bi,bj) -
      &              west(i,j,bi,bj) *fld_initial(i-1,j,bi,bj)
 
+
                 fld_out(i,j,bi,bj) = 
      &              fld_out(i,j,bi,bj)/center(i,j,bi,bj)
+           else
+            fld_out(i,j,bi,bj)=0. _d 0
            endif
           enddo
          enddo
@@ -120,19 +127,47 @@ C --- The jacobi iterations
           do i = 1,sNx
 
            ! Compute error
-           initial_norm = initial_norm +
-     &         fld_out(i,j,bi,bj)**2
-           relErr = relErr +
+           tile_initial_norm(bi,bj) = tile_initial_norm(bi,bj) +
+     &                                fld_initial(i,j,bi,bj)**2
+           tile_absErr(bi,bj) = tile_absErr(bi,bj) +
      &         (fld_out(i,j,bi,bj)-fld_initial(i,j,bi,bj))**2
 
-           ! Reset initial estimate
-           fld_initial(i,j,bi,bj)=fld_out(i,j,bi,bj)
           enddo
          enddo
         enddo
        enddo
 
-       relErr = sqrt(relErr) / sqrt(initial_norm)
+       CALL GLOBAL_SUM_TILE_RL(tile_initial_norm, initial_norm, myThid)
+       CALL GLOBAL_SUM_TILE_RL(tile_absErr, absErr, myThid)
+
+       relErr = absErr / initial_norm
+
+       write(msgbuf,'(A,I,A,F)') 'SMOOTH_JACOBI_2D: iter ',
+     &  jacobi_iter, ' absErr: ',absErr
+       call print_message(msgbuf,standardmessageunit,
+     &  SQUEEZE_RIGHT,mythid)
+
+       write(msgbuf,'(A,I,A,F)') 'SMOOTH_JACOBI_2D: iter ',
+     &  jacobi_iter, ' initial_norm: ',initial_norm
+       call print_message(msgbuf,standardmessageunit,
+     &  SQUEEZE_RIGHT,mythid)
+
+       write(msgbuf,'(A,I,A,F)') 'SMOOTH_JACOBI_2D: iter ',
+     &  jacobi_iter, ' relErr: ',relErr
+       call print_message(msgbuf,standardmessageunit,
+     &  SQUEEZE_RIGHT,mythid)
+
+
+           ! Reset initial estimate
+       do bj = jtlo,jthi
+        do bi = itlo,ithi
+         do j = 1,sNy
+          do i = 1,sNx
+           fld_initial(i,j,bi,bj)=fld_out(i,j,bi,bj)
+          enddo
+         enddo
+        enddo
+       enddo
        CALL EXCH_XY_RL ( fld_initial , myThid )
 
       enddo ! end dowhile <TOL and <n_iter_max
