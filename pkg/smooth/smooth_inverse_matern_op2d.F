@@ -80,9 +80,9 @@ c     since they're created here
       enddo
 
 C --- Read in K^2:
-C     This is a hack. Provide this file at run time
+C     Provide this file at run time
       write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth2Doperator',smoothOpNb
+     &    'smooth2Dkappa',smoothOpNb
       CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
      &           1, kappa_squared,1,1,mythid)
       CALL EXCH_XY_RL ( kappa_squared, myThid )
