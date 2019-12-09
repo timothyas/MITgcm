@@ -41,7 +41,7 @@ C     *==========================================================*
       _RL smoothTmpFld (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL smoothTmpVar (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL smoothTmpMean(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-      _RS smooth2Dmask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL smooth2Dmask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
 
       jtlo = mybylo(mythid)
       jthi = mybyhi(mythid)
@@ -76,13 +76,16 @@ c     filter variance without actually running the model
        ENDDO
       ENDDO
 
+      CALL EXCH_XY_RL( smooth2DMask, myThid )
+
 c if smooth2Dfilter(smoothOpNb)=0: the filter variance field
 c has been computed earlier and is already in the run directory
 c so this routine does not do anything
 
       IF (smooth2Dfilter(smoothOpNb).NE.0) then
 
-      if (smooth2DAlgorithm(smoothOpNb).ne.'matern') then
+      if (smooth2DAlgorithm(smoothOpNb)(1:4).eq.'WC01') then
+
        nbt_in=smooth2Dnbt(smoothOpNb)/2
 
 c read smoothing [i.e diffusion] operator:
@@ -94,14 +97,14 @@ c read smoothing [i.e diffusion] operator:
      &            1,smooth2D_Kvy,2,1,mythid)
        CALL EXCH_XY_RL ( smooth2D_Kux, myThid )
        CALL EXCH_XY_RL ( smooth2D_Kvy, myThid )
-      endif
+      endif ! if algorithm == 'WC01'
 
 c initialize filter variance field:
       DO bj=jtlo,jthi
        DO bi=itlo,ithi
          DO j=1-OLy,sNy+OLy
           DO i=1-OLx,sNx+OLx
-           smooth2Dnorm(i,j,bi,bj)=0.
+           smooth2Dnorm(i,j,bi,bj)=0. _d 0
           ENDDO
          ENDDO
        ENDDO
@@ -197,91 +200,102 @@ c convert variance to normalization factor:
        ENDDO      !DO ii=1,diLoc
        ENDDO      !DO jj=1,djLoc
 
-      endif ! algorithm check
+      endif ! end algorithm check
 
       ELSEIF (smooth2Dfilter(smoothOpNb).EQ.1) then
 c compute the normalization matrix using the approximate method
 
+C --- 1. Initialize mean and variance
       DO bj=jtlo,jthi
        DO bi=itlo,ithi
          DO j=1-OLy,sNy+OLy
           DO i=1-OLx,sNx+OLx
-           smoothTmpMean(i,j,bi,bj)   = 0. _d 0
-           smoothTmpVar(i,j,bi,bj)   = 0. _d 0
+           smoothTmpMean(i,j,bi,bj) = 0. _d 0
+           smoothTmpVar(i,j,bi,bj)  = 0. _d 0
           ENDDO
          ENDDO
        ENDDO
       ENDDO
 
-c initialize random number generator
+c --- 2. Initialize random number generator
       smoothTmpFld(1,1,1,1)=port_rand(1.d0)
       nbRand=1000
 
-         DO ii=1,nbRand
-            WRITE(standardMessageUnit,'(A,I4,A,I4)')
+      DO ii=1,nbRand
+       WRITE(standardMessageUnit,'(A,I4,A,I4)')
      & 'smooth_filtervar2D: ',ii,' members done out of',nbRand
 
-c fill smoothTmpFld with random numbers:
-      DO bj=jtlo,jthi
-       DO bi=itlo,ithi
+c --- 3. Iniitalize field within random sample loop
+       DO bj=jtlo,jthi
+        DO bi=itlo,ithi
          DO j=1-OLy,sNy+OLy
           DO i=1-OLx,sNx+OLx
            smoothTmpFld(i,j,bi,bj)   = 0. _d 0
-           if (smooth2dmask(i,j,bi,bj).NE.0) then
-           smoothTmpFld(i,j,bi,bj)=port_rand_norm()
-           endif
-c WC01: division by sqrt(area):
-           if (smooth2DAlgorithm(smoothOpNb).eq.'WC01')
-     & smoothTmpFld(i,j,bi,bj)=smoothTmpFld(i,j,bi,bj)
-     & *sqrt(recip_rA(i,j,bi,bj))
           ENDDO
          ENDDO
+        ENDDO
        ENDDO
-      ENDDO
 
-      CALL EXCH_XY_RL ( smoothTmpFld, myThid )
+c --- 4. set points wehre mask!=0 to random number
+c --- WC01: divide by sqrt(area)
+       DO bj=jtlo,jthi
+        DO bi=itlo,ithi
+         DO j=1,sNy
+          DO i=1,sNx
+           if (smooth2dmask(i,j,bi,bj).NE.0) then
+             smoothTmpFld(i,j,bi,bj)=port_rand_norm()
+            if (smooth2DAlgorithm(smoothOpNb).eq.'WC01') then
+             smoothTmpFld(i,j,bi,bj)=
+     &       smoothTmpFld(i,j,bi,bj)*sqrt(recip_rA(i,j,bi,bj))
+            endif
+           endif
+          ENDDO
+         ENDDO
+        ENDDO
+       ENDDO
+       CALL EXCH_XY_RL ( smoothTmpFld, myThid )
 
-c smooth random number field
-      if (smooth2DAlgorithm(smoothOpNb).eq.'WC01')
+c --- 5. Smooth random field with appropriate algorithm
+       if (smooth2DAlgorithm(smoothOpNb).eq.'WC01')
      &  call smooth_diff2D(smoothTmpFld,smooth2dmask,nbt_in,mythid)
 
-      if (smooth2DAlgorithm(smoothOpNb).eq.'matern')
+       if (smooth2DAlgorithm(smoothOpNb).eq.'matern')
      &  call smooth_inverse_matern_op2d(
      &          smoothTmpFld,smooth2DMask,smoothOpNb,doNormalize,myThid)
 
-c accumulate statistics (to compute the variance later)
-      DO bj=jtlo,jthi
-       DO bi=itlo,ithi
+c --- 6. accumulate statistics (to compute the variance later)
+       DO bj=jtlo,jthi
+        DO bi=itlo,ithi
          DO j=1-OLy,sNy+OLy
           DO i=1-OLx,sNx+OLx
-      smoothTmpVar(i,j,bi,bj)=smoothTmpVar(i,j,bi,bj)
-     & +smoothTmpFld(i,j,bi,bj)*smoothTmpFld(i,j,bi,bj)/nbRand
-      smoothTmpMean(i,j,bi,bj)=smoothTmpMean(i,j,bi,bj)
-     & +smoothTmpFld(i,j,bi,bj)/nbRand
+           smoothTmpVar(i,j,bi,bj)=smoothTmpVar(i,j,bi,bj)
+     &      +smoothTmpFld(i,j,bi,bj)*smoothTmpFld(i,j,bi,bj)/nbRand
+           smoothTmpMean(i,j,bi,bj)=smoothTmpMean(i,j,bi,bj)
+     &      +smoothTmpFld(i,j,bi,bj)/nbRand
           ENDDO
          ENDDO
+        ENDDO
        ENDDO
-      ENDDO
 
-      ENDDO
+      ENDDO ! end ii->nbRand
 
-c compute variance and convert it to normalization factor:
+c --- 7. compute variance and convert it to normalization factor:
       DO bj=jtlo,jthi
        DO bi=itlo,ithi
-         DO j=1-OLy,sNy+OLy
-          DO i=1-OLx,sNx+OLx
-           if (smooth2dmask(i,j,bi,bj).NE.0) then
+        DO j=1-OLy,sNy+OLy
+         DO i=1-OLx,sNx+OLx
+          if (smooth2dmask(i,j,bi,bj).NE.0) then
            smooth2Dnorm(i,j,bi,bj)=
-     & 1/sqrt ( nbRand/(nbRand-1)* ( smoothTmpVar(i,j,bi,bj) -
-     & smoothTmpMean(i,j,bi,bj)*smoothTmpMean(i,j,bi,bj)
-     &  )  )
+     &      1/sqrt ( nbRand/(nbRand-1)*
+     &      (smoothTmpVar(i,j,bi,bj) -
+     &          smoothTmpMean(i,j,bi,bj)*smoothTmpMean(i,j,bi,bj)) )
            endif
           ENDDO
          ENDDO
+        ENDDO
        ENDDO
-      ENDDO
 
-      ENDIF
+      ENDIF ! end smooth2Dfilter == 1 or 2
 
 c write smooth2Dnorm to file:
       write(fnamegeneric(1:80),'(1a,i3.3)')
@@ -290,7 +304,7 @@ c write smooth2Dnorm to file:
      &            1,smooth2Dnorm,1,1,mythid)
       CALL EXCH_XY_RL ( smooth2Dnorm,  myThid )
 
-      ENDIF
+      ENDIF ! end smooth2Dtype != 0
 
       END
 
