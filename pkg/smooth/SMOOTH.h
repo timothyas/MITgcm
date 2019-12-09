@@ -75,6 +75,7 @@ c fields:
      & smooth2D_Lx,smooth2D_Ly
 
       COMMON /smooth_flds_c/
+     & smooth3DAlgorithm, smooth2DAlgorithm,
      & smooth3DmaskName, smooth2DmaskName
 
       COMMON /smooth_operators_i/
