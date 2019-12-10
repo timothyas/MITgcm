@@ -88,24 +88,7 @@ C     Provide this file at run time
      &           1, kappa_squared,1,1,mythid)
       CALL EXCH_XY_RL ( kappa_squared, myThid )
 
-c --- read normalization field [i.e. 1/sqrt(var(filter))]:
-      if (doNormalize) then
-       write(fnamegeneric(1:80),'(1a,i3.3)')
-     &     'smooth2Dnorm',smoothOpNb
-       CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &            1, filtervar_norm,1,1,mythid)
-       CALL EXCH_XY_RL ( filtervar_norm, myThid )
-      else
-       do bj = jtlo,jthi
-        do bi = itlo,ithi
-         do j = 1-OLy,sNy+OLy
-          do i = 1-OLx,sNx+OLx
-           filtervar_norm(i,j,bi,bj)=1. _d 0
-          enddo
-         enddo
-        enddo
-       enddo
-      endif
+
 
 C ------------------------------------------------------------------
 C the actual algorithm
@@ -133,24 +116,13 @@ c        operate directly on overlap region, inputs "pre-exchanged"
        enddo
       enddo
 
-
 c --- 3. Get jacobi to solve our problem
-      call smooth_jacobi_2d( fld_in, fld_tmp,
+      call smooth_jacobi_2d( fld_in,
      &      center, north, south, east, west,
      &      smooth2DMask, myThid )
 
-c --- 4. Normalize: divide by ~sqrt(var(filter)):
-c        or multiply by 1 if doNormalize==False
-      do bj = jtlo,jthi
-       do bi = itlo,ithi
-        do j = 1,sNy
-         do i = 1,sNx
-          fld_in(i,j,bi,bj)=fld_tmp(i,j,bi,bj)
-     &    *filtervar_norm(i,j,bi,bj)
-         enddo
-        enddo
-       enddo
-      enddo
-      CALL EXCH_XY_RL ( fld_in , myThid )
+c --- 4. Apply normalization field [i.e. 1/sqrt(var(filter))]:
+      if (doNormalize) call smooth_apply_filternorm2d(
+     &                          fld_in, smoothOpNb, myThid)
        
       end
