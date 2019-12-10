@@ -67,8 +67,6 @@ c --- 1. Apply k^2 to fld_in and store in separate field
         enddo
        enddo
     
-      CALL EXCH_XY_RL ( fld_in_k, myThid )
-
 c --- 2. Apply laplacian
       call smooth_apply_laplacian2d(fld_in,smooth2DMask,mythid)
 
@@ -83,5 +81,6 @@ c --- 3. Stick 'em together: K^2(fld) - laplacian(fld)
          enddo
         enddo
        enddo
+       CALL EXCH_XY_RL ( fld_in, myThid )
        
       end
