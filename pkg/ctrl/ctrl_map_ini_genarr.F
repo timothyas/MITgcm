@@ -273,6 +273,7 @@ C     == local variables ==
       integer numsmo, k2
       logical dowc01
       logical dosmooth
+      logical domatern_regular, domatern_precond, domatern_normalize
       logical doscaling
       logical dolog10ctrl
       _RL log10initval
@@ -325,18 +326,17 @@ c--   Now, read the control vector.
              if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
      &           numsmo=xx_genarr2d_preproc_i(k2,iarr)
           endif
-          if (xx_genarr2d_preproc(k2,iarr).EQ.'matern_regular') then
-             domatern_regular=.TRUE.
+          if (xx_genarr2d_preproc(k2,iarr)(1:6).EQ.'matern') then
+             if (xx_genarr2d_preproc(k2,iarr)(7:14).EQ.'_regular') then
+              domatern_regular=.TRUE.
+             elseif(xx_genarr2d_preproc(k2,iarr)(7:15).EQ.'_precond') then
+              domatern_precond=.TRUE.
+             endif
+             if(xx_genarr2d_preproc_c(k2,iarr)(7:13).EQ.'_nonorm') then
+              domatern_normalize=.FALSE.
+             endif
              if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
      &           numsmo=xx_genarr2d_preproc_i(k2,iarr)
-          endif
-          if (xx_genarr2d_preproc(k2,iarr).EQ.'matern_precond') then
-             domatern_precond=.TRUE.
-             if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
-     &           numsmo=xx_genarr2d_preproc_i(k2,iarr)
-          endif
-          if (xx_genarr2d_preproc_c(k2,iarr).EQ.'matern_nonorm') then
-             domatern_normalize=.FALSE.
           endif
           if (xx_genarr2d_preproc(k2,iarr).EQ.'noscaling') then
              doscaling=.FALSE.
@@ -378,7 +378,7 @@ CADJ STORE mask2D = tapelev_init, key = 1
 CADJ STORE mask2D = tapelev_init, key = 1
        IF (dosmooth) call smooth2d(xx_gen,mask2D,numsmo,mythid)
        IF (domatern_regular.and.domatern_normalize) 
-     &      call smooth_apply_filternorm2d(x_gen, numsmo, mythid)
+     &      call smooth_apply_filternorm2d(xx_gen, numsmo, mythid)
        IF (domatern_precond) call smooth_inverse_matern_op2d(
      &          xx_gen,mask2D,numsmo,domatern_normalize,mythid)
       ENDIF
