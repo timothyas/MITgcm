@@ -44,8 +44,6 @@ C --- Local parameters
       integer jtlo,jthi
 
       _RL kappa_squared(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-      _RL filtervar_norm(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-      _RL fld_tmp(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL center(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL north(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL south(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
@@ -69,7 +67,6 @@ c     since they're created here
         do j = 1-OLy,sNy+OLy
          do i = 1-OLx,sNx+OLx
           kappa_squared(i,j,bi,bj) = 0. _d 0
-          fld_tmp(i,j,bi,bj) = 0. _d 0
           center(i,j,bi,bj) = 0. _d 0
           north(i,j,bi,bj) = 0. _d 0
           south(i,j,bi,bj) = 0. _d 0
@@ -88,7 +85,10 @@ C     Provide this file at run time
      &           1, kappa_squared,1,1,mythid)
       CALL EXCH_XY_RL ( kappa_squared, myThid )
 
-
+C --- Update halo retions for mask
+C     this is not done right now by ctrl_map_ini_genarr
+C     so we can't assume it to be the case
+      CALL EXCH_XY_RL( smooth2DMask, myThid )
 
 C ------------------------------------------------------------------
 C the actual algorithm
