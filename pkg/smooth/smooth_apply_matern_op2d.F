@@ -1,7 +1,7 @@
 #include "SMOOTH_OPTIONS.h"
 
       subroutine smooth_apply_matern_op2d (
-     U     fld_in,mask_in,smoothOpNb,mythid)
+     U     fld_in,smooth2DMask,smoothOpNb,mythid)
 
 C     *==========================================================*
 C     | SUBROUTINE smooth_apply_matern_op2d
@@ -25,7 +25,7 @@ c#include "tamc.h"
 
 C --- Inputs
       _RL fld_in(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-      _RL mask_in(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nR,nSx,nSy)
+      _RL smooth2DMask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nR,nSx,nSy)
       integer myThid
 
 C --- Local parameters
@@ -44,6 +44,9 @@ C --- Loop counters
       jthi = mybyhi(mythid)
       itlo = mybxlo(mythid)
       ithi = mybxhi(mythid)
+
+C --- Make sure input mask halos are good to go
+      CALL EXCH_XY_RL( smooth2DMask, myThid )
 
 C --- Read in K^2:
 C     Provide this file at run time
@@ -67,15 +70,15 @@ c --- 1. Apply k^2 to fld_in and store in separate field
       CALL EXCH_XY_RL ( fld_in_k, myThid )
 
 c --- 2. Apply laplacian
-      call smooth_apply_laplacian2d(fld_in,mask_in,mythid)
+      call smooth_apply_laplacian2d(fld_in,smooth2DMask,mythid)
 
 c --- 3. Stick 'em together: K^2(fld) - laplacian(fld)
        do bj = jtlo,jthi
         do bi = itlo,ithi
          do j = 1,sNy
           do i = 1,sNx
-            fld_in(i,j,bi,bj) = fld_in_k(i,j,bi,bj) -
-     &          fld_in(i,j,bi,bj)
+           fld_in(i,j,bi,bj) = (fld_in_k(i,j,bi,bj) -
+     &         fld_in(i,j,bi,bj))*smooth2DMask(i,j,bi,bj)
           enddo
          enddo
         enddo
