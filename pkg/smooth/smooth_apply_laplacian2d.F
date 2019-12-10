@@ -40,25 +40,21 @@ C --- Loop counters
 C --- Initialize output
       DO bj = jtlo,jthi
        DO bi = itlo,ithi
-        DO j = 1,sNy
-         DO i = 1,sNx
+        DO j = 1-OLy,sNy+OLy
+         DO i = 1-OLx,sNx+OLx
           fld_out(i,j,bi,bj)=0. _d 0
          ENDDO
         ENDDO
        ENDDO
       ENDDO
 
-      CALL EXCH_XY_RL ( fld_out , myThid )
-
 C --- Apply discretized Laplacian
 C     Note: sign is reversed from smooth_diff2d!
       DO bj = jtlo,jthi
-         DO bi = itlo,ithi
-            DO j = 1,sNy
-               DO i = 1,sNx
-
-      if (smooth2Dmask(i,j,bi,bj).NE.0.) then
-
+       DO bi = itlo,ithi
+        DO j = 1,sNy
+         DO i = 1,sNx
+          if (smooth2Dmask(i,j,bi,bj).NE.0.) then
       fld_out(i,j,bi,bj)=fld_out(i,j,bi,bj)-
      & dyG(i,j,bi,bj)*
      & smooth2Dmask(i,j,bi,bj)*smooth2Dmask(i-1,j,bi,bj)*
@@ -79,12 +75,11 @@ C     Note: sign is reversed from smooth_diff2d!
      & smooth2Dmask(i,j,bi,bj)*smooth2Dmask(i,j+1,bi,bj)*
      & (fld_in(i,j,bi,bj)-fld_in(i,j+1,bi,bj))*recip_dyC(i,j+1,bi,bj)
 
-      endif
-
-           ENDDO
-          ENDDO
+          endif
          ENDDO
         ENDDO
+       ENDDO
+      ENDDO
 
 C --- Replace fld_in with fld_out to return the result
       DO bj = jtlo,jthi
