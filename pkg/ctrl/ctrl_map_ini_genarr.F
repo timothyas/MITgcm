@@ -315,39 +315,39 @@ c--   Now, read the control vector.
 
       numsmo=1
       do k2 = 1, maxCtrlProc
-          if (xx_genarr2d_preproc(k2,iarr).EQ.'WC01') then
-             dowc01=.TRUE.
-             if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
-     &           numsmo=xx_genarr2d_preproc_i(k2,iarr)
-          endif
-          if ((.NOT.dowc01).AND.
-     &        (xx_genarr2d_preproc(k2,iarr).EQ.'smooth')) then
-             dosmooth=.TRUE.
-             if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
-     &           numsmo=xx_genarr2d_preproc_i(k2,iarr)
-          endif
-          if (xx_genarr2d_preproc(k2,iarr)(1:6).EQ.'matern') then
-             if (xx_genarr2d_preproc(k2,iarr)(7:14).EQ.'_regular') then
-              domatern_regular=.TRUE.
-             elseif(xx_genarr2d_preproc(k2,iarr)(7:15).EQ.'_precond') then
-              domatern_precond=.TRUE.
-             endif
-             if(xx_genarr2d_preproc_c(k2,iarr)(7:13).EQ.'_nonorm') then
-              domatern_normalize=.FALSE.
-             endif
-             if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
-     &           numsmo=xx_genarr2d_preproc_i(k2,iarr)
-          endif
-          if (xx_genarr2d_preproc(k2,iarr).EQ.'noscaling') then
-             doscaling=.FALSE.
-          endif
-          if (xx_genarr2d_preproc_c(k2,iarr).eq.'log10ctrl') then
-c             fld := log10(xx_gen)
-c               with initial guess for xx_gen set to log10initval
-c               passed to data.ctrl, (default = 0.0)
-              dolog10ctrl=.true.
-              log10initval = xx_genarr2d_preproc_r(k2,iarr)
-          endif
+       if (xx_genarr2d_preproc(k2,iarr).EQ.'WC01') then
+          dowc01=.TRUE.
+          if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
+     &        numsmo=xx_genarr2d_preproc_i(k2,iarr)
+       endif
+       if ((.NOT.dowc01).AND.
+     &     (xx_genarr2d_preproc(k2,iarr).EQ.'smooth')) then
+          dosmooth=.TRUE.
+          if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
+     &        numsmo=xx_genarr2d_preproc_i(k2,iarr)
+       endif
+       if (xx_genarr2d_preproc(k2,iarr)(1:6).EQ.'matern') then
+        if (xx_genarr2d_preproc(k2,iarr)(7:14).EQ.'_regular') then
+         domatern_regular=.TRUE.
+        elseif (xx_genarr2d_preproc(k2,iarr)(7:15).EQ.'_precond') then
+         domatern_precond=.TRUE.
+        endif
+        if(xx_genarr2d_preproc_c(k2,iarr)(7:13).EQ.'_nonorm') then
+         domatern_normalize=.FALSE.
+        endif
+        if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
+     &      numsmo=xx_genarr2d_preproc_i(k2,iarr)
+       endif
+       if (xx_genarr2d_preproc(k2,iarr).EQ.'noscaling') then
+          doscaling=.FALSE.
+       endif
+       if (xx_genarr2d_preproc_c(k2,iarr).eq.'log10ctrl') then
+c          fld := log10(xx_gen)
+c            with initial guess for xx_gen set to log10initval
+c            passed to data.ctrl, (default = 0.0)
+           dolog10ctrl=.true.
+           log10initval = xx_genarr2d_preproc_r(k2,iarr)
+       endif
       enddo
 
       fnamebase = xx_genarr2d_file(iarr)
