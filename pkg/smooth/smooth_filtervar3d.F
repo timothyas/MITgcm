@@ -16,6 +16,7 @@ C     *==========================================================*
       IMPLICIT NONE
 #include "SIZE.h"
 #include "EEPARAMS.h"
+#include "EESUPPORT.h"
 #include "PARAMS.h"
 #include "GRID.h"
 #include "SMOOTH.h"
