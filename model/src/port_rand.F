@@ -130,7 +130,7 @@ C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
 CBOP
 C     !ROUTINE: PORT_RAND_NORM
 C     !INTERFACE:
-      real*8 FUNCTION PORT_RAND_NORM()
+      real*8 FUNCTION PORT_RAND_NORM(seed)
 
 C     !DESCRIPTION:
 C     This function generates a normally distributed random number with
@@ -143,19 +143,19 @@ C     Changed: 2004.09.06 antti.westerlund@fimr.fi
 
 C     !USES:
       IMPLICIT NONE
+#ifdef _USE_INTEGERS
+      INTEGER seed
+C      seed=-1
+#else
+      real*8  seed
+C      seed=-1.d0
+#endif
 CEOP
 
 C     !LOCAL VARIABLES:
       real*8 port_rand
       real*8 x1, x2, xs, t
 
-#ifdef _USE_INTEGERS
-      INTEGER seed
-      seed=-1
-#else
-      real*8  seed
-      seed=-1.d0
-#endif
 c     seed=1618033.0d0
 
 C     first generate 2 equally distributed random numbers (-1,1)
