@@ -16,6 +16,7 @@ C     *==========================================================*
       IMPLICIT NONE
 #include "SIZE.h"
 #include "EEPARAMS.h"
+#include "EESUPPORT.h"
 #include "PARAMS.h"
 #include "GRID.h"
 #include "SMOOTH.h"
@@ -27,6 +28,9 @@ C     *==========================================================*
 
       Real*8   port_rand, port_rand_norm
       EXTERNAL PORT_RAND, PORT_RAND_NORM
+
+      Real*8 rand_seed
+      integer timeVals(8)
 
       integer i,j,k, bi, bj, ii, jj, kk
       integer itlo,ithi,jtlo,jthi
@@ -214,7 +218,11 @@ C --- 1. Initialize mean and variance
       ENDDO
 
 c --- 2. Initialize random number generator
-      smoothTmpFld(1,1,1,1)=port_rand(1.d0)
+c     seed is 1023 * pid * milliseconds from date/time
+      rand_seed = 1023. _d 0
+      call date_and_time(VALUES=timeVals)
+      rand_seed = rand_seed * REAL((1+myPid)*timeVals(8),8)
+      smoothTmpFld(1,1,1,1)=port_rand(rand_seed)
       nbRand=1000
 
       DO ii=1,nbRand
@@ -239,7 +247,7 @@ c --- WC01: divide by sqrt(area)
          DO j=1,sNy
           DO i=1,sNx
            if (smooth2dmask(i,j,bi,bj).NE.0) then
-             smoothTmpFld(i,j,bi,bj)=port_rand_norm()
+             smoothTmpFld(i,j,bi,bj)=port_rand_norm(-rand_seed)
             if (smooth2DAlgorithm(smoothOpNb).eq.'WC01') then
              smoothTmpFld(i,j,bi,bj)=
      &       smoothTmpFld(i,j,bi,bj)*sqrt(recip_rA(i,j,bi,bj))
