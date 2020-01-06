@@ -88,8 +88,6 @@ c so this routine does not do anything
 
       IF (smooth2Dfilter(smoothOpNb).NE.0) then
 
-      if (smooth2DAlgorithm(smoothOpNb)(1:4).eq.'WC01') then
-
        nbt_in=smooth2Dnbt(smoothOpNb)/2
 
 c read smoothing [i.e diffusion] operator:
@@ -101,7 +99,6 @@ c read smoothing [i.e diffusion] operator:
      &            1,smooth2D_Kvy,2,1,mythid)
        CALL EXCH_XY_RL ( smooth2D_Kux, myThid )
        CALL EXCH_XY_RL ( smooth2D_Kvy, myThid )
-      endif ! if algorithm == 'WC01'
 
 c initialize filter variance field:
       DO bj=jtlo,jthi
@@ -311,6 +308,12 @@ c write smooth2Dnorm to file:
       CALL WRITE_REC_3D_RL(fnamegeneric,smoothprec,
      &            1,smooth2Dnorm,1,1,mythid)
       CALL EXCH_XY_RL ( smooth2Dnorm,  myThid )
+
+c write out mean too
+      write(fnamegeneric(1:80),'(1a,i3.3)')
+     &    'smooth2Dmean',smoothOpNb
+      CALL WRITE_REC_3D_RL(fnamegeneric,smoothprec,
+     &            1,smoothTmpMean,1,1,mythid)
 
       ENDIF ! end smooth2Dtype != 0
 

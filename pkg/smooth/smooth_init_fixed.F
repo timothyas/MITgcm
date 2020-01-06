@@ -42,8 +42,7 @@ C     *==========================================================*
       ENDDO
 
       DO smoothOpNb=1,smoothOpNbMax
-      if ((smooth2Dtype(smoothOpNb).NE.0).and.
-     &    (smooth2DAlgorithm(smoothOpNb)(1:4).eq.'WC01')) then
+      if (smooth2Dtype(smoothOpNb).NE.0) then
       call smooth_init2D(smoothOpNb,mythid)
       endif
       ENDDO 
@@ -55,9 +54,8 @@ C     *==========================================================*
       ENDDO
 
       DO smoothOpNb=1,smoothOpNbMax
-      if (((smooth3DtypeZ(smoothOpNb).NE.0).OR.
-     &     (smooth3DtypeH(smoothOpNb).NE.0)).and.
-     &    (smooth3DAlgorithm(smoothOpNb)(1:4).eq.'WC01')) then
+      if ((smooth3DtypeZ(smoothOpNb).NE.0).OR.
+     & (smooth3DtypeH(smoothOpNb).NE.0)) then
       call smooth_init3D(smoothOpNb,mythid)
       endif
       ENDDO
