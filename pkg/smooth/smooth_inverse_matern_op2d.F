@@ -97,7 +97,7 @@ C ------------------------------------------------------------------
 c --- 1. Get laplacian matrix elements
       call smooth_get_laplacian_matrix2d(
      &      center, north, south, east, west,
-     &      smooth2DMask, myThid)
+     &      smoothOpNb, smooth2DMask, myThid)
 
 c --- 2. Create A matrix associated with operator A = (k^2 - nabla^2)
 c        operate directly on overlap region, inputs "pre-exchanged"
