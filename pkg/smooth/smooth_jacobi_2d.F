@@ -68,7 +68,7 @@ C --- Loop counters
 C --- Initialize solver stuff
       jacobi_iter = 0
       n_iter_max = 500
-      TOL = 1.0 _d -8
+      TOL = 1.0 _d -15
       TOL_SQ = TOL*TOL
       relErr = 100. _d 0
       absErr = 0. _d 0 
