@@ -50,14 +50,14 @@ C --- Loop counters
       ithi = mybxhi(mythid)
 
 C --- Diffusion operator (tensor): (Kux, 0; 0, Kvy)
-C      write(fnamegeneric(1:80),'(1a,i3.3)')
-C     &    'smooth2Doperator',smoothOpNb
-C      CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-C     &           1, smooth2D_Kux,1,1,mythid)
-C      CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-C     &           1, smooth2D_Kvy,2,1,mythid)
-C      CALL EXCH_XY_RL ( smooth2D_Kux, myThid )
-C      CALL EXCH_XY_RL ( smooth2D_Kvy, myThid )
+      write(fnamegeneric(1:80),'(1a,i3.3)')
+     &    'smooth2Doperator',smoothOpNb
+      CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
+     &           1, smooth2D_Kux,1,1,mythid)
+      CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
+     &           1, smooth2D_Kvy,2,1,mythid)
+      CALL EXCH_XY_RL ( smooth2D_Kux, myThid )
+      CALL EXCH_XY_RL ( smooth2D_Kvy, myThid )
     
 C --- Initialize output
       DO bj = jtlo,jthi
@@ -80,8 +80,8 @@ C     all input fields are "pre-exchanged"
 C     Note: sign is reversed from smooth_diff2d!
       DO bj = jtlo,jthi
        DO bi = itlo,ithi
-        DO j = 1,sNy
-         DO i = 1,sNx
+        DO j = 1-OLy,sNy+OLy
+         DO i = 1-OLx,sNx+OLx
           center(i,j,bi,bj)=center(i,j,bi,bj) -
      &     ( smooth2D_Kux(i,j,bi,bj)*
      &       dyG(i,j,bi,bj)*recip_dxC(i,j,bi,bj)*
@@ -119,11 +119,5 @@ C     Note: sign is reversed from smooth_diff2d!
         ENDDO
        ENDDO
       ENDDO
-
-      CALL EXCH_XY_RL ( center, myThid )
-      CALL EXCH_XY_RL ( north, myThid )
-      CALL EXCH_XY_RL ( south, myThid )
-      CALL EXCH_XY_RL ( east, myThid )
-      CALL EXCH_XY_RL ( west, myThid )
 
       end
