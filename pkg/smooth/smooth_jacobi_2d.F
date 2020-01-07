@@ -151,4 +151,19 @@ C --- The jacobi iterations
 
       enddo ! end dowhile <TOL and <n_iter_max
 
+      if ( debugLevel.GE.debLevC ) then
+
+        write(msgBuf,'(2A,I10,A,E22.14)') 'SMOOTH_JACOBI_2D: ',
+     &      'final iter: ', jacobi_iter,
+     &      '  final error: ', relErr
+        call print_message(msgBuf, standardMessageUnit,
+     &      SQUEEZE_RIGHT, myThid)
+
+        write(msgBuf,'(2A,I10,A,E22.14)') 'SMOOTH_JACOBI_2D: ',
+     &      'n_iter_max: ', n_iter_max,
+     &      '  TOL: ', TOL
+        call print_message(msgBuf, standardMessageUnit,
+     &      SQUEEZE_RIGHT, myThid)
+      endif
+
       end
