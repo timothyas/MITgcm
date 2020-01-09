@@ -155,7 +155,7 @@ C --- The jacobi iterations
 
         write(msgBuf,'(2A,I10,A,E22.14)') 'SMOOTH_JACOBI_2D: ',
      &      'final iter: ', jacobi_iter,
-     &      '  final error: ', relErr
+     &      '  final error: ', SQRT(relErr)
         call print_message(msgBuf, standardMessageUnit,
      &      SQUEEZE_RIGHT, myThid)
 
