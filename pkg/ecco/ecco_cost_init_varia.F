@@ -250,6 +250,7 @@ c--   Initialize the tiled cost function contributions.
         enddo
       enddo
 
+#ifdef ALLOW_GENCOST_VECTOR
 Cts --- gencost_vector_fc is equivalent to f_gencost,
 C     which is filled in ecco_cost_final
 C     the variable is defined initialized here for TAF reasons 
@@ -257,6 +258,7 @@ C     This is being designed for TLM... notes to come...
       do k=1,NGENCOST
         gencost_vector_fc(k) = 0. _d 0
       enddo
+#endif
 
 #ifdef ECCO_CTRL_DEPRECATED
 
