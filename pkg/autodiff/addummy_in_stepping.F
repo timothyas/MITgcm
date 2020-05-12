@@ -60,6 +60,9 @@ c#include "GRID.h"
 #  include "DIAGNOSTICS_SIZE.h"
 #  include "DIAGNOSTICS.h"
 # endif
+# ifdef ALLOW_SHI2D_CONTROL
+#  include "SHELFICE_OPTIONS.h"
+# endif
 #endif /* ALLOW_AUTODIFF_MONITOR */
 
 C     !INPUT/OUTPUT PARAMETERS:
@@ -479,10 +482,15 @@ C     dumpAdVarExch.NE.2
      &                     'adkapredi', adkapredi, myThid)
 #endif
 #ifdef ALLOW_SHI2D_CONTROL
+# ifndef SHI_ALLOW_GAMMAFRICT
           CALL MNC_CW_RL_W('D','adstate',0,0,
      &                     'adshict', adshiTransCoeffT, myThid)
           CALL MNC_CW_RL_W('D','adstate',0,0,
      &                     'adshics', adshiTransCoeffS, myThid)
+# else
+          CALL MNC_CW_RL_W('D','adstate',0,0,
+     &                     'adshicd', adshiCDragFld, myThid)
+# endif
 #endif
          ENDIF
 C     endif mnc
