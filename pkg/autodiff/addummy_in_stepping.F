@@ -60,6 +60,9 @@ c#include "GRID.h"
 #  include "DIAGNOSTICS_SIZE.h"
 #  include "DIAGNOSTICS.h"
 # endif
+# ifdef ALLOW_SHI2D_CONTROL
+#  include "SHELFICE_OPTIONS.h"
+# endif
 #endif /* ALLOW_AUTODIFF_MONITOR */
 
 C     !INPUT/OUTPUT PARAMETERS:
@@ -223,22 +226,33 @@ C --- 2. Fill up diagnostics from local copy (after exch)
          CALL DIAGNOSTICS_FILL( var3Du, 'ADJuvel ', 0,Nr,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( var3Dv, 'ADJvvel ', 0,Nr,0,1,1,myThid )
 # ifdef ALLOW_SHI2D_CONTROL
-#  ifdef ALLOW_OPENAD
+#  ifndef SHI_ALLOW_GAMMAFRICT
+#   ifdef ALLOW_OPENAD
          CALL COPY_ADVAR_OUTP( dumRL, shiTransCoeffT%d,
      &                          var2Du, 1, 12, myThid )
-#  else
+#   else
          CALL COPY_ADVAR_OUTP( dumRL, adshiTransCoeffT,
      &                          var2Du, 1, 12, myThid )
-#  endif
+#   endif
          CALL DIAGNOSTICS_FILL( var2Du, 'ADJshict', 0,1,0,1,1,myThid )
-#  ifdef ALLOW_OPENAD
+#   ifdef ALLOW_OPENAD
          CALL COPY_ADVAR_OUTP( dumRL, shiTransCoeffS%d,
      &                          var2Du, 1, 12, myThid )
-#  else
+#   else
          CALL COPY_ADVAR_OUTP( dumRL, adshiTransCoeffS,
      &                          var2Du, 1, 12, myThid )
-#  endif
+#   endif
          CALL DIAGNOSTICS_FILL( var2Du, 'ADJshics', 0,1,0,1,1,myThid )
+#  else
+#   ifdef ALLOW_OPENAD
+         CALL COPY_ADVAR_OUTP( dumRL, shiCDragFld%d,
+     &                          var2Du, 1, 12, myThid )
+#   else
+         CALL COPY_ADVAR_OUTP( dumRL, adshiCDragFld,
+     &                          var2Du, 1, 12, myThid )
+#   endif
+         CALL DIAGNOSTICS_FILL( var2Du, 'ADJshicd', 0,1,0,1,1,myThid )
+#  endif
 # endif
 
         ELSE
@@ -252,10 +266,15 @@ C -     OpenAD
          CALL DIAGNOSTICS_FILL( uVel%d, 'ADJuvel ', 0,Nr,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( vVel%d, 'ADJvvel ', 0,Nr,0,1,1,myThid )
 #  ifdef ALLOW_SHI2D_CONTROL
+#   ifndef SHI_ALLOW_GAMMAFRICT
          CALL DIAGNOSTICS_FILL( shiTransCoeffT%d, 
      &                          'ADJshict', 0,1,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( shiTransCoeffS%d, 
      &                          'ADJshics', 0,1,0,1,1,myThid )
+#   else
+         CALL DIAGNOSTICS_FILL( shiCDragFld%d, 
+     &                          'ADJshicd', 0,1,0,1,1,myThid )
+#   endif
 #  endif
 # else /* ALLOW_OPENAD */
 C -     TAF
@@ -265,10 +284,15 @@ C -     TAF
          CALL DIAGNOSTICS_FILL( aduVel, 'ADJuvel ', 0,Nr,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( advVel, 'ADJvvel ', 0,Nr,0,1,1,myThid )
 #  ifdef ALLOW_SHI2D_CONTROL
+#   ifndef SHI_ALLOW_GAMMAFRICT
          CALL DIAGNOSTICS_FILL( adshiTransCoeffT, 
      &                          'ADJshict', 0,1,0,1,1,myThid )
          CALL DIAGNOSTICS_FILL( adshiTransCoeffS, 
      &                          'ADJshics', 0,1,0,1,1,myThid )
+#   else
+         CALL DIAGNOSTICS_FILL( adshiCDragFld, 
+     &                          'ADJshicd', 0,1,0,1,1,myThid )
+#   endif
 #  endif
 # endif /* ALLOW_OPENAD */
         ENDIF
@@ -360,10 +384,15 @@ c    &                             adGGL90DiffKr, myIter, myThid )
      &                           adBottomDragFld, myIter, myThid )
 #endif
 #ifdef ALLOW_SHI2D_CONTROL
+# ifndef SHI_ALLOW_GAMMAFRICT
           CALL WRITE_FLD_XY_RL ( 'ADJshict.', suff,
      &                           adshiTransCoeffT, myIter, myThid )
           CALL WRITE_FLD_XY_RL ( 'ADJshics.', suff,
      &                           adshiTransCoeffS, myIter, myThid )
+# else
+          CALL WRITE_FLD_XY_RL ( 'ADJshicd.', suff,
+     &                           adshiCDragFld, myIter, myThid )
+# endif
 #endif
 
         ELSEIF ( ( dumpAdVarExch.NE.2 ).AND.(dumpAdByRec) ) THEN
@@ -431,10 +460,15 @@ c    &         adGGL90DiffKr, dumpAdRecMn, myIter, myThid )
      &         adBottomDragFld, dumpAdRecMn, myIter, myThid )
 #endif
 #ifdef ALLOW_SHI2D_CONTROL
+# ifndef SHI_ALLOW_GAMMAFRICT
           CALL WRITE_REC_XY_RL ( 'ADJshict', 
      &         adshiTransCoeffT, dumpAdRecMn, myIter, myThid )
           CALL WRITE_REC_XY_RL ( 'ADJshics',
      &         adshiTransCoeffS, dumpAdRecMn, myIter, myThid )
+# else
+          CALL WRITE_REC_XY_RL ( 'ADJshicd',
+     &         adshiCDragFld, dumpAdRecMn, myIter, myThid )
+# endif
 #endif
 
         ELSE
@@ -557,6 +591,7 @@ C       case dumpAdVarExch = 2
      &                           var2Du, dumpAdRecMn, myIter, myThid )
 #endif
 #ifdef ALLOW_SHI2D_CONTROL
+# ifndef SHI_ALLOW_GAMMAFRICT
           CALL COPY_ADVAR_OUTP( dumRS, adshiTransCoeffT,
      &                                        var2Du, 1, 12, myThid )
           IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XY_RL( 'ADJshict.',
@@ -569,6 +604,14 @@ C       case dumpAdVarExch = 2
      &                           suff, var2Du, myIter, myThid )
           IF (  dumpAdByRec   ) CALL WRITE_REC_XY_RL( 'ADJshics',
      &                           var2Du, dumpAdRecMn, myIter, myThid )
+# else
+          CALL COPY_ADVAR_OUTP( dumRS, adshiCDragFld,
+     &                                        var2Du, 1, 12, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XY_RL( 'ADJshicd.',
+     &                           suff, var2Du, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XY_RL( 'ADJshicd',
+     &                           var2Du, dumpAdRecMn, myIter, myThid )
+# endif
 #endif
 C       end if dumpAdVarExch = 2
         ENDIF
@@ -660,10 +703,15 @@ cc     &                           var3Du, myIter, myThid )
      &                           var2Du, myIter, myThid )
 #endif
 #ifdef ALLOW_SHI2D_CONTROL
+# ifndef SHI_ALLOW_GAMMAFRICT
           CALL WRITE_FLD_XY_RL ( 'ADJshict.', suff,
      &                           shiTransCoeffT%d, myIter, myThid )
           CALL WRITE_FLD_XY_RL ( 'ADJshics.', suff,
      &                           shiTransCoeffS%d, myIter, myThid )
+# else
+          CALL WRITE_FLD_XY_RL ( 'ADJshicd.', suff,
+     &                           shiCDragFld%d, myIter, myThid )
+# endif
 #endif
 
         ELSEIF ( ( dumpAdVarExch.NE.2 ).AND.(dumpAdByRec) ) THEN
@@ -750,10 +798,15 @@ cc     &         var3Du, dumpAdRecMn, myIter, myThid )
      &         var2Du, dumpAdRecMn, myIter, myThid )
 #endif
 #ifdef ALLOW_SHI2D_CONTROL
+# ifndef SHI_ALLOW_GAMMAFRICT
           CALL WRITE_REC_XY_RL ( 'ADJshict', 
      &         shiTransCoeffT%d, dumpAdRecMn, myIter, myThid )
           CALL WRITE_REC_XY_RL ( 'ADJshics',
      &         shiTransCoeffS%d, dumpAdRecMn, myIter, myThid )
+# else
+          CALL WRITE_REC_XY_RL ( 'ADJshicd',
+     &         shiCDragFld%d, dumpAdRecMn, myIter, myThid )
+# endif
 #endif
 
         ELSE
@@ -877,6 +930,7 @@ cc     &                           var3Du, dumpAdRecMn, myIter, myThid )
      &                           var2Du, dumpAdRecMn, myIter, myThid )
 #endif
 #ifdef ALLOW_SHI2D_CONTROL
+# ifndef SHI_ALLOW_GAMMAFRICT
           CALL COPY_ADVAR_OUTP( dumRS, shiTransCoeffT%d,
      &                                        var2Du, 1, 12, myThid )
           IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XY_RL( 'ADJshict.',
@@ -889,6 +943,14 @@ cc     &                           var3Du, dumpAdRecMn, myIter, myThid )
      &                           suff, var2Du, myIter, myThid )
           IF (  dumpAdByRec   ) CALL WRITE_REC_XY_RL( 'ADJshics',
      &                           var2Du, dumpAdRecMn, myIter, myThid )
+# else
+          CALL COPY_ADVAR_OUTP( dumRS, shiCDragFld%d,
+     &                          var2Du, 1, 12, myThid )
+          IF (.NOT.dumpAdByRec) CALL WRITE_FLD_XY_RL( 'ADJshicd.',
+     &                           suff, var2Du, myIter, myThid )
+          IF (  dumpAdByRec   ) CALL WRITE_REC_XY_RL( 'ADJshicd',
+     &                           var2Du, dumpAdRecMn, myIter, myThid )
+# endif
 #endif
 
 C       end if dumpAdVarExch = 2
@@ -996,10 +1058,15 @@ C     dumpAdVarExch.NE.2
      &                     'adkapredi', adkapredi, myThid)
 #endif
 #ifdef ALLOW_SHI2D_CONTROL
+# ifndef SHI_ALLOW_GAMMAFRICT
           CALL MNC_CW_RL_W('D','adstate',0,0,
      &                     'adshict', adshiTransCoeffT, myThid)
           CALL MNC_CW_RL_W('D','adstate',0,0,
      &                     'adshics', adshiTransCoeffS, myThid)
+# else
+          CALL MNC_CW_RL_W('D','adstate',0,0,
+     &                     'adshicd', adshiCDragFld, myThid)
+# endif
 #endif
          ENDIF
 C     endif mnc
