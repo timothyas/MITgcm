@@ -7,3 +7,13 @@ CADJ SUBROUTINE smooth_jacobi_2d INPUT   = 1,2,3,4,5,6,7,8
 CADJ SUBROUTINE smooth_jacobi_2d OUTPUT  = 1
 CADJ SUBROUTINE smooth_jacobi_2d ACTIVE  = 1
 CADJ SUBROUTINE smooth_jacobi_2d DEPEND  =               8
+
+C----------------------------------------
+C subroutine  smooth_jacobi_3d
+C----------------------------------------
+CADJ SUBROUTINE smooth_jacobi_3d ADNAME  = smooth_jacobi_3d
+CADJ SUBROUTINE smooth_jacobi_3d FTLNAME = smooth_jacobi_3d
+CADJ SUBROUTINE smooth_jacobi_3d INPUT   = 1,2,3,4,5,6,7,8,9,10
+CADJ SUBROUTINE smooth_jacobi_3d OUTPUT  = 1
+CADJ SUBROUTINE smooth_jacobi_3d ACTIVE  = 1
+CADJ SUBROUTINE smooth_jacobi_3d DEPEND  =                   10
