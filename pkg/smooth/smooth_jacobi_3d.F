@@ -38,6 +38,7 @@ C           east  = (i+1, j  ,  k  ); west  = (i-1, j  , k  )
 C           north = (i  , j+1,  k  ); south = (i  , j-1, k  )
 C           up    = (i  , j  ,  k+1); down  = (i  , j  , k-1)
 C
+      _RL fld_in(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL center(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL east  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL west  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
@@ -82,8 +83,8 @@ C --- Initialize solver stuff
         do k = 1,Nr
          do j = 1-OLy,sNy+OLy
           do i = 1-OLx,sNx+OLx
-           fld_rhs(i,j,k,bi,bj) = fld_in(i,j,bi,bj)
-           fld_in(i,j,k,bi,bj) = 1. _d 0
+           fld_rhs(i,j,k,bi,bj) = fld_in(i,j,k,bi,bj)
+           fld_in (i,j,k,bi,bj) = 1. _d 0
            fld_out(i,j,k,bi,bj) = 1. _d 0
            if (ABS(center(i,j,k,bi,bj)).gt.0. _d 0) then
             recip_center(i,j,k,bi,bj) = 1. _d 0 / center(i,j,k,bi,bj)
