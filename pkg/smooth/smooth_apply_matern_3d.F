@@ -85,7 +85,7 @@ C --- Make sure input mask halos are good to go
 C --- Read in delta:
 C     Provide this file at run time
       write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth2Dkappa',smoothOpNb
+     &    'smooth2Ddelta',smoothOpNb
       CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
      &           Nr, delta,1,1,mythid)
 
@@ -102,15 +102,17 @@ c --- 2. Get laplacian matrix elements and apply matern operator
         do k = 1,Nr
          do j = 1,sNy
           do i = 1,sNx
+
            fld_out(i,j,k,bi,bj) = fld_in(i,j,k,bi,bj)*
-     &          (delta(i,j,k,bi,bj) - center(i,j,k,bi,bj) -
+     &         (delta(i,j,k,bi,bj) - center(i,j,k,bi,bj)) -
      &          east (i,j,k,bi,bj)*fld_in(i+1,j,k,bi,bj) -
-     &          west (i,j,k,bi,bj)*fld_in(i  ,j,k,bi,bj) -
+     &          west (i,j,k,bi,bj)*fld_in(i-1,j,k,bi,bj) -
      &          north(i,j,k,bi,bj)*fld_in(i,j+1,k,bi,bj) -
-     &          south(i,j,k,bi,bj)*fld_in(i,j  ,k,bi,bj)
-           if (k.lt.Nr) fld_out(i,j,k,bi,bj) =
+     &          south(i,j,k,bi,bj)*fld_in(i,j-1,k,bi,bj)
+
+           if (k.lt.Nr) fld_out(i,j,k,bi,bj) = fld_out(i,j,k,bi,bj) -
      &          down(i,j,k,bi,bj)*fld_in(i,j,k+1,bi,bj)
-           if (k.gt.1) fld_out(i,j,k,bi,bj) =
+           if (k.gt.1) fld_out(i,j,k,bi,bj) = fld_out(i,j,k,bi,bj) -
      &          up  (i,j,k,bi,bj)*fld_in(i,j,k-1,bi,bj)
 
 
@@ -123,7 +125,7 @@ c --- 2. Get laplacian matrix elements and apply matern operator
        enddo
       enddo
 
-     CALL EXCH_XYZ_RL ( fld_out, myThid )
+      CALL EXCH_XYZ_RL ( fld_out, myThid )
 
 c --- 3. Rewrite input <- output
        do bj = jtlo,jthi

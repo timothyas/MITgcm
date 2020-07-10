@@ -40,6 +40,7 @@ C     *==========================================================*
       integer diLoc, djLoc,  dkLoc
       integer nbRand, nbt_in
       character*( 80) fnamegeneric
+      logical doNormalize
       _RL smoothTmpFld (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL smoothTmpMean(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL smoothTmpVar(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
@@ -49,6 +50,8 @@ C     *==========================================================*
       jthi = mybyhi(myThid)
       itlo = mybxlo(myThid)
       ithi = mybxhi(myThid)
+
+      doNormalize=.FALSE.
 
 c allow a different mask other than maskC
 
@@ -63,10 +66,6 @@ c allow a different mask other than maskC
               smooth3Dmask(i,j,k,bi,bj) = maskW(i,j,k,bi,bj)
              elseif (smooth3DmaskName(smoothOpNb)(1:5).eq.'maskS') then
               smooth3Dmask(i,j,k,bi,bj) = maskS(i,j,k,bi,bj)
-#if (defined ALLOW_SHI2D_CONTROL) || (defined ALLOW_SHIFWFLX_CONTROL)
-             elseif (smooth3DmaskName(smoothOpNb)(1:5).eq.'maskI') then
-              smooth3Dmask(i,j,k,bi,bj) = maskSHI(i,j,k,bi,bj)
-#endif
              endif
             ENDDO
            ENDDO
@@ -139,90 +138,104 @@ c of the approximate method results (that can be predicted).
 c
 c note: the exact method requires the adjoint of smooth_diff2D.F (see below)
 
-      diLoc=15 !int(5*smooth_L/smooth_dx)
-      djLoc=20 !int(5*smooth_L/smooth_dx)
-      dkLoc=8
+C --- Check which algorithm is used
+       if (smooth3DAlgorithm(smoothOpNb).eq.'matern') then
+        WRITE(errorMessageUnit,'(A,/,A)' )
+     &   "Exact method for matern prior covariance not "
+     &   "implemented yet... but would be pretty expensive."
+        CALL ALL_PROC_DIE( myThid )
+        STOP 'ABNORMAL END: S/R smooth_filtervar3D'
 
-      DO kk=1,dkLoc
-      DO ii=1,diLoc,2
-      DO jj=1,djLoc,2
+       else
 
-      DO bj=jtlo,jthi
-       DO bi=itlo,ithi
-        DO k=1,Nr
-         DO j=1-OLy,sNy+OLy
-          DO i=1-OLx,sNx+OLx
-           smoothTmpFld(i,j,k,bi,bj)=0.
+
+        diLoc=15 !int(5*smooth_L/smooth_dx)
+        djLoc=20 !int(5*smooth_L/smooth_dx)
+        dkLoc=8
+
+        DO kk=1,dkLoc
+        DO ii=1,diLoc,2
+        DO jj=1,djLoc,2
+
+        DO bj=jtlo,jthi
+         DO bi=itlo,ithi
+          DO k=1,Nr
+           DO j=1-OLy,sNy+OLy
+            DO i=1-OLx,sNx+OLx
+             smoothTmpFld(i,j,k,bi,bj)=0.
+            ENDDO
+           ENDDO
+          ENDDO
+
+          DO k=kk,Nr,dkLoc
+           DO j=jj,sNy,djLoc
+            DO i=ii,sNx,diLoc
+             smoothTmpFld(i,j,k,bi,bj)=1.
+            ENDDO
+           ENDDO
           ENDDO
          ENDDO
         ENDDO
-
-        DO k=kk,Nr,dkLoc
-         DO j=jj,sNy,djLoc
-          DO i=ii,sNx,diLoc
-           smoothTmpFld(i,j,k,bi,bj)=1.
-          ENDDO
-         ENDDO
-        ENDDO
-       ENDDO
-      ENDDO
 
 c note: as we go to adjoint part, we need to have 0 in overlaps
-c       so we must NOT have done an exchange for smoothTmpFld
+c         so we must NOT have done an exchange for smoothTmpFld
 
 c adjoint:
-      WRITE(errorMessageUnit,'(A,/,A)' )
-     & "you need to have adsmooth_diff3D compiled and then:",
-     & "uncomment the line below and comment the stop"
-      CALL ALL_PROC_DIE( myThid )
-      STOP 'ABNORMAL END: S/R smooth_filtervar3D'
-c      call adsmooth_diff3D(smoothTmpFld,nbt_in,myThid)
+        WRITE(errorMessageUnit,'(A,/,A)' )
+     &   "you need to have adsmooth_diff3D compiled and then:",
+     &   "uncomment the line below and comment the stop"
+        CALL ALL_PROC_DIE( myThid )
+        STOP 'ABNORMAL END: S/R smooth_filtervar3D'
+c       call adsmooth_diff3D(smoothTmpFld,nbt_in,myThid)
 
 c division by sqrt(volume)*sqrt(volume) [1 to end adj, 1 to begin fwd]
-      DO bj=jtlo,jthi
-       DO bi=itlo,ithi
-        DO k=1,Nr
-         DO j=1,sNy
-          DO i=1,sNx
+        DO bj=jtlo,jthi
+         DO bi=itlo,ithi
+          DO k=1,Nr
+           DO j=1,sNy
+            DO i=1,sNx
 c division by ~sqrt(volume):
-        smoothTmpFld(i,j,k,bi,bj)=smoothTmpFld(i,j,k,bi,bj)
-     & *(recip_rA(i,j,bi,bj)*recip_drF(k))
+          smoothTmpFld(i,j,k,bi,bj)=smoothTmpFld(i,j,k,bi,bj)
+     &   *(recip_rA(i,j,bi,bj)*recip_drF(k))
+            ENDDO
+           ENDDO
           ENDDO
          ENDDO
         ENDDO
-       ENDDO
-      ENDDO
 
 c coming out of adjoint part: overlaps are 0
 c going in fwd part: we need to fill them up
-      CALL EXCH_XYZ_RL ( smoothTmpFld , myThid )
+        CALL EXCH_XYZ_RL ( smoothTmpFld , myThid )
 
 c fwd:
-      call smooth_diff3D(smoothTmpFld,nbt_in,myThid)
+        call smooth_diff3D(smoothTmpFld,nbt_in,myThid)
 
 c convert variance to normalization factor:
-      DO bj=jtlo,jthi
-       DO bi=itlo,ithi
-        DO k=1,Nr,dkLoc
-         DO j=jj,sNy,djLoc
-          DO i=ii,sNx,diLoc
-          if (smoothTmpFld(i,j,k,bi,bj).NE.0.) then
-           smooth3Dnorm(i,j,k,bi,bj)=
-     & 1/sqrt(smoothTmpFld(i,j,k,bi,bj))
-          endif
+        DO bj=jtlo,jthi
+         DO bi=itlo,ithi
+          DO k=1,Nr,dkLoc
+           DO j=jj,sNy,djLoc
+            DO i=ii,sNx,diLoc
+            if (smoothTmpFld(i,j,k,bi,bj).NE.0.) then
+             smooth3Dnorm(i,j,k,bi,bj)=
+     &   1/sqrt(smoothTmpFld(i,j,k,bi,bj))
+            endif
+            ENDDO
+           ENDDO
           ENDDO
          ENDDO
         ENDDO
-       ENDDO
-      ENDDO
 
-      ENDDO      !DO ii=1,diLoc
-      ENDDO      !DO jj=1,djLoc
-      ENDDO      !DO kk=1,dkLoc
+        ENDDO      !DO ii=1,diLoc
+        ENDDO      !DO jj=1,djLoc
+        ENDDO      !DO kk=1,dkLoc
+       
+       ENDIF ! check smooth algorithm
 
       ELSEIF (smooth3Dfilter(smoothOpNb).EQ.1) then
 c compute the normalization matrix using the approximate method
 
+C --- 1. Initialize mean and variance
       DO bj=jtlo,jthi
        DO bi=itlo,ithi
         DO k=1,Nr
@@ -236,7 +249,7 @@ c compute the normalization matrix using the approximate method
        ENDDO
       ENDDO
 
-c initialize random number generator
+c --- 2. Initialize random number generator
 c     seed is 1023 * pid * milliseconds from date/time
       rand_seed = 1023. _d 0
       call date_and_time(VALUES=timeVals)
@@ -248,7 +261,9 @@ c     seed is 1023 * pid * milliseconds from date/time
             WRITE(standardMessageUnit,'(A,I4,A,I4)')
      & 'smooth_filtervar3D: ',ii,' members done out of ',nbRand
 
-c fill smoothTmpFld with random numbers:
+C --- 3. Initialize field within random sample loop
+C     set  points where mask!=0 to random number
+C     WC01: divide by sqrt(area)
       DO bj=jtlo,jthi
        DO bi=itlo,ithi
         DO k=1,Nr
@@ -258,9 +273,10 @@ c fill smoothTmpFld with random numbers:
            if (smooth3dmask(i,j,k,bi,bj).NE.0) then
            smoothTmpFld(i,j,k,bi,bj)=port_rand_norm(-rand_seed)
            endif
-c division by sqrt(volume):
-       smoothTmpFld(i,j,k,bi,bj)=smoothTmpFld(i,j,k,bi,bj)
-     & *sqrt(recip_rA(i,j,bi,bj)*recip_drF(k))
+           if (smooth3DAlgorithm(smoothOpNb).eq.'WC01') then
+            smoothTmpFld(i,j,k,bi,bj)=smoothTmpFld(i,j,k,bi,bj)
+     &      *sqrt(recip_rA(i,j,bi,bj)*recip_drF(k))
+           endif
           ENDDO
          ENDDO
         ENDDO
@@ -269,10 +285,14 @@ c division by sqrt(volume):
 
       CALL EXCH_XYZ_RL ( smoothTmpFld, myThid )
 
-c smooth random number field
-      call smooth_diff3D(smoothTmpFld,nbt_in,myThid)
+c --- 4. Smooth random field with appropriate algorithm
+      if (smooth3DAlgorithm(smoothOpNb).eq.'WC01')
+     &  call smooth_diff3D(smoothTmpFld,nbt_in,myThid)
+      if (smooth3DAlgorithm(smoothOpNb).eq.'matern')
+     &  call smooth_inverse_matern_3d(
+     &      smoothTmpFld,smooth3DMask,smoothOpNb,doNormalize,myThid)
 
-c accumulate statistics (to compute the variance later)
+c --- 5. accumulate statistics (to compute the variance later)
       DO bj=jtlo,jthi
        DO bi=itlo,ithi
         DO k=1,Nr
@@ -290,7 +310,7 @@ c accumulate statistics (to compute the variance later)
 
       ENDDO
 
-c compute variance and convert it to normalization factor:
+c --- 6. compute variance and convert it to normalization factor:
       DO bj=jtlo,jthi
        DO bi=itlo,ithi
         DO k=1,Nr
@@ -316,6 +336,38 @@ c write smooth3Dnorm_3D to file:
       CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
      &                      Nr, smooth3Dnorm, 1, 1, myThid )
       CALL EXCH_XYZ_RL ( smooth3Dnorm,  myThid )
+
+c write out mean too
+      write(fnamegeneric(1:80),'(1a,i3.3)')
+     &    'smooth3Dmean',smoothOpNb
+      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
+     &                      Nr, smoothTmpMean, 1, 1, myThid )
+
+      write(fnamegeneric(1:80),'(1a,i3.3)')
+     &    'smooth3D_Kwx',smoothOpNb
+      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
+     &                      Nr, smooth3D_Kwx, 1, 1, myThid )
+      write(fnamegeneric(1:80),'(1a,i3.3)')
+     &    'smooth3D_Kwy',smoothOpNb
+      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
+     &                      Nr, smooth3D_Kwy, 1, 1, myThid )
+      write(fnamegeneric(1:80),'(1a,i3.3)')
+     &    'smooth3D_Kwz',smoothOpNb
+      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
+     &                      Nr, smooth3D_Kwz, 1, 1, myThid )
+      write(fnamegeneric(1:80),'(1a,i3.3)')
+     &    'smooth3D_Kux',smoothOpNb
+      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
+     &                      Nr, smooth3D_Kux, 1, 1, myThid )
+      write(fnamegeneric(1:80),'(1a,i3.3)')
+     &    'smooth3D_Kvy',smoothOpNb
+      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
+     &                      Nr, smooth3D_Kvy, 1, 1, myThid )
+
+      write(fnamegeneric(1:80),'(1a,i3.3)')
+     &    'smooth3Dfld',smoothOpNb
+      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
+     &                      Nr, smoothTmpFld, 1, 1, myThid )
 
       ENDIF
 

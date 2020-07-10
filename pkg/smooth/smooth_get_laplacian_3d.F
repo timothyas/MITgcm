@@ -3,7 +3,7 @@
 # include "AUTODIFF_OPTIONS.h"
 #endif
 
-      subroutine smooth_get_laplacian_matrix3d (
+      subroutine smooth_get_laplacian_3d (
      U     center, east, west, north, south, up, down,
      I     smoothOpNb, smooth3DMask, mythid)
 
@@ -13,9 +13,9 @@ C     | o get the matrix to the discretized 3D
 C     |   laplacian operator: div( kappa * grad( ) )
 C     | o only the diagonal elements of the diffusion tensor:
 C     |
-C     |             Kux Kuy Kuz   Kux  0   0 
-C     |    kappa =  Kvx Kvy Kvz =  0  Kvy  0
-C     |             Kwx Kwy Kwz    0   0  Kwz
+C     |             Kux Kuy Kuz    Kux  0   0
+C     |    kappa =  Kvx Kvy Kvz ->  0  Kvy  0
+C     |             Kwx Kwy Kwz     0   0  Kwz
 C     |
 C     |   are implemented currently
 C     *==========================================================*
@@ -126,11 +126,11 @@ C           elements in applied to input field in smooth_rhs
          DO j = 1-OLy,sNy+OLy
           DO i = 1-OLx,sNx+OLx
 
-            xA(i,j,k,bi,bj) = _dyG(i,j,bi,bj) * drF(k)
+            xA(i,j,k,bi,bj) = _dyG(i,j,bi,bj) * drF(k) *
      &          _hFacW(i,j,k,bi,bj)  * _recip_dxC(i,j,bi,bj) *
      &          smooth3D_Kux(i,j,k,bi,bj)
 
-            yA(i,j,k,bi,bj) = _dxG(i,j,bi,bj) * drF(k)
+            yA(i,j,k,bi,bj) = _dxG(i,j,bi,bj) * drF(k) *
      &          _hFacS(i,j,k,bi,bj)  * _recip_dyC(i,j,bi,bj) *
      &          smooth3D_Kvy(i,j,k,bi,bj)
 
@@ -139,7 +139,7 @@ C           elements in applied to input field in smooth_rhs
      &          smooth3D_Kwz(i,j,k,bi,bj)
 
             recip_vol(i,j,k,bi,bj) = _recip_hFacC(i,j,k,bi,bj)*
-     &          recip_rA(i,j,k,bi,bj) * recip_drF(k)
+     &          recip_rA(i,j,bi,bj) * recip_drF(k)
 
           ENDDO
          ENDDO
@@ -150,26 +150,26 @@ C           elements in applied to input field in smooth_rhs
          DO j = 1-OLy+1,sNy+OLy-1
           DO i = 1-OLx+1,sNx+OLx-1
 
-           east(i,j,k,bi,bj)=east(i,j,k,bi,bj) + xA(i+1,j,k,bi,bj)
+           east(i,j,k,bi,bj)=east(i,j,k,bi,bj) + xA(i+1,j,k,bi,bj)*
      &      smooth3Dmask(i,j,k,bi,bj)*smooth3Dmask(i+1,j,k,bi,bj)*
      &      recip_vol(i,j,k,bi,bj)
 
-           west(i,j,k,bi,bj)=west(i,j,k,bi,bj) + xA(i,j,k,bi,bj)
+           west(i,j,k,bi,bj)=west(i,j,k,bi,bj) + xA(i,j,k,bi,bj)*
      &      smooth3Dmask(i-1,j,k,bi,bj)*smooth3Dmask(i,j,k,bi,bj)*
      &      recip_vol(i,j,k,bi,bj)
 
-           north(i,j,k,bi,bj)=north(i,j,k,bi,bj) + yA(i,j+1,k,bi,bj)
+           north(i,j,k,bi,bj)=north(i,j,k,bi,bj) + yA(i,j+1,k,bi,bj)*
      &      smooth3Dmask(i,j,k,bi,bj)*smooth3Dmask(i,j+1,k,bi,bj)*
      &      recip_vol(i,j,k,bi,bj)
 
-           south(i,j,k,bi,bj)=south(i,j,k,bi,bj) + yA(i,j,k,bi,bj)
+           south(i,j,k,bi,bj)=south(i,j,k,bi,bj) + yA(i,j,k,bi,bj)*
      &      smooth3Dmask(i,j-1,k,bi,bj)*smooth3Dmask(i,j,k,bi,bj)*
      &      recip_vol(i,j,k,bi,bj)
 
            if (k.eq.1) then
             up(i,j,k,bi,bj) = 0. _d 0
            else
-            up(i,j,k,bi,bj)=up(i,j,k,bi,bj) + zA(i,j,k,bi,bj)
+            up(i,j,k,bi,bj)=up(i,j,k,bi,bj) + zA(i,j,k,bi,bj)*
      &       smooth3Dmask(i,j,k-1,bi,bj)*smooth3Dmask(i,j,k,bi,bj)*
      &       recip_vol(i,j,k,bi,bj)
            endif
@@ -177,12 +177,12 @@ C           elements in applied to input field in smooth_rhs
            if (k.eq.Nr) then
             down(i,j,k,bi,bj) = 0. _d 0
            else
-            down(i,j,k,bi,bj)=down(i,j,k,bi,bj) + zA(i,j,k+1,bi,bj)
+            down(i,j,k,bi,bj)=down(i,j,k,bi,bj) + zA(i,j,k+1,bi,bj)*
      &       smooth3Dmask(i,j,k,bi,bj)*smooth3Dmask(i,j,k+1,bi,bj)*
      &       recip_vol(i,j,k,bi,bj)
            endif
 
-           center(i,j,k,bi,bj) = center(i,j,bi,bj) -
+           center(i,j,k,bi,bj) = center(i,j,k,bi,bj) -
      &       east(i,j,k,bi,bj) - west(i,j,k,bi,bj) -
      &       north(i,j,k,bi,bj) - south(i,j,k,bi,bj) -
      &       up(i,j,k,bi,bj) - down(i,j,k,bi,bj)

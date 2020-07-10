@@ -115,10 +115,10 @@ c        operate directly on overlap region, inputs "pre-exchanged"
           do i = 1-OLx,sNx+OLx
            center(i,j,k,bi,bj) = delta(i,j,k,bi,bj) -
      &                           center(i,j,k,bi,bj) 
-           north(i,j,k,bi,bj)  = -north(i,j,k,bi,bj)
-           south(i,j,k,bi,bj)  = -south(i,j,k,bi,bj)
            east (i,j,k,bi,bj)  = -east (i,j,k,bi,bj)
            west (i,j,k,bi,bj)  = -west (i,j,k,bi,bj)
+           north(i,j,k,bi,bj)  = -north(i,j,k,bi,bj)
+           south(i,j,k,bi,bj)  = -south(i,j,k,bi,bj)
            up   (i,j,k,bi,bj)  = -up   (i,j,k,bi,bj)
            down (i,j,k,bi,bj)  = -down (i,j,k,bi,bj)
           enddo
