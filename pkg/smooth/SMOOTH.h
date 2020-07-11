@@ -23,7 +23,7 @@ c fields:
       integer smooth3Dnbt(smoothOpNbMax),
      & smooth3DtypeZ(smoothOpNbMax),smooth3DsizeZ(smoothOpNbMax),
      & smooth3DtypeH(smoothOpNbMax),smooth3DsizeH(smoothOpNbMax),
-     & smooth3Dfilter(smoothOpNbMax)
+     & smooth3Dfilter(smoothOpNbMax),smooth3DNbRand(smoothOpNbMax)
       _RL smooth3DtotTime,
      & smooth3D_Lx0(smoothOpNbMax),
      & smooth3D_Ly0(smoothOpNbMax), smooth3D_Lz0(smoothOpNbMax),
@@ -37,7 +37,7 @@ c fields:
 
       integer smooth2Dnbt(smoothOpNbMax),
      & smooth2Dtype(smoothOpNbMax),smooth2Dsize(smoothOpNbMax),
-     & smooth2Dfilter(smoothOpNbMax)
+     & smooth2Dfilter(smoothOpNbMax),smooth2DNbRand(smoothOpNbMax)
       _RL smooth2DtotTime,
      & smooth2D_Lx0(smoothOpNbMax),smooth2D_Ly0(smoothOpNbMax),
      & smooth2D_Lx(1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy),
@@ -83,7 +83,8 @@ c fields:
      & smooth2Dtype, smooth2Dsize,
      & smooth3DtypeZ, smooth3DsizeZ,
      & smooth3DtypeH, smooth3DsizeH,
-     & smooth2Dfilter, smooth3Dfilter
+     & smooth2Dfilter, smooth3Dfilter,
+     & smooth2DNbRand, smooth3DNbRand
 
       COMMON /smooth_operators_r/
      & smooth3D_kappaR,smooth3D_Kwx,smooth3D_Kwy,smooth3D_Kwz,

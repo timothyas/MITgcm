@@ -39,6 +39,7 @@ c--   Read the namelist input.
      &                   smooth2D_Lx0,
      &                   smooth2D_Ly0,
      &                   smooth2Dfilter,
+     &                   smooth2DNbRand,
      &                   smooth2DMaskName,
      &                   smooth2DAlgorithm,
      &                   smooth3Dnbt,
@@ -50,6 +51,7 @@ c--   Read the namelist input.
      &                   smooth3D_Ly0,
      &                   smooth3D_Lz0,
      &                   smooth3Dfilter,
+     &                   smooth3DNbRand,
      &                   smooth3DMaskName,
      &                   smooth3DAlgorithm
 
@@ -77,6 +79,7 @@ c--   Set default values.
         smooth2Dfilter(smoothOpNb)=0
         smooth2DMaskName(smoothOpNb) = 'maskC'
         smooth2DAlgorithm(smoothOpNb) = 'WC01  '
+        smooth2DNbRand(smoothOpNb) = 1000
 
         smooth3Dnbt(smoothOpNb)=0
         smooth3D_Lx0(smoothOpNb)=0. _d 0
@@ -89,6 +92,7 @@ c--   Set default values.
         smooth3Dfilter(smoothOpNb)=0
         smooth3DMaskName(smoothOpNb)(1:5) = 'maskC'
         smooth3DAlgorithm(smoothOpNb)(1:6) = 'WC01  '
+        smooth3DNbRand(smoothOpNb) = 1000
       ENDDO
 
 C--   Read settings from model parameter file "data.smooth".

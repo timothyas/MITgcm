@@ -39,7 +39,7 @@ C     *==========================================================*
       integer i,j,k, bi, bj, ii, jj, kk
       integer itlo,ithi,jtlo,jthi
       integer diLoc,djLoc,dkLoc
-      integer nbRand, nbt_in
+      integer nbt_in
       character*( 80) fnamegeneric
       logical doNormalize
       _RL smoothTmpFld (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
@@ -224,11 +224,11 @@ c     seed is 1023 * pid * milliseconds from date/time
       call date_and_time(VALUES=timeVals)
       rand_seed = rand_seed * REAL((1+myPid)*timeVals(8),8)
       smoothTmpFld(1,1,1,1)=port_rand(rand_seed)
-      nbRand=1000
 
-      DO ii=1,nbRand
+      DO ii=1,smooth2DNbRand(smoothOpNb)
        WRITE(standardMessageUnit,'(A,I4,A,I4)')
-     & 'smooth_filtervar2D: ',ii,' members done out of',nbRand
+     & 'smooth_filtervar2D: ',ii,' members done out of ',
+     & smooth2DNbRand(smoothOpNb)
 
 c --- 3. Iniitalize field within random sample loop
        DO bj=jtlo,jthi
@@ -274,9 +274,10 @@ c --- 6. accumulate statistics (to compute the variance later)
          DO j=1-OLy,sNy+OLy
           DO i=1-OLx,sNx+OLx
            smoothTmpVar(i,j,bi,bj)=smoothTmpVar(i,j,bi,bj)
-     &      +smoothTmpFld(i,j,bi,bj)*smoothTmpFld(i,j,bi,bj)/nbRand
+     &      +smoothTmpFld(i,j,bi,bj)*smoothTmpFld(i,j,bi,bj)/
+     &       smooth2DNbRand(smoothOpNb)
            smoothTmpMean(i,j,bi,bj)=smoothTmpMean(i,j,bi,bj)
-     &      +smoothTmpFld(i,j,bi,bj)/nbRand
+     &      +smoothTmpFld(i,j,bi,bj)/smooth2DNbRand(smoothOpNb)
           ENDDO
          ENDDO
         ENDDO
@@ -291,7 +292,8 @@ c --- 7. compute variance and convert it to normalization factor:
          DO i=1-OLx,sNx+OLx
           if (smooth2dmask(i,j,bi,bj).NE.0) then
            smooth2Dnorm(i,j,bi,bj)=
-     &      1/sqrt ( nbRand/(nbRand-1)*
+     &      1/sqrt ( smooth2DNbRand(smoothOpNb)/
+     &      (smooth2DNbRand(smoothOpNb)-1)*
      &      (smoothTmpVar(i,j,bi,bj) -
      &          smoothTmpMean(i,j,bi,bj)*smoothTmpMean(i,j,bi,bj)) )
            endif
