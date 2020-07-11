@@ -38,7 +38,7 @@ C     *==========================================================*
       integer i,j,k, bi, bj, ii, jj, kk
       integer itlo,ithi, jtlo,jthi
       integer diLoc, djLoc,  dkLoc
-      integer nbRand, nbt_in
+      integer nbt_in
       character*( 80) fnamegeneric
       logical doNormalize
       _RL smoothTmpFld (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
@@ -255,11 +255,11 @@ c     seed is 1023 * pid * milliseconds from date/time
       call date_and_time(VALUES=timeVals)
       rand_seed = rand_seed * REAL((1+myPid)*timeVals(8),8)
       smoothTmpFld(1,1,1,1,1)=port_rand(rand_seed)
-      nbRand=1000
 
-      DO ii=1,nbRand
+      DO ii=1,smooth3DNbRand(smoothOpNb)
             WRITE(standardMessageUnit,'(A,I4,A,I4)')
-     & 'smooth_filtervar3D: ',ii,' members done out of ',nbRand
+     & 'smooth_filtervar3D: ',ii,' members done out of ',
+     &  smooth3DNbRand(smoothOpNb)
 
 C --- 3. Initialize field within random sample loop
 C     set  points where mask!=0 to random number
@@ -299,9 +299,10 @@ c --- 5. accumulate statistics (to compute the variance later)
          DO j=1-OLy,sNy+OLy
           DO i=1-OLx,sNx+OLx
       smoothTmpVar(i,j,k,bi,bj)=smoothTmpVar(i,j,k,bi,bj)
-     & +smoothTmpFld(i,j,k,bi,bj)*smoothTmpFld(i,j,k,bi,bj)/nbRand
+     & +smoothTmpFld(i,j,k,bi,bj)*smoothTmpFld(i,j,k,bi,bj)/
+     &  smooth3DNbRand(smoothOpNb)
       smoothTmpMean(i,j,k,bi,bj)=smoothTmpMean(i,j,k,bi,bj)
-     & +smoothTmpFld(i,j,k,bi,bj)/nbRand
+     & +smoothTmpFld(i,j,k,bi,bj)/smooth3DNbRand(smoothOpNb)
           ENDDO
          ENDDO
         ENDDO
@@ -318,7 +319,8 @@ c --- 6. compute variance and convert it to normalization factor:
           DO i=1-OLx,sNx+OLx
            if (smooth3dmask(i,j,k,bi,bj).NE.0) then
            smooth3Dnorm(i,j,k,bi,bj)=
-     & 1/sqrt ( nbRand/(nbRand-1)* ( smoothTmpVar(i,j,k,bi,bj) -
+     & 1/sqrt ( smooth3DNbRand(smoothOpNb)/
+     & (smooth3DNbRand(smoothOpNb)-1)* ( smoothTmpVar(i,j,k,bi,bj) -
      & smoothTmpMean(i,j,k,bi,bj)*smoothTmpMean(i,j,k,bi,bj)
      &  )  )
            endif
