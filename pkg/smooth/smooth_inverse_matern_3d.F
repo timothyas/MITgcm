@@ -39,11 +39,14 @@ C --- Inputs
 
 C --- Local parameters
       character*( 80) fnamegeneric
+      character*(MAX_LEN_MBUF) msgBuf
       integer i,j,k,bi,bj
       integer itlo,ithi
       integer jtlo,jthi
+      logical fexist
 
       _RL delta (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
+      _RL detInv(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL center(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL east  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL west  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
@@ -71,6 +74,7 @@ c     since they're created here
          do j = 1-OLy,sNy+OLy
           do i = 1-OLx,sNx+OLx
            delta (i,j,k,bi,bj) = 0. _d 0
+           detInv(i,j,k,bi,bj) = 1. _d 0
            center(i,j,k,bi,bj) = 0. _d 0
            east  (i,j,k,bi,bj) = 0. _d 0
            west  (i,j,k,bi,bj) = 0. _d 0
@@ -86,11 +90,41 @@ c     since they're created here
 
 C --- Read in delta:
 C     Provide this file at run time
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth3Ddelta',smoothOpNb
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec, 
-     &           Nr, delta,1, 1, myThid )
-      CALL EXCH_XYZ_RL ( delta, myThid )
+      fexist = .FALSE.
+      write(fnamegeneric(1:80),'(1a,i3.3,a)')
+     &    'smooth3Ddelta',smoothOpNb,'.data'
+      inquire(file=fnamegeneric,exist=fexist)
+      if (fexist) then
+        CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
+     &             Nr, delta,1, 1, myThid )
+        CALL EXCH_XYZ_RL ( delta, myThid )
+      else
+        write(msgBuf,'(4a)')
+     &    'SMOOTH_INVERSE_MATERN_3D: ',
+     &    'cannot find ', fnamegeneric,
+     &    ' setting to zeros'
+        call print_message(msgBuf, standardMessageUnit,
+     &      SQUEEZE_RIGHT, myThid)
+      endif
+
+C --- Look for determinant inverse
+      fexist = .FALSE.
+      write(fnamegeneric(1:80),'(1a,i3.3,a)')
+     &    'smooth3DdetInv',smoothOpNb,'.data'
+      inquire(file=fnamegeneric,exist=fexist)
+      if (fexist) then
+        CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
+     &             Nr, detInv,1, 1, myThid )
+        CALL EXCH_XYZ_RL ( detInv, myThid )
+      else
+        write(msgBuf,'(4a)')
+     &    'SMOOTH_INVERSE_MATERN_3D: ',
+     &    'cannot find ', fnamegeneric,
+     &    ' setting to ones'
+        call print_message(msgBuf, standardMessageUnit,
+     &      SQUEEZE_RIGHT, myThid)
+      endif
+
 
 C --- Update halo retions for mask
 C     this is not done right now by ctrl_map_ini_genarr
@@ -113,8 +147,8 @@ c        operate directly on overlap region, inputs "pre-exchanged"
         do k = 1,Nr
          do j = 1-OLy,sNy+OLy
           do i = 1-OLx,sNx+OLx
-           center(i,j,k,bi,bj) = delta(i,j,k,bi,bj) -
-     &                           center(i,j,k,bi,bj) 
+           center(i,j,k,bi,bj) = -center(i,j,k,bi,bj) +
+     &          detInv(i,j,k,bi,bj)*delta(i,j,k,bi,bj)
            east (i,j,k,bi,bj)  = -east (i,j,k,bi,bj)
            west (i,j,k,bi,bj)  = -west (i,j,k,bi,bj)
            north(i,j,k,bi,bj)  = -north(i,j,k,bi,bj)
@@ -135,5 +169,10 @@ c --- 3. Get jacobi to solve our problem
 c --- 4. Apply normalization field [i.e. 1/sqrt(var(filter))]:
       if (doNormalize) call smooth_apply_filternorm_3d(
      &                          fld_in, smoothOpNb, myThid)
+
+      write(fnamegeneric(1:80),'(1a,i3.3)')
+     &    'smooth3Dcenter',smoothOpNb
+      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
+     &                      Nr, center, 1, 1, myThid )
        
       end
