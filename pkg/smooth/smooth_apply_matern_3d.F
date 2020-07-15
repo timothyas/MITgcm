@@ -32,6 +32,7 @@ C --- Inputs
 
 C --- Local parameters
       _RL delta (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
+      _RL detInv(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL center(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL east  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL west  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
@@ -42,9 +43,11 @@ C --- Local parameters
       _RL fld_out(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       integer smoothOpNb
       character*( 80) fnamegeneric
+      character*(MAX_LEN_MBUF) msgBuf
       integer i,j,k,bi,bj
       integer itlo,ithi
       integer jtlo,jthi
+      logical fexist
 
 
 C --- Loop counters
@@ -64,15 +67,16 @@ c     since they're created here
         do k = 1,Nr
          do j = 1-OLy,sNy+OLy
           do i = 1-OLx,sNx+OLx
-           delta    (i,j,k,bi,bj) = 0. _d 0
-           center   (i,j,k,bi,bj) = 0. _d 0
-           east     (i,j,k,bi,bj) = 0. _d 0
-           west     (i,j,k,bi,bj) = 0. _d 0
-           north    (i,j,k,bi,bj) = 0. _d 0
-           south    (i,j,k,bi,bj) = 0. _d 0
-           up       (i,j,k,bi,bj) = 0. _d 0
-           down     (i,j,k,bi,bj) = 0. _d 0
-           fld_out  (i,j,k,bi,bj) = 0. _d 0
+           delta  (i,j,k,bi,bj) = 0. _d 0
+           detInv (i,j,k,bi,bj) = 1. _d 0
+           center (i,j,k,bi,bj) = 0. _d 0
+           east   (i,j,k,bi,bj) = 0. _d 0
+           west   (i,j,k,bi,bj) = 0. _d 0
+           north  (i,j,k,bi,bj) = 0. _d 0
+           south  (i,j,k,bi,bj) = 0. _d 0
+           up     (i,j,k,bi,bj) = 0. _d 0
+           down   (i,j,k,bi,bj) = 0. _d 0
+           fld_out(i,j,k,bi,bj) = 0. _d 0
           enddo
          enddo
         enddo
@@ -84,10 +88,40 @@ C --- Make sure input mask halos are good to go
 
 C --- Read in delta:
 C     Provide this file at run time
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth2Ddelta',smoothOpNb
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &           Nr, delta,1,1,mythid)
+      fexist = .FALSE.
+      write(fnamegeneric(1:80),'(1a,i3.3,a)')
+     &    'smooth3Ddelta',smoothOpNb,'.data'
+      inquire(file=fnamegeneric,exist=fexist)
+      if (fexist) then
+        CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
+     &             Nr, delta,1, 1, myThid )
+        CALL EXCH_XYZ_RL ( delta, myThid )
+      else
+        write(msgBuf,'(4a)')
+     &    'SMOOTH_APPLY_MATERN_3D: ',
+     &    'cannot find ', fnamegeneric,
+     &    ' setting to zeros'
+        call print_message(msgBuf, standardMessageUnit,
+     &      SQUEEZE_RIGHT, myThid)
+      endif
+
+C --- Look for determinant inverse
+      fexist = .FALSE.
+      write(fnamegeneric(1:80),'(1a,i3.3,a)')
+     &    'smooth3DdetInv',smoothOpNb,'.data'
+      inquire(file=fnamegeneric,exist=fexist)
+      if (fexist) then
+        CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
+     &             Nr, detInv,1, 1, myThid )
+        CALL EXCH_XYZ_RL ( detInv, myThid )
+      else
+        write(msgBuf,'(4a)')
+     &    'SMOOTH_APPLY_MATERN_3D: ',
+     &    'cannot find ', fnamegeneric,
+     &    ' setting to ones'
+        call print_message(msgBuf, standardMessageUnit,
+     &      SQUEEZE_RIGHT, myThid)
+      endif
 
 c --- 1. Apply inverse of filternorm (i.e. filter standard deviation)
       call smooth_apply_filterstd_3d(fld_in, smoothOpNb, myThid)
@@ -104,7 +138,8 @@ c --- 2. Get laplacian matrix elements and apply matern operator
           do i = 1,sNx
 
            fld_out(i,j,k,bi,bj) = fld_in(i,j,k,bi,bj)*
-     &         (delta(i,j,k,bi,bj) - center(i,j,k,bi,bj)) -
+     &         (detInv(i,j,k,bi,bj)*delta(i,j,k,bi,bj) -
+     &          center(i,j,k,bi,bj)) -
      &          east (i,j,k,bi,bj)*fld_in(i+1,j,k,bi,bj) -
      &          west (i,j,k,bi,bj)*fld_in(i-1,j,k,bi,bj) -
      &          north(i,j,k,bi,bj)*fld_in(i,j+1,k,bi,bj) -
