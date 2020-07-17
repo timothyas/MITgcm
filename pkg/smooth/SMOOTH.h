@@ -1,4 +1,4 @@
-c pkg/smooth constants
+C pkg/smooth constants
 
       integer     smoothprec
       parameter ( smoothprec = 32 )
@@ -20,10 +20,13 @@ c fields:
      & smooth_hFacW(1-Olx:sNx+Olx,1-Oly:sNy+Oly,Nr,nSx,nSy),
      & smooth_hFacS(1-Olx:sNx+Olx,1-Oly:sNy+Oly,Nr,nSx,nSy)
 
+C --- 3D Fields
       integer smooth3Dnbt(smoothOpNbMax),
      & smooth3DtypeZ(smoothOpNbMax),smooth3DsizeZ(smoothOpNbMax),
      & smooth3DtypeH(smoothOpNbMax),smooth3DsizeH(smoothOpNbMax),
-     & smooth3Dfilter(smoothOpNbMax),smooth3DNbRand(smoothOpNbMax)
+     & smooth3Dfilter(smoothOpNbMax),smooth3DNbRand(smoothOpNbMax),
+     & smooth3DJacobiMaxIters(smoothOpNbMax)
+
       _RL smooth3DtotTime,
      & smooth3D_Lx0(smoothOpNbMax),
      & smooth3D_Ly0(smoothOpNbMax), smooth3D_Lz0(smoothOpNbMax),
@@ -31,21 +34,6 @@ c fields:
      & smooth3D_Ly(1-Olx:sNx+Olx,1-Oly:sNy+Oly,Nr,nSx,nSy),
      & smooth3D_Lz(1-Olx:sNx+Olx,1-Oly:sNy+Oly,Nr,nSx,nSy),
      & smooth3Dnorm (1-Olx:sNx+Olx,1-Oly:sNy+Oly,Nr,nSx,nSy)
-
-      character*(5) smooth3DmaskName(smoothOpNbMax)
-      character*(6) smooth3DAlgorithm(smoothOpNbMax)
-
-      integer smooth2Dnbt(smoothOpNbMax),
-     & smooth2Dtype(smoothOpNbMax),smooth2Dsize(smoothOpNbMax),
-     & smooth2Dfilter(smoothOpNbMax),smooth2DNbRand(smoothOpNbMax)
-      _RL smooth2DtotTime,
-     & smooth2D_Lx0(smoothOpNbMax),smooth2D_Ly0(smoothOpNbMax),
-     & smooth2D_Lx(1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy),
-     & smooth2D_Ly(1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy),
-     & smooth2Dnorm (1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy)
-
-      character*(5) smooth2DmaskName(smoothOpNbMax)
-      character*(6) smooth2DAlgorithm(smoothOpNbMax)
 
       _RL 
      & smooth3D_kappaR (1-Olx:sNx+Olx,1-Oly:sNy+Oly,Nr,nSx,nSy),
@@ -57,12 +45,33 @@ c fields:
      & smooth3D_Kuz(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy),
      & smooth3D_Kvz(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy),
      & smooth3D_Kuy(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy),
-     & smooth3D_Kvx(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
+     & smooth3D_Kvx(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy),
+     & smooth3DDelta(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy),
+     & smooth3DRandNorm(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
+
+      character*(5) smooth3DmaskName(smoothOpNbMax)
+      character*(6) smooth3DAlgorithm(smoothOpNbMax)
+
+C --- 2D Fields
+      integer smooth2Dnbt(smoothOpNbMax),
+     & smooth2Dtype(smoothOpNbMax),smooth2Dsize(smoothOpNbMax),
+     & smooth2Dfilter(smoothOpNbMax),smooth2DNbRand(smoothOpNbMax),
+     & smooth2DJacobiMaxIters(smoothOpNbMax)
+
+      _RL smooth2DtotTime,
+     & smooth2D_Lx0(smoothOpNbMax),smooth2D_Ly0(smoothOpNbMax),
+     & smooth2D_Lx(1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy),
+     & smooth2D_Ly(1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy),
+     & smooth2Dnorm (1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy)
+
+      character*(5) smooth2DmaskName(smoothOpNbMax)
+      character*(6) smooth2DAlgorithm(smoothOpNbMax)
 
       _RL 
      & smooth2D_Kux (1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy),
      & smooth2D_Kvy (1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy)
 
+C --- Common Blocks
       COMMON /smooth_flds_rs/
      & smooth_recip_hFacC, smooth_hFacW, smooth_hFacS
 
@@ -84,12 +93,15 @@ c fields:
      & smooth3DtypeZ, smooth3DsizeZ,
      & smooth3DtypeH, smooth3DsizeH,
      & smooth2Dfilter, smooth3Dfilter,
-     & smooth2DNbRand, smooth3DNbRand
+     & smooth2DNbRand, smooth3DNbRand,
+     & smooth2DJacobiMaxIters, smooth3DJacobiMaxIters
 
       COMMON /smooth_operators_r/
      & smooth3D_kappaR,smooth3D_Kwx,smooth3D_Kwy,smooth3D_Kwz,
      & smooth3D_Kux,smooth3D_Kvy,smooth3D_Kuz,smooth3D_Kvz,
      & smooth3D_Kuy,smooth3D_Kvx,
+     & smooth3DDelta,smooth3DRandNorm,
      & smooth2D_Kux,smooth2D_Kvy
+
 
  

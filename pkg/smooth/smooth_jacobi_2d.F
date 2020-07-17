@@ -5,6 +5,7 @@
 
       subroutine smooth_jacobi_2d (
      U     fld_in,
+     I     smoothOpNb,
      I     center, north, south, east, west,
      I     smooth2Dmask,
      I     mythid)
@@ -37,6 +38,7 @@ C           center = (i,j)
 C           north = (i,j+1); south = (i,j-1)
 C           east  = (i+1,j); west  = (i-1,j)
       _RL fld_in(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      integer smoothOpNb
       _RL center(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL north(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL south(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
@@ -67,7 +69,6 @@ C --- Loop counters
 
 C --- Initialize solver stuff
       jacobi_iter = 0
-      n_iter_max = 500
       TOL = 1.0 _d -15
       TOL_SQ = TOL*TOL
       relErr = 100. _d 0
@@ -86,7 +87,8 @@ C --- Initialize solver stuff
       enddo
     
 C --- The jacobi iterations
-      do while ((jacobi_iter.lt.n_iter_max).and.(relErr.ge.TOL_SQ))
+      do while ((jacobi_iter.lt.smooth2DJacobiMaxIters(smoothOpNb))
+     &     .and.(relErr.ge.TOL_SQ))
 
        ! reset error and update counter
        fld_in_norm = 0. _d 0
@@ -160,7 +162,7 @@ C --- The jacobi iterations
      &      SQUEEZE_RIGHT, myThid)
 
         write(msgBuf,'(2A,I10,A,E22.14)') 'SMOOTH_JACOBI_2D: ',
-     &      'n_iter_max: ', n_iter_max,
+     &      'n_iter_max: ', smooth2DJacobiMaxIters(smoothOpNb),
      &      '  TOL: ', TOL
         call print_message(msgBuf, standardMessageUnit,
      &      SQUEEZE_RIGHT, myThid)
