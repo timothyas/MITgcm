@@ -5,6 +5,7 @@
 
       subroutine smooth_jacobi_3d (
      U     fld_in,
+     I     smoothOpNb,
      I     center, east, west, north, south, up, down,
      I     smooth3Dmask,
      I     mythid)
@@ -39,6 +40,7 @@ C           north = (i  , j+1,  k  ); south = (i  , j-1, k  )
 C           up    = (i  , j  ,  k+1); down  = (i  , j  , k-1)
 C
       _RL fld_in(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
+      integer smoothOpNb
       _RL center(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL east  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL west  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
@@ -55,7 +57,7 @@ C --- Local parameters
       integer jtlo,jthi
 
       _RL TOL, TOL_SQ, fld_in_norm, relErr, absErr
-      integer jacobi_iter, n_iter_max
+      integer jacobi_iter
 
       _RL fld_rhs(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL fld_out(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
@@ -72,7 +74,6 @@ C --- Loop counters
 
 C --- Initialize solver stuff
       jacobi_iter = 0
-      n_iter_max = 1000
       TOL = 1.0 _d -15
       TOL_SQ = TOL*TOL
       relErr = 100. _d 0
@@ -98,7 +99,8 @@ C --- Initialize solver stuff
       enddo
     
 C --- The jacobi iterations
-      do while ((jacobi_iter.lt.n_iter_max).and.(relErr.ge.TOL_SQ))
+      do while ((jacobi_iter.lt.smooth3DJacobiMaxIters(smoothOpNb))
+     &     .and.(relErr.ge.TOL_SQ))
 
        ! reset error and update counter
        fld_in_norm = 0. _d 0
@@ -176,7 +178,7 @@ C --- The jacobi iterations
      &      SQUEEZE_RIGHT, myThid)
 
         write(msgBuf,'(2A,I10,A,E22.14)') 'SMOOTH_JACOBI_3D: ',
-     &      'n_iter_max: ', n_iter_max,
+     &      'n_iter_max: ', smooth3DJacobiMaxIters(smoothOpNb),
      &      '  TOL: ', TOL
         call print_message(msgBuf, standardMessageUnit,
      &      SQUEEZE_RIGHT, myThid)
