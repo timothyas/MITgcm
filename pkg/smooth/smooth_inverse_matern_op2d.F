@@ -117,7 +117,7 @@ c        operate directly on overlap region, inputs "pre-exchanged"
       enddo
 
 c --- 3. Get jacobi to solve our problem
-      call smooth_jacobi_2d( fld_in,
+      call smooth_jacobi_2d( fld_in, smoothOpNb,
      &      center, north, south, east, west,
      &      smooth2DMask, myThid )
 
