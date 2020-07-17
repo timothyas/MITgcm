@@ -64,40 +64,6 @@ C --- Loop counters
       itlo = mybxlo(mythid)
       ithi = mybxhi(mythid)
 
-C --- Diffusion operator (tensor) as shown above
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth3Doperator',smoothOpNb
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec, 
-     &           Nr,smooth3D_Kwx,1, 1, myThid )
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec, 
-     &           Nr,smooth3D_Kwy,2, 1, myThid )
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec, 
-     &           Nr,smooth3D_Kwz,3, 1, myThid )
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec, 
-     &           Nr,smooth3D_Kux,4, 1, myThid )
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec, 
-     &           Nr,smooth3D_Kvy,5, 1, myThid )
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec, 
-     &           Nr,smooth3D_Kuz,6, 1, myThid )
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec, 
-     &           Nr,smooth3D_Kvz,7, 1, myThid )
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec, 
-     &           Nr,smooth3D_Kuy,8, 1, myThid )
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec, 
-     &           Nr,smooth3D_Kvx,9, 1, myThid )
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec, 
-     &           Nr,smooth3D_kappaR,10, 1, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kwx, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kwy, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kwz, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kux, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kvy, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kuz, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kvz, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kuy, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kvx, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_kappaR, myThid )
-    
 C --- Initialize output
       DO bj = jtlo,jthi
        DO bi = itlo,ithi

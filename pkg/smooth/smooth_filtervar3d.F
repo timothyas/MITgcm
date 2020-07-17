@@ -49,7 +49,7 @@ C --- Local Parameters
       _RL smoothTmpMean(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL smoothTmpVar(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RS smooth3Dmask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
-      _RS detInv(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
+      _RS randNorm(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
 
 C --- Initialize loop counters
       jtlo = mybylo(myThid)
@@ -75,7 +75,7 @@ c initialize determinant inverse (for matern), and get mask:
          DO j=1-OLy,sNy+OLy
           DO i=1-OLx,sNx+OLx
            smooth3Dnorm(i,j,k,bi,bj)=0.
-           detInv(i,j,k,bi,bj)=1. _d 0
+           randNorm(i,j,k,bi,bj)=1. _d 0
            if (smooth3DmaskName(smoothOpNb)(1:5).eq.'maskC') then
             smooth3Dmask(i,j,k,bi,bj) = maskC(i,j,k,bi,bj)
            elseif (smooth3DmaskName(smoothOpNb)(1:5).eq.'maskW') then
@@ -89,49 +89,18 @@ c initialize determinant inverse (for matern), and get mask:
        ENDDO
       ENDDO
 
-c read smoothing [i.e diffusion] operator:
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth3Doperator',smoothOpNb
-      CALL READ_REC_3D_RL( fnamegeneric,smoothprec, Nr,smooth3D_Kwx,
-     &                     1, 1, myThid )
-      CALL READ_REC_3D_RL( fnamegeneric,smoothprec, Nr,smooth3D_Kwy,
-     &                     2, 1, myThid )
-      CALL READ_REC_3D_RL( fnamegeneric,smoothprec, Nr,smooth3D_Kwz,
-     &                     3, 1, myThid )
-      CALL READ_REC_3D_RL( fnamegeneric,smoothprec, Nr,smooth3D_Kux,
-     &                     4, 1, myThid )
-      CALL READ_REC_3D_RL( fnamegeneric,smoothprec, Nr,smooth3D_Kvy,
-     &                     5, 1, myThid )
-      CALL READ_REC_3D_RL( fnamegeneric,smoothprec, Nr,smooth3D_Kuz,
-     &                     6, 1, myThid )
-      CALL READ_REC_3D_RL( fnamegeneric,smoothprec, Nr,smooth3D_Kvz,
-     &                     7, 1, myThid )
-      CALL READ_REC_3D_RL( fnamegeneric,smoothprec, Nr,smooth3D_Kuy,
-     &                     8, 1, myThid )
-      CALL READ_REC_3D_RL( fnamegeneric,smoothprec, Nr,smooth3D_Kvx,
-     &                     9, 1, myThid )
-      CALL READ_REC_3D_RL( fnamegeneric,smoothprec, Nr,smooth3D_kappaR,
-     &                     10,1, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kwx, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kwy, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kwz, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kux, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kvy, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kuz, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kvz, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kuy, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_Kvx, myThid )
-      CALL EXCH_XYZ_RL ( smooth3D_kappaR, myThid )
+C --- Read smoothing [i.e diffusion] operator:
+      CALL smooth_read_operator_3d(smoothOpNb,myThid)
 
 C --- Look for determinant inverse
       fexist = .FALSE.
       write(fnamegeneric(1:80),'(1a,i3.3,a)')
-     &    'smooth3DdetInv',smoothOpNb,'.data'
+     &    'smooth3DRandNorm',smoothOpNb,'.data'
       inquire(file=fnamegeneric,exist=fexist)
       if (fexist) then
         CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &             Nr, detInv,1, 1, myThid )
-        CALL EXCH_XYZ_RL ( detInv, myThid )
+     &             Nr, randNorm,1, 1, myThid )
+        CALL EXCH_XYZ_RL ( randNorm, myThid )
       else
         write(msgBuf,'(4a)')
      &    'SMOOTH_FILTERVAR3D: ',
@@ -289,10 +258,9 @@ C     WC01: divide by sqrt(area)
               smoothTmpFld(i,j,k,bi,bj)=smoothTmpFld(i,j,k,bi,bj)
      &        *sqrt(recip_rA(i,j,bi,bj)*recip_drF(k))
 
-             elseif ((smooth3DAlgorithm(smoothOpNb).eq.'matern').and.
-     &               (ABS(detInv(i,j,k,bi,bj)).gt.0. _d 0)) then
+             elseif (smooth3DAlgorithm(smoothOpNb).eq.'matern') then
               smoothTmpFld(i,j,k,bi,bj)=smoothTmpFld(i,j,k,bi,bj)*
-     &         sqrt(detInv(i,j,k,bi,bj))
+     &         randNorm(i,j,k,bi,bj)
              endif
            endif
           ENDDO
