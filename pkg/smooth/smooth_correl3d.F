@@ -33,17 +33,6 @@ c#include "tamc.h"
       itlo = mybxlo(mythid)
       ithi = mybxhi(mythid)
 
-      
-c read smoothing [i.e diffusion] operator:
-      CALL smooth_read_operator_3d(smoothOpNb,myThid)
-
-c read normalization field [i.e. 1/sqrt(var(filter))]:
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth3Dnorm',smoothOpNb
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &           Nr, smooth3Dnorm,1,1,mythid)
-      CALL EXCH_XYZ_RL ( smooth3Dnorm, myThid )
-
 c division by ~sqrt(volume):
       DO bj=jtlo,jthi
        DO bi=itlo,ithi

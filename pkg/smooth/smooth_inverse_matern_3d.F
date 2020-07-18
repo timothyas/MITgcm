@@ -58,9 +58,6 @@ C --- Loop Counters
       itlo = mybxlo(mythid)
       ithi = mybxhi(mythid)
 
-C --- Read in the operator: kappa and delta
-      CALL smooth_read_operator_3d(smoothOpNb, myThid)
-
 C --- Update halo retions for mask
 C     this is not done right now by ctrl_map_ini_genarr
 C     so we can't assume it to be the case
@@ -102,12 +99,19 @@ c --- 3. Get jacobi to solve our problem
      &      smooth3DMask, myThid )
 
 c --- 4. Apply normalization field [i.e. 1/sqrt(var(filter))]:
-      if (doNormalize) call smooth_apply_filternorm_3d(
-     &                          fld_in, smoothOpNb, myThid)
+      if (doNormalize) then
+       do bj = jtlo,jthi
+        do bi = itlo,ithi
+         do k = 1,Nr
+          do j = 1-OLy,sNy+OLy
+           do i = 1-OLx,sNx+OLx
+            fld_in(i,j,k,bi,bj) = fld_in(i,j,k,bi,bj)*
+     &          smooth3DNorm(i,j,k,bi,bj)
+           enddo
+          enddo
+         enddo
+        enddo
+       enddo
+      endif
 
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth3Dcenter',smoothOpNb
-      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
-     &                      Nr, center, 1, 1, myThid )
-       
       end
