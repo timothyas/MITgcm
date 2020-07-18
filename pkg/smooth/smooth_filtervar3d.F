@@ -329,33 +329,11 @@ c write smooth3Dnorm_3D to file:
      &                      Nr, smooth3Dnorm, 1, 1, myThid )
       CALL EXCH_XYZ_RL ( smooth3Dnorm,  myThid )
 
-c write out mean too
+c write out mean and the last sample
       write(fnamegeneric(1:80),'(1a,i3.3)')
      &    'smooth3Dmean',smoothOpNb
       CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
      &                      Nr, smoothTmpMean, 1, 1, myThid )
-
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth3D_Kwx',smoothOpNb
-      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
-     &                      Nr, smooth3D_Kwx, 1, 1, myThid )
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth3D_Kwy',smoothOpNb
-      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
-     &                      Nr, smooth3D_Kwy, 1, 1, myThid )
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth3D_Kwz',smoothOpNb
-      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
-     &                      Nr, smooth3D_Kwz, 1, 1, myThid )
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth3D_Kux',smoothOpNb
-      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
-     &                      Nr, smooth3D_Kux, 1, 1, myThid )
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth3D_Kvy',smoothOpNb
-      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
-     &                      Nr, smooth3D_Kvy, 1, 1, myThid )
-
       write(fnamegeneric(1:80),'(1a,i3.3)')
      &    'smooth3Dfld',smoothOpNb
       CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,

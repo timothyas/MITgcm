@@ -25,6 +25,9 @@ C     === Global variables ===
 #ifdef ALLOW_SHI2D_CONTROL
 # include "SHELFICE_OPTIONS.h"
 #endif
+#ifdef ALLOW_SMOOTH
+# include "SMOOTH.h"
+#endif      
 
 C     === Routine arguments ===
 C     myThid -  Number of this instance
@@ -33,7 +36,8 @@ C     myThid -  Number of this instance
 C     === Local variables ===
 C     msgBuf      - Informational/error message buffer
       CHARACTER*(MAX_LEN_MBUF) msgBuf
-      LOGICAL solve4Stress
+      CHARACTER*(80) fnamegeneric
+      LOGICAL solve4Stress, fexist
 
 #ifndef ALLOW_OPENAD
 #if (defined (ALLOW_GENARR2D_CONTROL) || defined (ALLOW_GENARR3D_CONTROL) || defined (ALLOW_GENTIM2D_CONTROL))
@@ -340,6 +344,95 @@ C this could be changed to control cdrag for momentum equation...
               STOP 'ABNORMAL END: S/R CTRL_CHECK'
           endif
         enddo
+# endif
+#endif
+
+#ifdef ALLOW_SMOOTH
+# ifdef ALLOW_GENARR2D_CONTROL
+      do iarr = 1, maxCtrlArr2D
+         do k2 = 1, maxCtrlProc
+           if ((xx_genarr2d_preproc(k2,iarr).EQ.'WC01').or.
+     &         (xx_genarr2d_preproc(k2,iarr)(1:6).EQ.'matern')) then
+             if (xx_genarr2d_preproc_i(k2,iarr).NE.0) then
+               numsmo=xx_genarr2d_preproc_i(k2,iarr)
+             else
+               numsmo=1
+             endif
+             if (smooth2DFilter(numsmo).EQ.0) then
+               fexist = .FALSE.
+               write(fnamegeneric(1:80),'(1a,i3.3,a)')
+     &           'smooth2Dnorm',numsmo,'.data'
+               inquire(file=fnamegeneric,exist=fexist)
+               IF (.not.fexist) THEN
+                  write(msgBuf,'(2A)')
+     &            'CTRL_CHECK: Using WC01 or Matern but ',
+     &            'not computing normalization and cannot find file: ',
+     &            fnamegeneric
+                  call print_error( msgBuf, myThid )
+                  STOP 'ABNORMAL END: S/R CTRL_CHECK'
+              ENDIF
+            ENDIF ! test if computing filtervar
+          ENDIF ! test if WC01 or matern
+        enddo
+      enddo
+
+
+# ifdef ALLOW_GENARR3D_CONTROL
+      do iarr = 1, maxCtrlArr3D
+         do k2 = 1, maxCtrlProc
+           if ((xx_genarr3d_preproc(k2,iarr).EQ.'WC01').or.
+     &         (xx_genarr3d_preproc(k2,iarr)(1:6).EQ.'matern')) then
+             if (xx_genarr3d_preproc_i(k2,iarr).NE.0) then
+               numsmo=xx_genarr3d_preproc_i(k2,iarr)
+             else
+               numsmo=1
+             endif
+             if (smooth3DFilter(numsmo).EQ.0) then
+               fexist = .FALSE.
+               write(fnamegeneric(1:80),'(1a,i3.3,a)')
+     &           'smooth3Dnorm',numsmo,'.data'
+               inquire(file=fnamegeneric,exist=fexist)
+               IF (.not.fexist) THEN
+                  write(msgBuf,'(2A)')
+     &            'CTRL_CHECK: Using WC01 or Matern but ',
+     &            'not computing normalization and cannot find file: ',
+     &            fnamegeneric
+                  call print_error( msgBuf, myThid )
+                  STOP 'ABNORMAL END: S/R CTRL_CHECK'
+              ENDIF
+            ENDIF ! test if computing filtervar
+          ENDIF ! test if WC01 or matern
+        enddo
+      enddo
+# endif
+
+# ifdef ALLOW_GENTIM2D_CONTROL
+      do iarr = 1, maxCtrlTim2D
+         do k2 = 1, maxCtrlProc
+           if ((xx_gentim2d_preproc(k2,iarr).EQ.'WC01').or.
+     &         (xx_gentim2d_preproc(k2,iarr)(1:6).EQ.'matern')) then
+             if (xx_gentim3d_preproc_i(k2,iarr).NE.0) then
+               numsmo=xx_gentim2d_preproc_i(k2,iarr)
+             else
+               numsmo=1
+             endif
+             if (smooth2DFilter(numsmo).EQ.0) then
+               fexist = .FALSE.
+               write(fnamegeneric(1:80),'(1a,i3.3,a)')
+     &           'smooth2Dnorm',numsmo,'.data'
+               inquire(file=fnamegeneric,exist=fexist)
+               IF (.not.fexist) THEN
+                  write(msgBuf,'(2A)')
+     &            'CTRL_CHECK: Using WC01 or Matern but ',
+     &            'not computing normalization and cannot find file: ',
+     &            fnamegeneric
+                  call print_error( msgBuf, myThid )
+                  STOP 'ABNORMAL END: S/R CTRL_CHECK'
+              ENDIF
+            ENDIF ! test if computing filtervar
+          ENDIF ! test if WC01 or matern
+        enddo
+      enddo
 # endif
 #endif
 

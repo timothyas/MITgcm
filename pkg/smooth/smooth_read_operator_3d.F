@@ -189,6 +189,18 @@ C ---   delta:
 
       ENDIF ! Check algorithm 'WC01' or 'matern'
 
+c ---  read normalization field [i.e. 1/sqrt(var(filter))]:
+c     ctrl_check ensures this file exists or is computed, if needed
+      fexist = .FALSE.
+      write(fnamegeneric(1:80),'(1a,i3.3)')
+     &    'smooth3Dnorm',smoothOpNb,'.data'
+      inquire(file=fnamegeneric,exist=fexist)
+      IF (fexist) THEN
+        CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
+     &             Nr, smooth3Dnorm,1,1,mythid)
+        CALL EXCH_XYZ_RL ( smooth3Dnorm, myThid )
+      ENDIF
+
       CALL EXCH_XYZ_RL ( smooth3D_Kwx, myThid )
       CALL EXCH_XYZ_RL ( smooth3D_Kwy, myThid )
       CALL EXCH_XYZ_RL ( smooth3D_Kwz, myThid )

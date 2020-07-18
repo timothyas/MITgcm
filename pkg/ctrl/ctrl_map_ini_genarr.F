@@ -271,9 +271,7 @@ C     == local variables ==
       integer jmin,jmax
       integer imin,imax
       integer numsmo, k2
-      logical dowc01
-      logical dosmooth
-      logical domatern_regular, domatern_precond, domatern_normalize
+      logical be_smooth
       logical doscaling
       logical dolog10ctrl
       _RL log10initval
@@ -304,39 +302,19 @@ c--   Now, read the control vector.
        ENDDO
       ENDDO
 
-      dosmooth=.false.
-      dowc01  = .false.
-      domatern_regular = .false.
-      domatern_precond = .false.
-      domatern_normalize =.true.
+      be_smooth=.false.
       doscaling=.true.
       dolog10ctrl=.false.
       log10initval=0. _d 0
 
       numsmo=1
       do k2 = 1, maxCtrlProc
-       if (xx_genarr2d_preproc(k2,iarr).EQ.'WC01') then
-          dowc01=.TRUE.
+       if ((xx_genarr2d_preproc(k2,iarr).EQ.'WC01').or.
+     &     (xx_genarr2d_preproc(k2,iarr).EQ.'smooth').or.
+     &     (xx_genarr2d_preproc(k2,iarr)(1:6).EQ.'matern')) then
+          be_smooth=.TRUE.
           if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
      &        numsmo=xx_genarr2d_preproc_i(k2,iarr)
-       endif
-       if ((.NOT.dowc01).AND.
-     &     (xx_genarr2d_preproc(k2,iarr).EQ.'smooth')) then
-          dosmooth=.TRUE.
-          if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
-     &        numsmo=xx_genarr2d_preproc_i(k2,iarr)
-       endif
-       if (xx_genarr2d_preproc(k2,iarr)(1:6).EQ.'matern') then
-        if (xx_genarr2d_preproc(k2,iarr)(7:14).EQ.'_regular') then
-         domatern_regular=.TRUE.
-        elseif (xx_genarr2d_preproc(k2,iarr)(7:15).EQ.'_precond') then
-         domatern_precond=.TRUE.
-        endif
-        if(xx_genarr2d_preproc_c(k2,iarr)(7:13).EQ.'_nonorm') then
-         domatern_normalize=.FALSE.
-        endif
-        if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
-     &      numsmo=xx_genarr2d_preproc_i(k2,iarr)
        endif
        if (xx_genarr2d_preproc(k2,iarr).EQ.'noscaling') then
           doscaling=.FALSE.
@@ -370,18 +348,11 @@ c            passed to data.ctrl, (default = 0.0)
 C --- Get appropriate mask for ctrl variable
       call ctrl_get_mask2d(xx_genarr2d_file(iarr), mask2D, myThid)
 
-C --- Do any smoothing
 #ifdef ALLOW_SMOOTH
-      IF (useSMOOTH) THEN
+C --- Do any smoothing: WC01, smooth, or matern-type
 CADJ STORE mask2D = tapelev_init, key = 1
-       IF (dowc01) call smooth_correl2d(xx_gen,mask2D,numsmo,mythid)
-CADJ STORE mask2D = tapelev_init, key = 1
-       IF (dosmooth) call smooth2d(xx_gen,mask2D,numsmo,mythid)
-       IF (domatern_regular.and.domatern_normalize) 
-     &      call smooth_apply_filternorm2d(xx_gen, numsmo, mythid)
-       IF (domatern_precond) call smooth_inverse_matern_op2d(
-     &          xx_gen,mask2D,numsmo,domatern_normalize,mythid)
-      ENDIF
+      IF ((useSMOOTH).and.(be_smooth))
+     &  call smooth_driver_2d(xx_gen,mask2D,numsmo,myThid)
 #endif
 
       DO bj=myByLo(myThid), myByHi(myThid)
@@ -470,9 +441,7 @@ C     == local variables ==
       integer bi,bj
       integer i,j,k
       integer numsmo,k2
-      logical dowc01
-      logical dosmooth
-      logical doscaling
+      logical be_smooth
       logical dolog10ctrl
       _RL log10initval
       _RL xx_gen  (1-olx:snx+olx,1-oly:sny+oly,nr,nsx,nsy)
@@ -480,6 +449,7 @@ C     == local variables ==
       character*(80) fnamegenIn
       character*(80) fnamegenOut
       character*(80) fnamebase
+      character*(20) smooth_options(maxCtrlProc)
       INTEGER  ILNBLNK
       EXTERNAL ILNBLNK
       integer ilgen
@@ -494,22 +464,19 @@ c--   Now, read the control vector.
 
       call ctrl_zero(xx_gen, Nr, 0. _d 0, myThid)
 
-      dosmooth=.false.
-      dowc01  = .false.
+      usesmoothpkg=.false.
       doscaling=.true.
       dolog10ctrl=.false.
       log10initval=0. _d 0
 
       numsmo=1
       do k2 = 1, maxCtrlProc
-          if (xx_genarr3d_preproc(k2,iarr).EQ.'WC01') then
-             dowc01=.TRUE.
-             if (xx_genarr3d_preproc_i(k2,iarr).NE.0)
-     &           numsmo=xx_genarr3d_preproc_i(k2,iarr)
-          endif
-          if ((.NOT.dowc01).AND.
-     &        (xx_genarr3d_preproc(k2,iarr).EQ.'smooth')) then
-             dosmooth=.TRUE.
+          write(smooth_options(k2),'(a)') ''
+          if ((xx_genarr3d_preproc(k2,iarr).EQ.'WC01').or.
+     &        (xx_genarr3d_preproc(k2,iarr).EQ.'smooth').or.
+     &        (xx_genarr3d_preproc(k2,iarr)(1:6).EQ.'matern')) then
+             be_smooth=.TRUE.
+             smooth_options(k2) = xx_genarr3d_preproc(k2,iarr)
              if (xx_genarr3d_preproc_i(k2,iarr).NE.0)
      &           numsmo=xx_genarr3d_preproc_i(k2,iarr)
           endif
@@ -542,15 +509,16 @@ c               passed to data.ctrl, (default = 0.0)
       CALL READ_REC_XYZ_RL( fnamegenIn, xx_gen, 1, 1, myThid)
 #endif
 
-#ifdef ALLOW_SMOOTH
-      IF (useSMOOTH) THEN
-       IF (dowc01) call smooth_correl3d(xx_gen,numsmo,mythid)
-       IF (dosmooth) call smooth3d(xx_gen,numsmo,mythid)
-      ENDIF
-#endif
-
-C --- Get appropriate mask
+C --- Get appropriate mask for ctrl variable
       call ctrl_get_mask3d(xx_genarr3d_file(iarr), mask3D, myThid)
+
+#ifdef ALLOW_SMOOTH
+C --- Do any smoothing: WC01, smooth, or matern-type
+CADJ STORE mask3D = tapelev_init, key = 1
+      IF ((useSMOOTH).and.(be_smooth))
+     &  call smooth_driver_3d(xx_gen,smooth_options,
+     &                        mask3D,numsmo,myThid)
+#endif
 
       DO bj=myByLo(myThid), myByHi(myThid)
        DO bi=myBxLo(myThid), myBxHi(myThid)
