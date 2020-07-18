@@ -73,17 +73,18 @@ C --- only maskC is allowed for smoothing 3D fields... for now I guess.
 
         IF ( (smooth3DmaskName(smoothOpNb).ne.'maskC').and.
      &       (smooth3DmaskName(smoothOpNb).ne.'maskW').and.
-     &       (smooth3DmaskName(smoothOpNb).ne.'maskS').and.
-     &       (smooth3DmaskName(smoothOpNb).ne.'maskI') ) then
+     &       (smooth3DmaskName(smoothOpNb).ne.'maskS')) then
           WRITE(msgBuf,'(2A,I2,2A)') 'SMOOTH_CHECK: ',
      &      'Unrecognized option for smooth3DmaskName(', smoothOpNb, 
      &      '): ', smooth3DmaskName(smoothOpNb)
           CALL PRINT_ERROR( msgBuf, myThid )
           WRITE(msgBuf,'(2A)') 'SMOOTH_CHECK: ',
-     &      'must be: maskC, maskW, maskS, or maskI'
+     &      'must be: maskC, maskW, or maskS'
           CALL PRINT_ERROR( msgBuf, myThid )
           STOP 'ABNORMAL END: S/R SMOOTH_CHECK'
         ENDIF
+
+
 
 C --- make sure proper macros are defined for maskI (iceshelf domain)
 #if !( defined(ALLOW_SHI2D_CONTROL) || defined(ALLOW_SHIFWFLX_CONTROL) )
