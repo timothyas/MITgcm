@@ -54,16 +54,22 @@ C     *==========================================================*
 
       doNormalize=.FALSE.
 
+c if smooth2Dfilter(smoothOpNb)=0: the filter variance field
+c has been computed earlier and is already in the run directory
+c so this routine does not do anything
+
+      IF (smooth2Dfilter(smoothOpNb).NE.0) then
+
+       nbt_in=smooth2Dnbt(smoothOpNb)/2
+
 c --- allow a different mask other than maskC
 c     Note: this is essentially a copy of ctrl_get_mask
 c     but is repeated here for package independence
-c     since this subroutine is typically used simply to get
-c     filter variance without actually running the model
-
       DO bj = jtlo,jthi
        DO bi = itlo,ithi
-        DO j = 1,sNy
-         DO i = 1,sNx
+        DO j = 1-OLy,sNy+OLy
+         DO i = 1-OLx,sNx+OLx
+          smooth2Dnorm(i,j,bi,bj)=0. _d 0
           if (smooth2DmaskName(smoothOpNb)(1:5).eq.'maskC') then
            smooth2Dmask(i,j,bi,bj) = maskC(i,j,1,bi,bj)
           elseif (smooth2DmaskName(smoothOpNb)(1:5).eq.'maskW') then
@@ -80,36 +86,8 @@ c     filter variance without actually running the model
        ENDDO
       ENDDO
 
-      CALL EXCH_XY_RL( smooth2DMask, myThid )
-
-c if smooth2Dfilter(smoothOpNb)=0: the filter variance field
-c has been computed earlier and is already in the run directory
-c so this routine does not do anything
-
-      IF (smooth2Dfilter(smoothOpNb).NE.0) then
-
-       nbt_in=smooth2Dnbt(smoothOpNb)/2
-
-c read smoothing [i.e diffusion] operator:
-       write(fnamegeneric(1:80),'(1a,i3.3)')
-     &     'smooth2Doperator',smoothOpNb
-       CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &            1,smooth2D_Kux,1,1,mythid)
-       CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &            1,smooth2D_Kvy,2,1,mythid)
-       CALL EXCH_XY_RL ( smooth2D_Kux, myThid )
-       CALL EXCH_XY_RL ( smooth2D_Kvy, myThid )
-
-c initialize filter variance field:
-      DO bj=jtlo,jthi
-       DO bi=itlo,ithi
-         DO j=1-OLy,sNy+OLy
-          DO i=1-OLx,sNx+OLx
-           smooth2Dnorm(i,j,bi,bj)=0. _d 0
-          ENDDO
-         ENDDO
-       ENDDO
-      ENDDO
+C --- Read smoothing [i.e. diffusion] operator:
+      CALL smooth_reaD_operator_2d(smoothOpNb,myThid)
 
       IF (smooth2Dfilter(smoothOpNb).EQ.2) then
 c compute the normalization matrix using the approximate method
@@ -230,28 +208,24 @@ c     seed is 1023 * pid * milliseconds from date/time
      & 'smooth_filtervar2D: ',ii,' members done out of ',
      & smooth2DNbRand(smoothOpNb)
 
-c --- 3. Iniitalize field within random sample loop
-       DO bj=jtlo,jthi
-        DO bi=itlo,ithi
-         DO j=1-OLy,sNy+OLy
-          DO i=1-OLx,sNx+OLx
-           smoothTmpFld(i,j,bi,bj)   = 0. _d 0
-          ENDDO
-         ENDDO
-        ENDDO
-       ENDDO
-
-c --- 4. set points wehre mask!=0 to random number
+c --- 3. set points wehre mask!=0 to random number
 c --- WC01: divide by sqrt(area)
        DO bj=jtlo,jthi
         DO bi=itlo,ithi
          DO j=1,sNy
           DO i=1,sNx
+
+           smoothTmpFld(i,j,bi,bj)   = 0. _d 0
            if (smooth2dmask(i,j,bi,bj).NE.0) then
+
              smoothTmpFld(i,j,bi,bj)=port_rand_norm(-rand_seed)
-            if (smooth2DAlgorithm(smoothOpNb).eq.'WC01') then
-             smoothTmpFld(i,j,bi,bj)=
-     &       smoothTmpFld(i,j,bi,bj)*sqrt(recip_rA(i,j,bi,bj))
+
+             if (smooth2DAlgorithm(smoothOpNb).eq.'WC01') then
+               smoothTmpFld(i,j,bi,bj)=
+     &         smoothTmpFld(i,j,bi,bj)*sqrt(recip_rA(i,j,bi,bj))
+             elseif (smooth2DAlgorithm(smoothOpNb).eq.'matern') then
+               smoothTmpFld(i,j,bi,bj)=smoothTmpFld(i,j,bi,bj)*
+     &         smooth2DRandNorm(i,j,bi,bj)
             endif
            endif
           ENDDO
@@ -260,7 +234,7 @@ c --- WC01: divide by sqrt(area)
        ENDDO
        CALL EXCH_XY_RL ( smoothTmpFld, myThid )
 
-c --- 5. Smooth random field with appropriate algorithm
+c --- 4. Smooth random field with appropriate algorithm
        if (smooth2DAlgorithm(smoothOpNb).eq.'WC01')
      &  call smooth_diff2D(smoothTmpFld,smooth2dmask,nbt_in,mythid)
 
@@ -268,7 +242,7 @@ c --- 5. Smooth random field with appropriate algorithm
      &  call smooth_inverse_matern_op2d(
      &          smoothTmpFld,smooth2DMask,smoothOpNb,doNormalize,myThid)
 
-c --- 6. accumulate statistics (to compute the variance later)
+c --- 5. accumulate statistics (to compute the variance later)
        DO bj=jtlo,jthi
         DO bi=itlo,ithi
          DO j=1-OLy,sNy+OLy
@@ -283,9 +257,13 @@ c --- 6. accumulate statistics (to compute the variance later)
         ENDDO
        ENDDO
 
+       WRITE(standardMessageUnit,'(A,I4,A,I4)')
+     & 'smooth_filtervar2D: ',ii,' members done out of ',
+     &  smooth2DNbRand(smoothOpNb)
+
       ENDDO ! end ii->nbRand
 
-c --- 7. compute variance and convert it to normalization factor:
+c --- 6. compute variance and convert it to normalization factor:
       DO bj=jtlo,jthi
        DO bi=itlo,ithi
         DO j=1-OLy,sNy+OLy
@@ -316,6 +294,11 @@ c write out mean too
      &    'smooth2Dmean',smoothOpNb
       CALL WRITE_REC_3D_RL(fnamegeneric,smoothprec,
      &            1,smoothTmpMean,1,1,mythid)
+
+      write(fnamegeneric(1:80),'(1a,i3.3)')
+     &    'smooth2Dfld',smoothOpNb
+      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
+     &                      1, smoothTmpFld, 1, 1, myThid )
 
       ENDIF ! end smooth2Dtype != 0
 
