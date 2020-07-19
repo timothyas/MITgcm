@@ -91,17 +91,6 @@ C --- WC01: look for single file, smooth3Doperator
           CALL PRINT_ERROR( msgBuf, myThid )
           STOP 'ABNORMAL END: S/R SMOOTH_READ_OPERATOR_3D' 
         endif ! look for smooth3Doperator file
-        do bj = jtlo,jthi
-         do bi = itlo,ithi
-          do k = 1,sNy
-           do j = 1,sNy
-            do i = 1,sNx
-             smooth3D_Kux = 1. _d 0
-            enddo
-           enddo
-          enddo
-         enddo
-        enddo
 
       elseif (smooth3DAlgorithm(smoothOpNb).eq.'matern') then
 
@@ -109,12 +98,13 @@ c --- Initialize tensor with default values
         do bj = jtlo,jthi
          do bi = itlo,ithi
           do k = 1,sNy
-           do j = 1,sNy
-            do i = 1,sNx
+           do j = 1-OLy,sNy+OLy
+            do i = 1-OLx,sNx+OLx
              smooth3D_Kux = 1. _d 0
              smooth3D_Kvy = 1. _d 0
              smooth3D_Kwz = 1. _d 0
              smooth3DDelta = 0. _d 0
+             smooth3DRandNorm = 0. _d 0
 
              smooth3D_Kuy = 0. _d 0
              smooth3D_Kuz = 0. _d 0
@@ -179,6 +169,7 @@ C ---   delta:
         IF (fexist) THEN
           CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
      &               Nr, smooth3DDelta,1, 1, myThid )
+          CALL EXCH_XYZ_RL ( smooth3DDelta, myThid )
         ELSE
           WRITE(msgBuf,'(4a)')
      &      'SMOOTH_READ_OPERATOR_3D: ',
@@ -186,6 +177,25 @@ C ---   delta:
      &      ' setting to zeros'
           CALL PRINT_ERROR(msgBuf, myThid)
         ENDIF
+
+C ---   Look for normalization of white noise process
+C       i.e. 1/sqrt(det(F))
+        fexist = .FALSE.
+        write(fnamegeneric(1:80),'(1a,i3.3,a)')
+     &      'smooth3DRandNorm',smoothOpNb,'.data'
+        inquire(file=fnamegeneric,exist=fexist)
+        if (fexist) then
+          CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
+     &               Nr, smooth3DRandNorm,1, 1, myThid )
+          CALL EXCH_XYZ_RL ( smooth3DRandNorm, myThid )
+        else
+          write(msgBuf,'(4a)')
+     &      'SMOOTH_READ_OPERATOR_3D: ',
+     &      'cannot find ', fnamegeneric,
+     &      ' setting to ones'
+          call print_message(msgBuf, standardMessageUnit,
+     &        SQUEEZE_RIGHT, myThid)
+        endif
 
       ENDIF ! Check algorithm 'WC01' or 'matern'
 
@@ -211,7 +221,5 @@ c     ctrl_check ensures this file exists or is computed, if needed
       CALL EXCH_XYZ_RL ( smooth3D_Kuy, myThid )
       CALL EXCH_XYZ_RL ( smooth3D_Kvx, myThid )
       CALL EXCH_XYZ_RL ( smooth3D_kappaR, myThid )
-      CALL EXCH_XYZ_RL ( smooth3DDelta, myThid )
-
       RETURN
       END
