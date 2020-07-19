@@ -49,7 +49,6 @@ C --- Local Parameters
       _RL smoothTmpMean(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL smoothTmpVar(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RS smooth3Dmask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
-      _RS randNorm(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
 
 C --- Initialize loop counters
       jtlo = mybylo(myThid)
@@ -74,8 +73,7 @@ c initialize determinant inverse (for matern), and get mask:
         DO k=1,Nr
          DO j=1-OLy,sNy+OLy
           DO i=1-OLx,sNx+OLx
-           smooth3Dnorm(i,j,k,bi,bj)=0.
-           randNorm(i,j,k,bi,bj)=1. _d 0
+           smooth3Dnorm(i,j,k,bi,bj)=0. _d 0
            if (smooth3DmaskName(smoothOpNb)(1:5).eq.'maskC') then
             smooth3Dmask(i,j,k,bi,bj) = maskC(i,j,k,bi,bj)
            elseif (smooth3DmaskName(smoothOpNb)(1:5).eq.'maskW') then
@@ -91,24 +89,6 @@ c initialize determinant inverse (for matern), and get mask:
 
 C --- Read smoothing [i.e diffusion] operator:
       CALL smooth_read_operator_3d(smoothOpNb,myThid)
-
-C --- Look for determinant inverse
-      fexist = .FALSE.
-      write(fnamegeneric(1:80),'(1a,i3.3,a)')
-     &    'smooth3DRandNorm',smoothOpNb,'.data'
-      inquire(file=fnamegeneric,exist=fexist)
-      if (fexist) then
-        CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &             Nr, randNorm,1, 1, myThid )
-        CALL EXCH_XYZ_RL ( randNorm, myThid )
-      else
-        write(msgBuf,'(4a)')
-     &    'SMOOTH_FILTERVAR3D: ',
-     &    'cannot find ', fnamegeneric,
-     &    ' setting to ones'
-        call print_message(msgBuf, standardMessageUnit,
-     &      SQUEEZE_RIGHT, myThid)
-      endif
 
       IF (smooth3Dfilter(smoothOpNb).EQ.2) then
 c compute the normalization matrix using the approximate method
@@ -244,11 +224,13 @@ c     seed is 1023 * pid * milliseconds from date/time
 C --- 3. Initialize field within random sample loop
 C     set  points where mask!=0 to random number
 C     WC01: divide by sqrt(area)
+C     matern: multiply by 1/sqrt(det(F)), provided by user
       DO bj=jtlo,jthi
        DO bi=itlo,ithi
         DO k=1,Nr
-         DO j=1-OLy,sNy+OLy
-          DO i=1-OLx,sNx+OLx
+         DO j=1,sNy
+          DO i=1,sNx
+
            smoothTmpFld(i,j,k,bi,bj)   = 0. _d 0
            if (smooth3dmask(i,j,k,bi,bj).NE.0) then
 
@@ -260,7 +242,7 @@ C     WC01: divide by sqrt(area)
 
              elseif (smooth3DAlgorithm(smoothOpNb).eq.'matern') then
               smoothTmpFld(i,j,k,bi,bj)=smoothTmpFld(i,j,k,bi,bj)*
-     &         randNorm(i,j,k,bi,bj)
+     &         smooth3DRandNorm(i,j,k,bi,bj)
              endif
            endif
           ENDDO
@@ -295,7 +277,7 @@ c --- 5. accumulate statistics (to compute the variance later)
        ENDDO
       ENDDO
 
-            WRITE(standardMessageUnit,'(A,I4,A,I4)')
+       WRITE(standardMessageUnit,'(A,I4,A,I4)')
      & 'smooth_filtervar3D: ',ii,' members done out of ',
      &  smooth3DNbRand(smoothOpNb)
 
