@@ -31,7 +31,7 @@ C --- Inputs
       integer myThid
 
 C --- Local parameters
-      _RL fld_in_k(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL fld_out(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL center(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL east(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL west(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)

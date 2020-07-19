@@ -69,7 +69,7 @@ C --- 2D Fields
 
       _RL 
      & smooth2D_Kux (1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy),
-     & smooth2D_Kvy (1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy)
+     & smooth2D_Kvy (1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy),
      & smooth2DDelta(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy),
      & smooth2DRandNorm(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
 
@@ -103,7 +103,8 @@ C --- Common Blocks
      & smooth3D_Kux,smooth3D_Kvy,smooth3D_Kuz,smooth3D_Kvz,
      & smooth3D_Kuy,smooth3D_Kvx,
      & smooth3DDelta,smooth3DRandNorm,
-     & smooth2D_Kux,smooth2D_Kvy
+     & smooth2D_Kux,smooth2D_Kvy,
+     & smooth2DDelta,smooth2DRandNorm
 
 
  

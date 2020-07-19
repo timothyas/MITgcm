@@ -98,7 +98,7 @@ c --- 4. Apply normalization field [i.e. 1/sqrt(var(filter))]:
          do j = 1-OLy,sNy+OLy
           do i = 1-OLx,sNx+OLx
            fld_in(i,j,bi,bj) = fld_in(i,j,bi,bj)*
-     &         smooth3DNorm(i,j,bi,bj)
+     &         smooth2DNorm(i,j,bi,bj)
           enddo
          enddo
         enddo

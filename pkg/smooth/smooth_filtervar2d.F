@@ -239,7 +239,7 @@ c --- 4. Smooth random field with appropriate algorithm
      &  call smooth_diff2D(smoothTmpFld,smooth2dmask,nbt_in,mythid)
 
        if (smooth2DAlgorithm(smoothOpNb).eq.'matern')
-     &  call smooth_inverse_matern_op2d(
+     &  call smooth_inverse_matern_2d(
      &          smoothTmpFld,smooth2DMask,smoothOpNb,doNormalize,myThid)
 
 c --- 5. accumulate statistics (to compute the variance later)
