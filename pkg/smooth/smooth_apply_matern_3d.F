@@ -1,7 +1,7 @@
 #include "SMOOTH_OPTIONS.h"
 
       subroutine smooth_apply_matern_3d (
-     U     fld_in,smooth3DMask,smoothOpNb,mythid)
+     U     fld_in,smooth3DMask,smoothOpNb,doNormalize,mythid)
 
 C     *==========================================================*
 C     | SUBROUTINE smooth_apply_matern_3d
@@ -28,6 +28,8 @@ C     *==========================================================*
 C --- Inputs
       _RL fld_in      (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL smooth3DMask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
+      integer smoothOpNb
+      logical doNormalize
       integer myThid
 
 C --- Local parameters
@@ -39,7 +41,7 @@ C --- Local parameters
       _RL up    (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL down  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL fld_out(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
-      integer smoothOpNb
+
       character*( 80) fnamegeneric
       character*(MAX_LEN_MBUF) msgBuf
       integer i,j,k,bi,bj
@@ -54,12 +56,7 @@ C --- Loop counters
       itlo = mybxlo(mythid)
       ithi = mybxhi(mythid)
 
-c --- Initialize some containers
-c     Not sure what best practices are here...
-c     I know these get initialized to standard values
-c     when sent to other subroutines, but it
-c     seems "unsafe" to not initialize them here
-c     since they're created here
+c --- Initialize
       do bj = jtlo,jthi
        do bi = itlo,ithi
         do k = 1,Nr
@@ -78,14 +75,34 @@ C --- Read in the operator: kappa and delta
 C --- Make sure input mask halos are good to go
       CALL EXCH_XYZ_RL( smooth3DMask, myThid )
 
-c --- 1. Apply inverse of filternorm (i.e. filter standard deviation)
-      call smooth_apply_filterstd_3d(fld_in, smoothOpNb, myThid)
-
-c --- 2. Get laplacian matrix elements and apply matern operator
+c --- Get laplacian matrix elements
       call smooth_get_laplacian_3d(
      &      center, east, west, north, south, up, down,
      &      smoothOpNb, smooth3DMask, myThid)
 
+c --- 1. Apply inverse of filter normalization ( i.e. sqrt(filtervar))
+      if (doNormalize) then
+       do bj = jtlo,jthi
+        do bi = itlo,ithi
+         do k = 1,sNy
+          do j = 1,sNy
+           do i = 1,sNx
+            if ((ABS(smooth3DNorm(i,j,k,bi,bj)).gt.0. _d 0).and.
+     &          (smooth3DMask(i,j,k,bi,bj).ne.0)) then
+             fld_in(i,j,k,bi,bj)=
+     &        fld_in(i,j,k,bi,bj)/smooth3DNorm(i,j,k,bi,bj)
+            else
+             fld_in(i,j,k,bi,bj)=0. _d 0
+            endif
+           enddo
+          enddo
+         enddo
+        enddo
+       enddo
+       CALL EXCH_XYZ_RL ( fld_in , myThid )
+      endif
+
+C --- 2. Apply laplacian-like operator
       do bj = jtlo,jthi
        do bi = itlo,ithi
         do k = 1,Nr

@@ -3,7 +3,7 @@
       subroutine smooth_read_operator_3d (smoothOpNb,mythid)
 
 C     *==========================================================*
-C     | SUBROUTINE smooth_apply_filternorm_3d
+C     | SUBROUTINE smooth_read_operator_3d
 C     | o Read in the tensor Kappa:
 C     |
 C     |             Kux Kuy Kuz

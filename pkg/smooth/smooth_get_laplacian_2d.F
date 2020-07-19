@@ -3,8 +3,8 @@
 # include "AUTODIFF_OPTIONS.h"
 #endif
 
-      subroutine smooth_get_laplacian_matrix2d (
-     U     center, north, south, east, west,
+      subroutine smooth_get_laplacian_2d (
+     U     center, east, west, north, south,
      I     smoothOpNb, smooth2DMask, mythid)
 
 C     *==========================================================*
@@ -25,14 +25,15 @@ C   center, north, south, east, west :
 C       fields that define the laplacian stencil at each point
 C       for a point (i,j)
 C           center = (i,j)
-C           north = (i,j+1); south = (i,j-1)
 C           east  = (i+1,j); west  = (i-1,j)
+C           north = (i,j+1); south = (i,j-1)
+
 C
       _RL center(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-      _RL north(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-      _RL south(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL east(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL west(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL north(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL south(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       integer smoothOpNb
       _RL smooth2Dmask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       integer myThid
@@ -49,16 +50,6 @@ C --- Loop counters
       itlo = mybxlo(mythid)
       ithi = mybxhi(mythid)
 
-C --- Diffusion operator (tensor): (Kux, 0; 0, Kvy)
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth2Doperator',smoothOpNb
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &           1, smooth2D_Kux,1,1,mythid)
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &           1, smooth2D_Kvy,2,1,mythid)
-      CALL EXCH_XY_RL ( smooth2D_Kux, myThid )
-      CALL EXCH_XY_RL ( smooth2D_Kvy, myThid )
-    
 C --- Initialize output
       DO bj = jtlo,jthi
        DO bi = itlo,ithi

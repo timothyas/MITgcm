@@ -1,11 +1,11 @@
 #include "SMOOTH_OPTIONS.h"
 
-      subroutine smooth_inverse_matern_op2d (
+      subroutine smooth_inverse_matern_2d (
      U     fld_in,
      I     smooth2DMask,smoothOpNb,doNormalize,mythid)
 
 C     *==========================================================*
-C     | SUBROUTINE smooth_inverse_matern_op2d
+C     | SUBROUTINE smooth_inverse_matern_2d
 C     | o Given the laplace-like differential operator
 C     |         
 C     |         A=( K^2 - laplacian() )
@@ -43,47 +43,17 @@ C --- Local parameters
       integer itlo,ithi
       integer jtlo,jthi
 
-      _RL kappa_squared(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL center(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-      _RL north(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-      _RL south(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL east(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL west(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL north(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL south(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
 
 C --- Loop Counters
       jtlo = mybylo(mythid)
       jthi = mybyhi(mythid)
       itlo = mybxlo(mythid)
       ithi = mybxhi(mythid)
-
-c --- Initialize some containers
-c     Not sure what best practices are here...
-c     I know these get initialized to standard values
-c     when sent to other subroutines, but it
-c     seems "unsafe" to not initialize them here
-c     since they're created here
-      do bj = jtlo,jthi
-       do bi = itlo,ithi
-        do j = 1-OLy,sNy+OLy
-         do i = 1-OLx,sNx+OLx
-          kappa_squared(i,j,bi,bj) = 0. _d 0
-          center(i,j,bi,bj) = 0. _d 0
-          north(i,j,bi,bj) = 0. _d 0
-          south(i,j,bi,bj) = 0. _d 0
-          east(i,j,bi,bj) = 0. _d 0
-          west(i,j,bi,bj) = 0. _d 0
-         enddo
-        enddo
-       enddo
-      enddo
-
-C --- Read in K^2:
-C     Provide this file at run time
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth2Dkappa',smoothOpNb
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &           1, kappa_squared,1,1,mythid)
-      CALL EXCH_XY_RL ( kappa_squared, myThid )
 
 C --- Update halo retions for mask
 C     this is not done right now by ctrl_map_ini_genarr
@@ -95,8 +65,8 @@ C the actual algorithm
 C ------------------------------------------------------------------
 
 c --- 1. Get laplacian matrix elements
-      call smooth_get_laplacian_matrix2d(
-     &      center, north, south, east, west,
+      call smooth_get_laplacian_2d(
+     &      center, east, west, north, south,
      &      smoothOpNb, smooth2DMask, myThid)
 
 c --- 2. Create A matrix associated with operator A = (k^2 - nabla^2)
@@ -105,12 +75,12 @@ c        operate directly on overlap region, inputs "pre-exchanged"
        do bi = itlo,ithi
         do j = 1-OLy,sNy+OLy
          do i = 1-OLx,sNx+OLx
-          center(i,j,bi,bj) = kappa_squared(i,j,bi,bj) -
-     &                         center(i,j,bi,bj) 
-          north(i,j,bi,bj)  = -north(i,j,bi,bj)
-          south(i,j,bi,bj)  = -south(i,j,bi,bj)
+          center(i,j,bi,bj) = -center(i,j,bi,bj) -
+     &      smooth2DDelta(i,j,bi,bj) 
           east(i,j,bi,bj)   = -east (i,j,bi,bj)
           west(i,j,bi,bj)   = -west (i,j,bi,bj)
+          north(i,j,bi,bj)  = -north(i,j,bi,bj)
+          south(i,j,bi,bj)  = -south(i,j,bi,bj)
          enddo
         enddo
        enddo
@@ -118,11 +88,21 @@ c        operate directly on overlap region, inputs "pre-exchanged"
 
 c --- 3. Get jacobi to solve our problem
       call smooth_jacobi_2d( fld_in, smoothOpNb,
-     &      center, north, south, east, west,
+     &      center, east, west, north, south,
      &      smooth2DMask, myThid )
 
 c --- 4. Apply normalization field [i.e. 1/sqrt(var(filter))]:
-      if (doNormalize) call smooth_apply_filternorm2d(
-     &                          fld_in, smoothOpNb, myThid)
+      if (doNormalize) then
+       do bj = jtlo,jthi
+        do bi = itlo,ithi
+         do j = 1-OLy,sNy+OLy
+          do i = 1-OLx,sNx+OLx
+           fld_in(i,j,bi,bj) = fld_in(i,j,bi,bj)*
+     &         smooth3DNorm(i,j,bi,bj)
+          enddo
+         enddo
+        enddo
+       enddo
+      endif
        
       end

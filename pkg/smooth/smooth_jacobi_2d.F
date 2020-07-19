@@ -6,7 +6,7 @@
       subroutine smooth_jacobi_2d (
      U     fld_in,
      I     smoothOpNb,
-     I     center, north, south, east, west,
+     I     center, east, west, north, south,
      I     smooth2Dmask,
      I     mythid)
 
@@ -35,28 +35,29 @@ C   center, north, south, east, west :
 C       fields that define the sparse matrix A at each point
 C       for a point (i,j)
 C           center = (i,j)
-C           north = (i,j+1); south = (i,j-1)
 C           east  = (i+1,j); west  = (i-1,j)
+C           north = (i,j+1); south = (i,j-1)
       _RL fld_in(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       integer smoothOpNb
       _RL center(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-      _RL north(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-      _RL south(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL east(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL west(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL north(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL south(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL smooth2Dmask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       integer myThid
 
 C --- Local parameters
-      integer i,j,k, bi, bj
+      integer i,j,bi, bj
       integer itlo,ithi
       integer jtlo,jthi
 
       _RL TOL, TOL_SQ, fld_in_norm, relErr, absErr
-      integer jacobi_iter, n_iter_max
+      integer jacobi_iter
 
       _RL fld_rhs(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL fld_out(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL recip_center(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL tile_in_norm(nSx,nSy)
       _RL tile_absErr(nSx,nSy)
       character(max_len_mbuf) msgBuf
@@ -81,6 +82,11 @@ C --- Initialize solver stuff
           fld_rhs(i,j,bi,bj) = fld_in(i,j,bi,bj)
           fld_in(i,j,bi,bj) = 1. _d 0
           fld_out(i,j,bi,bj) = 1. _d 0
+          if (ABS(center(i,j,bi,bj).gt.0. _d 0) then
+            recip_center(i,j,bi,bj) = 1. _d 0 / center(i,j,bi,bj)
+          else
+            recip_center(i,j,bi,bj) = 0. _d 0
+          endif
          enddo
         enddo
        enddo
@@ -101,22 +107,15 @@ C --- The jacobi iterations
          tile_absErr(bi,bj) = 0. _d 0
          do j = 1,sNy
           do i = 1,sNx
-           if ((smooth2Dmask(i,j,bi,bj).NE.0. _d 0).and.
-     &         (center(i,j,bi,bj).ne.0. _d 0) ) then
+            ! Update "final" estimate
+            fld_out(i,j,bi,bj) = fld_rhs(i,j,bi,bj) -
+     &          east(i,j,bi,bj) *fld_in(i+1,j,bi,bj) -
+     &          west(i,j,bi,bj) *fld_in(i-1,j,bi,bj)
+     &          north(i,j,bi,bj)*fld_in(i,j+1,bi,bj) -
+     &          south(i,j,bi,bj)*fld_in(i,j-1,bi,bj) -
 
-                ! Update "final" estimate
-                fld_out(i,j,bi,bj) = fld_rhs(i,j,bi,bj) -
-     &              north(i,j,bi,bj)*fld_in(i,j+1,bi,bj) -
-     &              south(i,j,bi,bj)*fld_in(i,j-1,bi,bj) -
-     &              east(i,j,bi,bj) *fld_in(i+1,j,bi,bj) -
-     &              west(i,j,bi,bj) *fld_in(i-1,j,bi,bj)
-
-
-                fld_out(i,j,bi,bj) = 
-     &              fld_out(i,j,bi,bj)/center(i,j,bi,bj)
-           else
-            fld_out(i,j,bi,bj)=0. _d 0
-           endif
+            fld_out(i,j,bi,bj) = 
+     &          fld_out(i,j,bi,bj)*recip_center(i,j,bi,bj)
           enddo
          enddo
         enddo

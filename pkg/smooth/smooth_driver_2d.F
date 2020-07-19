@@ -1,11 +1,11 @@
 #include "SMOOTH_OPTIONS.h"
 
-      subroutine smooth_driver_3D (
+      subroutine smooth_driver_2D (
      U     fld_in,
-     I     smooth_options,smooth3DMask,smoothOpNb,mythid)
+     I     smooth_options,smooth2DMask,smoothOpNb,mythid)
 
 C     *==========================================================*
-C     | SUBROUTINE smooth_driver_3d
+C     | SUBROUTINE smooth_driver_2d
 C     | o determine which smoothing algorithm to employ
 C     | o read in the operator
 C     | o be cool, be smooth
@@ -25,8 +25,8 @@ C 2. there should not be more than one preprocessing option
 
 
 C --- Inputs
-      _RL fld_in(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nR,nSx,nSy)
-      _RL smooth3DMask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nR,nSx,nSy)
+      _RL fld_in(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL smooth2DMask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       character*(20) smooth_options(maxCtrlProc)
       integer smoothOpNb
       integer myThid
@@ -37,19 +37,20 @@ C --- Local Parameters
       logical doNormalize
 
 c read smoothing [i.e diffusion] operator and normalization:
-      CALL smooth_read_operator_3d(smoothOpNb,myThid)
+      CALL smooth_read_operator_2d(smoothOpNb,myThid)
 
       doNormalize=.TRUE.
       do k2 = 1, maxCtrlProc
         if (smooth_options(k2).eq.'WC01')
-     &      CALL smooth_correl3d(fld_in,smoothOpNb,myThid)
+     &      CALL smooth_correl2d(fld_in,smooth2DMask,smoothOpNb,myThid)
         if (smooth_options(k2).eq.'smooth')
-     &      CALL smooth_diff3d(fld_in,smooth3Dnbt(smoothOpNb),myThid)
+     &      CALL smooth_diff2d(fld_in,smooth2DMask,
+     &          smooth2Dnbt(smoothOpNb),myThid)
         if (smooth_options(k2).eq.'matern_precond')
-     &      CALL smooth_inverse_matern_3d(fld_in,
-     &          smooth3DMask, smoothOpNb, doNormalize, myThid)
+     &      CALL smooth_inverse_matern_2d(fld_in,
+     &          smooth2DMask, smoothOpNb, doNormalize, myThid)
       enddo
 
-      CALL EXCH_XYZ_RL ( fld_in , myThid )
+      CALL EXCH_XY_RL ( fld_in , myThid )
 
       end

@@ -35,21 +35,6 @@ c#include "tamc.h"
 
 
 c read smoothing [i.e diffusion] operator:
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth2Doperator',smoothOpNb
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &           1, smooth2D_Kux,1,1,mythid)
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &           1, smooth2D_Kvy,2,1,mythid)
-      CALL EXCH_XY_RL ( smooth2D_Kux, myThid )
-      CALL EXCH_XY_RL ( smooth2D_Kvy, myThid )
-
-c read normalization field [i.e. 1/sqrt(var(filter))]:
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth2Dnorm',smoothOpNb
-      CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &           1, smooth2Dnorm,1,1,mythid)
-      CALL EXCH_XY_RL ( smooth2Dnorm, myThid )
 
 c division by ~sqrt(area):
       DO bj = jtlo,jthi
