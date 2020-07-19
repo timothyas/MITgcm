@@ -21,7 +21,12 @@ c#include "tamc.h"
 C this seems like bad form, but
 C 1. this routine is called by the control package
 C 2. there should not be more than one preprocessing option
-#include "CTRL_SIZE.h"
+#ifdef ALLOW_CTRL
+# include "CTRL_SIZE.h"
+#else
+      integer  maxCtrlProc
+      parameter ( maxCtrlProc = 1 )
+#endif
 
 
 C --- Inputs

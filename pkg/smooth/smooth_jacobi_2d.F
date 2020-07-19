@@ -82,7 +82,7 @@ C --- Initialize solver stuff
           fld_rhs(i,j,bi,bj) = fld_in(i,j,bi,bj)
           fld_in(i,j,bi,bj) = 1. _d 0
           fld_out(i,j,bi,bj) = 1. _d 0
-          if (ABS(center(i,j,bi,bj).gt.0. _d 0) then
+          if (ABS(center(i,j,bi,bj)).gt.0. _d 0) then
             recip_center(i,j,bi,bj) = 1. _d 0 / center(i,j,bi,bj)
           else
             recip_center(i,j,bi,bj) = 0. _d 0
@@ -110,9 +110,9 @@ C --- The jacobi iterations
             ! Update "final" estimate
             fld_out(i,j,bi,bj) = fld_rhs(i,j,bi,bj) -
      &          east(i,j,bi,bj) *fld_in(i+1,j,bi,bj) -
-     &          west(i,j,bi,bj) *fld_in(i-1,j,bi,bj)
+     &          west(i,j,bi,bj) *fld_in(i-1,j,bi,bj) -
      &          north(i,j,bi,bj)*fld_in(i,j+1,bi,bj) -
-     &          south(i,j,bi,bj)*fld_in(i,j-1,bi,bj) -
+     &          south(i,j,bi,bj)*fld_in(i,j-1,bi,bj)
 
             fld_out(i,j,bi,bj) = 
      &          fld_out(i,j,bi,bj)*recip_center(i,j,bi,bj)

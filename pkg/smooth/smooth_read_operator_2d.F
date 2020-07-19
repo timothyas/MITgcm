@@ -64,12 +64,11 @@ c       read smoothing [i.e diffusion] operator:
         write(fnamegeneric(1:80),'(1a,i3.3)')
      &    'smooth2Doperator',smoothOpNb,'.data'
         inquire(file=fnamegeneric,exist=fexist)
-        CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &             1, smooth2D_Kux,1,1,mythid)
-        CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
-     &             1, smooth2D_Kvy,2,1,mythid)
-
-
+        if (fexist) then
+          CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
+     &               1, smooth2D_Kux,1,1,mythid)
+          CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
+     &               1, smooth2D_Kvy,2,1,mythid)
         else
           WRITE(msgBuf,'(3A)') 'SMOOTH_READ_OPERATOR_2D: ',
      &      'cannot find file ', fnamegeneric
