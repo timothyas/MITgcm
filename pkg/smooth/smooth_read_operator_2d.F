@@ -160,8 +160,8 @@ C       i.e. 1/sqrt(det(F))
 c ---  read normalization field [i.e. 1/sqrt(var(filter))]:
 c     ctrl_check ensures this file exists or is computed, if needed
       fexist = .FALSE.
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth2Dnorm',smoothOpNb
+      write(fnamegeneric(1:80),'(1a,i3.3,a)')
+     &    'smooth2Dnorm',smoothOpNb,'.data'
       inquire(file=fnamegeneric,exist=fexist)
       IF (fexist) THEN
         CALL READ_REC_3D_RL(fnamegeneric,smoothprec,
