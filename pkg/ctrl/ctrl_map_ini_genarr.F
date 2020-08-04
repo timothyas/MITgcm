@@ -442,6 +442,7 @@ C     == local variables ==
       integer i,j,k
       integer numsmo,k2
       logical be_smooth
+      logical doscaling
       logical dolog10ctrl
       _RL log10initval
       _RL xx_gen  (1-olx:snx+olx,1-oly:sny+oly,nr,nsx,nsy)
@@ -464,7 +465,7 @@ c--   Now, read the control vector.
 
       call ctrl_zero(xx_gen, Nr, 0. _d 0, myThid)
 
-      usesmoothpkg=.false.
+      be_smooth=.false.
       doscaling=.true.
       dolog10ctrl=.false.
       log10initval=0. _d 0

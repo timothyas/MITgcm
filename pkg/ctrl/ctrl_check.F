@@ -42,6 +42,9 @@ C     msgBuf      - Informational/error message buffer
 #ifndef ALLOW_OPENAD
 #if (defined (ALLOW_GENARR2D_CONTROL) || defined (ALLOW_GENARR3D_CONTROL) || defined (ALLOW_GENTIM2D_CONTROL))
       integer iarr, k2
+# ifdef ALLOW_SMOOTH
+      integer numsmo
+# endif
 #endif
 #endif
 
@@ -375,6 +378,7 @@ C this could be changed to control cdrag for momentum equation...
           ENDIF ! test if WC01 or matern
         enddo
       enddo
+# endif
 
 
 # ifdef ALLOW_GENARR3D_CONTROL
