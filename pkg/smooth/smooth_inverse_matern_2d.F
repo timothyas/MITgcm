@@ -75,7 +75,7 @@ c        operate directly on overlap region, inputs "pre-exchanged"
        do bi = itlo,ithi
         do j = 1-OLy,sNy+OLy
          do i = 1-OLx,sNx+OLx
-          center(i,j,bi,bj) = -center(i,j,bi,bj) -
+          center(i,j,bi,bj) = -center(i,j,bi,bj) +
      &      smooth2DDelta(i,j,bi,bj) 
           east(i,j,bi,bj)   = -east (i,j,bi,bj)
           west(i,j,bi,bj)   = -west (i,j,bi,bj)
