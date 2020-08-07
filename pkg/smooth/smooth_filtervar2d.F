@@ -87,7 +87,7 @@ c     but is repeated here for package independence
       ENDDO
 
 C --- Read smoothing [i.e. diffusion] operator:
-      CALL smooth_reaD_operator_2d(smoothOpNb,myThid)
+      CALL smooth_read_operator_2d(smoothOpNb,myThid)
 
       IF (smooth2Dfilter(smoothOpNb).EQ.2) then
 c compute the normalization matrix using the approximate method
