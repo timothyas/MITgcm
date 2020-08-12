@@ -42,6 +42,7 @@ c--   Read the namelist input.
      &                   smooth2DNbRand,
      &                   smooth2DMaskName,
      &                   smooth2DAlgorithm,
+     &                   smooth2DDims,
      &                   smooth2DJacobiMaxIters,
      &                   smooth3Dnbt,
      &                   smooth3DtypeH,
@@ -81,6 +82,7 @@ c--   Set default values.
         smooth2Dfilter(smoothOpNb)=0
         smooth2DMaskName(smoothOpNb) = 'maskC'
         smooth2DAlgorithm(smoothOpNb) = 'WC01  '
+        smooth2DDims(smoothOpNb) = 'xy '
         smooth2DNbRand(smoothOpNb) = 1000
         smooth2DJacobiMaxIters(smoothOpNb) = 1000
 
