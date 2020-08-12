@@ -83,9 +83,9 @@ c --- Initialize tensor with default values
          do bi = itlo,ithi
           do j = 1-OLy,sNy+OLy
            do i = 1-OLx,sNx+OLx
-            smooth2D_Kux = 1. _d 0
-            smooth2D_Kvy = 1. _d 0
-            smooth2DDelta = 0. _d 0
+            smooth2D_Kux(i,j,bi,bj)  = 1. _d 0
+            smooth2D_Kvy(i,j,bi,bj)  = 1. _d 0
+            smooth2DDelta(i,j,bi,bj) = 0. _d 0
            enddo
           enddo
          enddo
