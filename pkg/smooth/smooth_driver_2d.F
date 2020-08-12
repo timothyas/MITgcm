@@ -1,5 +1,7 @@
 #include "SMOOTH_OPTIONS.h"
-#include "CTRL_OPTIONS.h"
+#ifdef ALLOW_CTRL
+# include "CTRL_OPTIONS.h"
+#endif
 
       subroutine smooth_driver_2D (
      U     fld_in,
