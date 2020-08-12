@@ -100,19 +100,19 @@ c --- Initialize tensor with default values
           do k = 1,sNy
            do j = 1-OLy,sNy+OLy
             do i = 1-OLx,sNx+OLx
-             smooth3D_Kux(i,j,k) = 1. _d 0
-             smooth3D_Kvy(i,j,k) = 1. _d 0
-             smooth3D_Kwz(i,j,k) = 1. _d 0
-             smooth3DDelta(i,j,k) = 0. _d 0
-             smooth3DRandNorm(i,j,k) = 1. _d 0
+             smooth3D_Kux(i,j,k,bi,bj) = 1. _d 0
+             smooth3D_Kvy(i,j,k,bi,bj) = 1. _d 0
+             smooth3D_Kwz(i,j,k,bi,bj) = 1. _d 0
+             smooth3DDelta(i,j,k,bi,bj) = 0. _d 0
+             smooth3DRandNorm(i,j,k,bi,bj) = 1. _d 0
 
-             smooth3D_Kuy(i,j,k) = 0. _d 0
-             smooth3D_Kuz(i,j,k) = 0. _d 0
-             smooth3D_Kvx(i,j,k) = 0. _d 0
-             smooth3D_Kvz(i,j,k) = 0. _d 0
-             smooth3D_Kwx(i,j,k) = 0. _d 0
-             smooth3D_Kwy(i,j,k) = 0. _d 0
-             smooth3D_kappaR(i,j,k) = 0. _d 0
+             smooth3D_Kuy(i,j,k,bi,bj) = 0. _d 0
+             smooth3D_Kuz(i,j,k,bi,bj) = 0. _d 0
+             smooth3D_Kvx(i,j,k,bi,bj) = 0. _d 0
+             smooth3D_Kvz(i,j,k,bi,bj) = 0. _d 0
+             smooth3D_Kwx(i,j,k,bi,bj) = 0. _d 0
+             smooth3D_Kwy(i,j,k,bi,bj) = 0. _d 0
+             smooth3D_kappaR(i,j,k,bi,bj) = 0. _d 0
             enddo
            enddo
           enddo
