@@ -2,6 +2,9 @@
 #ifdef ALLOW_SHELFICE
 # include "SHELFICE_OPTIONS.h"
 #endif
+#ifdef ALLOW_OBCS
+# include "OBCS_OPTIONS.h"
+#endif
 
       subroutine smooth_check( myThid )
 
@@ -84,6 +87,69 @@ C --- only maskC is allowed for smoothing 3D fields... for now I guess.
           STOP 'ABNORMAL END: S/R SMOOTH_CHECK'
         ENDIF
 
+C --- Make sure 2D Dims are 'xy', 'xz', or 'yz'
+        IF ((smooth2DDims(smoothOpNb)(1:2).NE.'xy').AND.
+     &      (smooth2DDims(smoothOpNb)(1:2).NE.'xz').AND.
+     &      (smooth2DDims(smoothOpNb)(1:2).NE.'yz')) THEN
+          WRITE(msgBuf,'(2A,I2,2A)') 'SMOOTH_CHECK: ',
+     &      'Unrecognized option for smooth2DDims(', smoothOpNb, 
+     &      '): ', smooth2DDims(smoothOpNb)
+          CALL PRINT_ERROR( msgBuf, myThid )
+          WRITE(msgBuf,'(2A)') 'SMOOTH_CHECK: ',
+     &      'must be: xy , xzn, xzs, yze, or yzw (lower case)'
+          CALL PRINT_ERROR( msgBuf, myThid )
+          STOP 'ABNORMAL END: S/R SMOOTH_CHECK'
+        ENDIF
+
+C --- Make sure correct OBCS flags turned on for smoothing xz or yz
+C     Also, not implemented for WC01 algorithm ... yet?
+        IF ((smooth2DDims(smoothOpNb)(1:2).EQ.'xz').OR.
+     &      (smooth2DDims(smoothOpNb)(1:2).EQ.'yz')) THEN
+#ifndef ALLOW_OBCS
+          WRITE(msgBuf,'(A)') 'SMOOTH_CHECK: ',
+     &      'Must compile with ALLOW_OBCS to smooth xz/yz slice'
+          CALL PRINT_ERROR( msgBuf, myThid )
+#endif
+          IF (smooth2DAlgorithm(smoothOpNb)(1:6).NE.'matern') THEN
+            WRITE(msgBuf,'(3A)') 'SMOOTH_CHECK: ',
+     &        'smoothing of xz/yz slices only implemented for matern ',
+     &        'algorithm'
+            CALL PRINT_ERROR( msgBuf, myThid )
+          ENDIF
+        ENDIF
+
+
+        IF (smooth2DDims(smoothOpNb)(1:2).EQ.'xz') THEN
+#if !( defined(ALLOW_OBCS_NORTH) || defined(ALLOW_OBCS_SOUTH) )
+          WRITE(msgBuf,'(3A)') 'SMOOTH_CHECK: ',
+     &      'Must compile with ALLOW_OBCS_NORTH or ALLOW_OBCS_SOUTH',
+     &      ' to smooth xz slice'
+          CALL PRINT_ERROR( msgBuf, myThid )
+#endif
+          IF ((smooth2DDims(smoothOpNb)(3:3).NE.'n').AND.
+     &        (smooth2DDims(smoothOpNb)(3:3).NE.'s')) THEN
+          WRITE(msgBuf,'(A,A,I,A)') 'SMOOTH_CHECK: ',
+     &      'Must specify north or south for xz slice as',
+     &      'smooth2DDims(',smoothOpNb,') = xzn or xzs'
+          CALL PRINT_ERROR( msgBuf, myThid )
+          ENDIF
+        ENDIF
+
+        IF (smooth2DDims(smoothOpNb)(1:2).EQ.'yz') THEN
+#if !( defined(ALLOW_OBCS_EAST) || defined(ALLOW_OBCS_WEST) )
+          WRITE(msgBuf,'(3A)') 'SMOOTH_CHECK: ',
+     &      'Must compile with ALLOW_OBCS_WEST or ALLOW_OBCS_WEST',
+     &      ' to smooth yz slice'
+          CALL PRINT_ERROR( msgBuf, myThid )
+#endif
+          IF ((smooth2DDims(smoothOpNb)(3:3).NE.'e').AND.
+     &        (smooth2DDims(smoothOpNb)(3:3).NE.'w')) THEN
+          WRITE(msgBuf,'(A,A,I,A)') 'SMOOTH_CHECK: ',
+     &      'Must specify east or west for yz slice as',
+     &      'smooth2DDims(',smoothOpNb,') = yze or yzw'
+          CALL PRINT_ERROR( msgBuf, myThid )
+          ENDIF
+        ENDIF
 
 
 C --- make sure proper macros are defined for maskI (iceshelf domain)

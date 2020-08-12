@@ -62,16 +62,27 @@ C --- 2D Fields
      & smooth2D_Lx0(smoothOpNbMax),smooth2D_Ly0(smoothOpNbMax),
      & smooth2D_Lx(1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy),
      & smooth2D_Ly(1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy),
-     & smooth2Dnorm (1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy)
+     & smooth2Dnorm (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy),
+     & smoothXZnorm (1-OLx:sNx+OLx,Nr,nSx,nSy),
+     & smoothYZnorm (1-OLy:sNy+OLy,Nr,nSx,nSy)
 
       character*(5) smooth2DmaskName(smoothOpNbMax)
       character*(6) smooth2DAlgorithm(smoothOpNbMax)
+      character*(3) smooth2DDims(smoothOpNbMax)
 
       _RL 
      & smooth2D_Kux (1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy),
      & smooth2D_Kvy (1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy),
      & smooth2DDelta(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy),
-     & smooth2DRandNorm(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+     & smooth2DRandNorm(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy),
+     & smoothXZ_Kux (1-Olx:sNx+Olx,Nr,nSx,nSy),
+     & smoothXZ_Kwz (1-Olx:sNx+Olx,Nr,nSx,nSy),
+     & smoothXZDelta(1-OLx:sNx+OLx,Nr,nSx,nSy),
+     & smoothXZRandNorm(1-OLx:sNx+OLx,Nr,nSx,nSy),
+     & smoothYZ_Kvy (1-Oly:sNy+Oly,Nr,nSx,nSy),
+     & smoothYZ_Kwz (1-Oly:sNy+Oly,Nr,nSx,nSy),
+     & smoothYZDelta(1-OLy:sNy+OLy,Nr,nSx,nSy),
+     & smoothYZRandNorm(1-OLy:sNy+OLy,Nr,nSx,nSy)
 
 C --- Common Blocks
       COMMON /smooth_flds_rs/
@@ -83,11 +94,14 @@ C --- Common Blocks
      & smooth3D_Lx0,smooth3D_Ly0,smooth3D_Lz0,
      & smooth3D_Lx,smooth3D_Ly,smooth3D_Lz,
      & smooth2D_Lx0,smooth2D_Ly0,
-     & smooth2D_Lx,smooth2D_Ly
+     & smooth2D_Lx,smooth2D_Ly,
+     & smoothXZNorm, smoothYZNorm
+
 
       COMMON /smooth_flds_c/
      & smooth3DAlgorithm, smooth2DAlgorithm,
-     & smooth3DmaskName, smooth2DmaskName
+     & smooth3DmaskName, smooth2DmaskName,
+     & smooth2DDims
 
       COMMON /smooth_operators_i/
      & smooth3Dnbt, smooth2Dnbt,
@@ -104,7 +118,11 @@ C --- Common Blocks
      & smooth3D_Kuy,smooth3D_Kvx,
      & smooth3DDelta,smooth3DRandNorm,
      & smooth2D_Kux,smooth2D_Kvy,
-     & smooth2DDelta,smooth2DRandNorm
+     & smooth2DDelta,smooth2DRandNorm,
+     & smoothXZ_Kux,smoothXZ_Kwz,
+     & smoothXZDelta,smoothXZRandNorm,
+     & smoothYZ_Kvy,smoothYZ_Kwz,
+     & smoothYZDelta,smoothYZRandNorm
 
 
  
