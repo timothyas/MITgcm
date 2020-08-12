@@ -86,6 +86,7 @@ c --- Initialize tensor with default values
             smooth2D_Kux(i,j,bi,bj)  = 1. _d 0
             smooth2D_Kvy(i,j,bi,bj)  = 1. _d 0
             smooth2DDelta(i,j,bi,bj) = 0. _d 0
+            smooth2DRandNorm(i,j,bi,bj) = 1. _d 0
            enddo
           enddo
          enddo
