@@ -3,17 +3,37 @@ C subroutine  smooth_jacobi_2d
 C----------------------------------------
 CADJ SUBROUTINE smooth_jacobi_2d ADNAME  = smooth_jacobi_2d
 CADJ SUBROUTINE smooth_jacobi_2d FTLNAME = smooth_jacobi_2d
-CADJ SUBROUTINE smooth_jacobi_2d INPUT   = 1,2,3,4,5,6,7,8
+CADJ SUBROUTINE smooth_jacobi_2d INPUT   = 1,2,3,4,5,6,7,8,9
 CADJ SUBROUTINE smooth_jacobi_2d OUTPUT  = 1
 CADJ SUBROUTINE smooth_jacobi_2d ACTIVE  = 1
-CADJ SUBROUTINE smooth_jacobi_2d DEPEND  =               8
+CADJ SUBROUTINE smooth_jacobi_2d DEPEND  =                 9
 
 C----------------------------------------
 C subroutine  smooth_jacobi_3d
 C----------------------------------------
 CADJ SUBROUTINE smooth_jacobi_3d ADNAME  = smooth_jacobi_3d
 CADJ SUBROUTINE smooth_jacobi_3d FTLNAME = smooth_jacobi_3d
-CADJ SUBROUTINE smooth_jacobi_3d INPUT   = 1,2,3,4,5,6,7,8,9,10
+CADJ SUBROUTINE smooth_jacobi_3d INPUT   = 1,2,3,4,5,6,7,8,9,10,11
 CADJ SUBROUTINE smooth_jacobi_3d OUTPUT  = 1
 CADJ SUBROUTINE smooth_jacobi_3d ACTIVE  = 1
-CADJ SUBROUTINE smooth_jacobi_3d DEPEND  =                   10
+CADJ SUBROUTINE smooth_jacobi_3d DEPEND  =                      11
+
+C----------------------------------------
+C subroutine  smooth_jacobi_xz
+C----------------------------------------
+CADJ SUBROUTINE smooth_jacobi_xz ADNAME  = smooth_jacobi_xz
+CADJ SUBROUTINE smooth_jacobi_xz FTLNAME = smooth_jacobi_xz
+CADJ SUBROUTINE smooth_jacobi_xz INPUT   = 1,2,3,4,5,6,7,8,9
+CADJ SUBROUTINE smooth_jacobi_xz OUTPUT  = 1
+CADJ SUBROUTINE smooth_jacobi_xz ACTIVE  = 1
+CADJ SUBROUTINE smooth_jacobi_xz DEPEND  =                 9
+
+C----------------------------------------
+C subroutine  smooth_jacobi_yz
+C----------------------------------------
+CADJ SUBROUTINE smooth_jacobi_yz ADNAME  = smooth_jacobi_yz
+CADJ SUBROUTINE smooth_jacobi_yz FTLNAME = smooth_jacobi_yz
+CADJ SUBROUTINE smooth_jacobi_yz INPUT   = 1,2,3,4,5,6,7,8,9
+CADJ SUBROUTINE smooth_jacobi_yz OUTPUT  = 1
+CADJ SUBROUTINE smooth_jacobi_yz ACTIVE  = 1
+CADJ SUBROUTINE smooth_jacobi_yz DEPEND  =                 9
