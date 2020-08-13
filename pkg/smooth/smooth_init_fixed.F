@@ -52,8 +52,8 @@ C     *==========================================================*
         if (smooth2DFilter(smoothOpNb).NE.0) then
           if (smooth2DDims(smoothOpNb)(1:2).eq.'xy') then
             call smooth_filtervar2D(smoothOpNb,mythid)
-          !elseif (smooth2DDims(smoothOpNb)(1:2).eq.'xz') then
-          !  call smooth_filtervar2D_xz(smoothOpNb,mythid)
+          elseif (smooth2DDims(smoothOpNb)(1:2).eq.'xz') then
+            call smooth_filtervar_xz(smoothOpNb,mythid)
           else
             call smooth_filtervar_yz(smoothOpNb,mythid)
           endif
