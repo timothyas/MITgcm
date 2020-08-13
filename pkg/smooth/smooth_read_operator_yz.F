@@ -3,10 +3,10 @@
 # include "OBCS_OPTIONS.h"
 #endif
 
-      subroutine smooth_read_operator_2d (smoothOpNb,mythid)
+      subroutine smooth_read_operator_yz (smoothOpNb,mythid)
 
 C     *==========================================================*
-C     | SUBROUTINE smooth_read_operator_2d
+C     | SUBROUTINE smooth_read_operator_yz
 C     | o Read in the tensor Kappa:
 C     |
 C     |             Kvy Kvz
@@ -68,6 +68,7 @@ c --- Initialize tensor with default values
             smoothYZ_Kvy(j,k,bi,bj)  = 1. _d 0
             smoothYZ_Kwz(j,k,bi,bj)  = 1. _d 0
             smoothYZDelta(j,k,bi,bj) = 0. _d 0
+            smoothYZRandNorm(j,k,bi,bj) = 1. _d 0
            enddo
           enddo
          enddo
@@ -75,11 +76,12 @@ c --- Initialize tensor with default values
 
 C ---   Kvy
         write(fnamegeneric(1:80),'(1a,i3.3,a)')
-     &        'smoothYZKvy',smoothOpNb,'.data'
+     &        'smooth2DKvy',smoothOpNb,'.data'
         inquire(file=fnamegeneric,exist=fexist)
         if (fexist) then
           CALL READ_REC_YZ_RL(fnamegeneric, smoothprec, Nr,
      &          smoothYZ_Kvy, 1, 1, myThid )
+          CALL SMOOTH_EXCH_YZ_RL( smoothYZ_Kvy, smoothOpNb, myThid )
         else
           WRITE(msgBuf,'(3A)') 'SMOOTH_READ_OPERATOR_YZ: ',
      &      'cannot find file ', fnamegeneric,
@@ -89,11 +91,12 @@ C ---   Kvy
 
 C ---   Kwz
         write(fnamegeneric(1:80),'(1a,i3.3,a)')
-     &        'smoothYZKwz',smoothOpNb,'.data'
+     &        'smooth2DKwz',smoothOpNb,'.data'
         inquire(file=fnamegeneric,exist=fexist)
         if (fexist) then
           CALL READ_REC_YZ_RL(fnamegeneric, smoothprec, Nr,
      &          smoothYZ_Kwz, 1, 1, myThid )
+          CALL SMOOTH_EXCH_YZ_RL( smoothYZ_Kwz, smoothOpNb, myThid )
         else
           WRITE(msgBuf,'(3A)') 'SMOOTH_READ_OPERATOR_YZ: ',
      &      'cannot find file ', fnamegeneric,
@@ -104,12 +107,12 @@ C ---   Kwz
 C ---   delta:
         fexist = .FALSE.
         write(fnamegeneric(1:80),'(1a,i3.3,a)')
-     &      'smoothYZDelta',smoothOpNb,'.data'
+     &      'smooth2DDelta',smoothOpNb,'.data'
         inquire(file=fnamegeneric,exist=fexist)
         IF (fexist) THEN
           CALL READ_REC_YZ_RL(fnamegeneric,smoothprec,
      &               Nr, smoothYZDelta,1, 1, myThid )
-          CALL EXCH_YZ_RL ( smoothYZDelta, myThid )
+          CALL SMOOTH_EXCH_YZ_RL( smoothYZDelta, smoothOpNb, myThid )
         ELSE
           WRITE(msgBuf,'(4a)')
      &      'SMOOTH_READ_OPERATOR_YZ: ',
@@ -122,12 +125,12 @@ C ---   Look for normalization of white noise process
 C       i.e. 1/sqrt(det(F))
         fexist = .FALSE.
         write(fnamegeneric(1:80),'(1a,i3.3,a)')
-     &      'smoothYZRandNorm',smoothOpNb,'.data'
+     &      'smooth2DRandNorm',smoothOpNb,'.data'
         inquire(file=fnamegeneric,exist=fexist)
         if (fexist) then
           CALL READ_REC_YZ_RL(fnamegeneric,smoothprec,
      &               Nr, smoothYZRandNorm,1, 1, myThid )
-          CALL EXCH_YZ_RL ( smoothYZRandNorm, myThid )
+          CALL SMOOTH_EXCH_YZ_RL( smoothYZRandNorm, smoothOpNb, myThid )
         else
           write(msgBuf,'(4a)')
      &      'SMOOTH_READ_OPERATOR_YZ: ',
@@ -143,16 +146,13 @@ c ---  read normalization field [i.e. 1/sqrt(var(filter))]:
 c     ctrl_check ensures this file exists or is computed, if needed
       fexist = .FALSE.
       write(fnamegeneric(1:80),'(1a,i3.3,a)')
-     &    'smoothYZnorm',smoothOpNb,'.data'
+     &    'smooth2Dnorm',smoothOpNb,'.data'
       inquire(file=fnamegeneric,exist=fexist)
       IF (fexist) THEN
         CALL READ_REC_YZ_RL(fnamegeneric,smoothprec,
      &             Nr, smoothYZnorm,1,1,mythid)
-        CALL EXCH_YZ_RL ( smoothYZnorm, myThid )
+        CALL SMOOTH_EXCH_YZ_RL( smoothYZNorm, smoothOpNb, myThid )
       ENDIF
-
-      CALL EXCH_YZ_RL ( smoothYZ_Kvy, myThid )
-      CALL EXCH_YZ_RL ( smoothYZ_Kwz, myThid )
 
 
 # endif

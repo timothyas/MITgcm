@@ -3,7 +3,7 @@
 # include "OBCS_OPTIONS.h"
 #endif 
 
-      subroutine smooth_filtervar2D_yz (smoothOpNb,mythid)
+      subroutine smooth_filtervar_yz (smoothOpNb,mythid)
 
 C     *==========================================================*
 C     | SUBROUTINE smooth_filtervar2D_yz
@@ -142,9 +142,6 @@ c     seed is 1023 * pid * milliseconds from date/time
       smoothTmpFld(1,1,1,1)=port_rand(rand_seed)
 
       DO ii=1,smooth2DNbRand(smoothOpNb)
-       WRITE(standardMessageUnit,'(A,I4,A,I4)')
-     & 'smooth_filtervar2D: ',ii,' members done out of ',
-     & smooth2DNbRand(smoothOpNb)
 
 c --- 3. set points wehre mask!=0 to random number
        DO bj=jtlo,jthi
@@ -178,11 +175,11 @@ c --- 3. set points wehre mask!=0 to random number
          ENDIF
         ENDDO
        ENDDO
-       CALL EXCH_YZ_RL ( smoothTmpFld, myThid )
+       CALL SMOOTH_EXCH_YZ_RL ( smoothTmpFld, smoothOpNb, myThid )
 
 c --- 4. Smooth random field with appropriate algorithm
        if (smooth2DAlgorithm(smoothOpNb).eq.'matern')
-     &  call smooth_inverse_matern_2d(
+     &  call smooth_inverse_matern_yz(
      &          smoothTmpFld,smooth2DMask,smoothOpNb,doNormalize,myThid)
 
 c --- 5. accumulate statistics (to compute the variance later)
@@ -207,7 +204,7 @@ c --- 5. accumulate statistics (to compute the variance later)
        ENDDO
 
        WRITE(standardMessageUnit,'(A,I4,A,I4)')
-     & 'smooth_filtervar2D: ',ii,' members done out of ',
+     & 'smooth_filtervar_yz: ',ii,' members done out of ',
      &  smooth2DNbRand(smoothOpNb)
 
       ENDDO ! end ii->nbRand
@@ -238,10 +235,10 @@ c --- 6. compute variance and convert it to normalization factor:
 
 c write smooth2Dnorm to file:
       write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smoothYZnorm',smoothOpNb
+     &    'smooth2Dnorm',smoothOpNb
       CALL WRITE_REC_YZ_RL(fnamegeneric,smoothprec,
      &            Nr,smoothYZnorm,1,1,mythid)
-      CALL EXCH_YZ_RL ( smoothYZnorm,  myThid )
+      CALL SMOOTH_EXCH_YZ_RL ( smoothYZnorm,  smoothOpNb, myThid )
 
 c write out mean too
       write(fnamegeneric(1:80),'(1a,i3.3)')

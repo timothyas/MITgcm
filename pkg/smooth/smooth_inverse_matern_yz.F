@@ -68,7 +68,7 @@ C --- Loop Counters
 C --- Update halo retions for mask
 C     this is not done right now by ctrl_map_ini_genarr
 C     so we can't assume it to be the case
-      CALL EXCH_YZ_RL( smooth2DMask, myThid )
+      CALL SMOOTH_EXCH_YZ_RL( smooth2DMask, smoothOpNb, myThid )
 
 C ------------------------------------------------------------------
 C the actual algorithm
@@ -83,28 +83,23 @@ c --- 2. Create A matrix associated with operator A = (k^2 - nabla^2)
 c        operate directly on overlap region, inputs "pre-exchanged"
       do bj = jtlo,jthi
        do bi = itlo,ithi
-        IF (((smooth2DDims(smoothOpNb).EQ.'yze').AND.
-     &       (tileHasOBE(bi,bj))).OR.
-     &      ((smooth2DDims(smoothOpNb).EQ.'yzw').AND.
-     &       (tileHasOBW(bi,bj)))) then
-         do k = 1,Nr
-          do j = 1-OLy,sNy+OLy
-           center(j,k,bi,bj) = -center(j,k,bi,bj) +
-     &       smoothYZDelta(j,k,bi,bj) 
-           north(j,k,bi,bj)  = -north(j,k,bi,bj)
-           south(j,k,bi,bj)  = -south(j,k,bi,bj)
-           up   (j,k,bi,bj)  = -up   (j,k,bi,bj)
-           down (j,k,bi,bj)  = -down (j,k,bi,bj)
-          enddo
+        do k = 1,Nr
+         do j = 1-OLy,sNy+OLy
+          center(j,k,bi,bj) = -center(j,k,bi,bj) +
+     &      smoothYZDelta(j,k,bi,bj)
+          north(j,k,bi,bj)  = -north(j,k,bi,bj)
+          south(j,k,bi,bj)  = -south(j,k,bi,bj)
+          up   (j,k,bi,bj)  = -up   (j,k,bi,bj)
+          down (j,k,bi,bj)  = -down (j,k,bi,bj)
          enddo
-        ENDIF
+        enddo
        enddo
       enddo
 
 c --- 3. Get jacobi to solve our problem
-c      call smooth_jacobi_yz( fld_in, smoothOpNb,
-c     &      center, north, south, up, down,
-c     &      smooth2DMask, myThid )
+      call smooth_jacobi_yz( fld_in, smoothOpNb,
+     &      center, north, south, up, down,
+     &      smooth2DMask, myThid )
 
 c --- 4. Apply normalization field [i.e. 1/sqrt(var(filter))]:
       if (doNormalize) then
