@@ -34,8 +34,8 @@ C 2. there should not be more than one preprocessing option
 
 C --- Inputs
       _RL fld_in(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
-      _RL smooth2DMask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       character*(20) smooth_options(maxCtrlProc)
+      _RL smooth2DMask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       integer smoothOpNb
       integer myThid
 

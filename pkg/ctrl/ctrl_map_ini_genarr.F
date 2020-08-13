@@ -280,6 +280,7 @@ C     == local variables ==
       character*(80) fnamegenIn
       character*(80) fnamegenOut
       character*(80) fnamebase
+      character*(20) smooth_options(maxCtrlProc)
       INTEGER  ILNBLNK
       EXTERNAL ILNBLNK
       integer ilgen
@@ -309,12 +310,15 @@ c--   Now, read the control vector.
 
       numsmo=1
       do k2 = 1, maxCtrlProc
+       write(smooth_options(k2),'(a)') ''
        if ((xx_genarr2d_preproc(k2,iarr).EQ.'WC01').or.
      &     (xx_genarr2d_preproc(k2,iarr).EQ.'smooth').or.
      &     (xx_genarr2d_preproc(k2,iarr)(1:6).EQ.'matern')) then
           be_smooth=.TRUE.
+          smooth_options(k2) = xx_genarr2d_preproc(k2,iarr)
           if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
      &        numsmo=xx_genarr2d_preproc_i(k2,iarr)
+
        endif
        if (xx_genarr2d_preproc(k2,iarr).EQ.'noscaling') then
           doscaling=.FALSE.
@@ -352,7 +356,8 @@ C --- Get appropriate mask for ctrl variable
 C --- Do any smoothing: WC01, smooth, or matern-type
 CADJ STORE mask2D = tapelev_init, key = 1
       IF ((useSMOOTH).and.(be_smooth))
-     &  call smooth_driver_2d(xx_gen,mask2D,numsmo,myThid)
+     &  call smooth_driver_2d(xx_gen,smooth_options,
+     &                        mask2D,numsmo,myThid)
 #endif
 
       DO bj=myByLo(myThid), myByHi(myThid)
