@@ -60,6 +60,17 @@ C --- Loop Counters
 C --- WC01: look for single file, smooth2Doperator
       if (smooth2DAlgorithm(smoothOpNb).eq.'WC01') then
 
+C       Initialize some stuff. Ignoring matern specific fields...
+        do bj = jtlo,jthi
+         do bi = itlo,ithi
+          do j = 1-OLy,sNy+OLy
+           do i = 1-OLx,sNx+OLx
+            smooth2DNorm(i,j,bi,bj) = 0. _d 0
+           enddo
+          enddo
+         enddo
+        enddo
+
 c       read smoothing [i.e diffusion] operator:
         write(fnamegeneric(1:80),'(1a,i3.3)')
      &    'smooth2Doperator',smoothOpNb,'.data'
@@ -87,6 +98,7 @@ c --- Initialize tensor with default values
             smooth2D_Kvy(i,j,bi,bj)  = 1. _d 0
             smooth2DDelta(i,j,bi,bj) = 0. _d 0
             smooth2DRandNorm(i,j,bi,bj) = 1. _d 0
+            smooth2DNorm(i,j,bi,bj) = 0. _d 0
            enddo
           enddo
          enddo

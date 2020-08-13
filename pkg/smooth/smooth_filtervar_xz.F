@@ -126,7 +126,6 @@ C --- 1. Initialize mean and variance
        DO bi=itlo,ithi
         DO k = 1,Nr
          DO i = 1-OLx,sNx+OLx
-          smoothXZNorm (i,k,bi,bj) = 0. _d 0
           smoothTmpMean(i,k,bi,bj) = 0. _d 0
           smoothTmpVar (i,k,bi,bj)  = 0. _d 0
          ENDDO

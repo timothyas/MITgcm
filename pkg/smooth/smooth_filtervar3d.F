@@ -73,7 +73,6 @@ c initialize determinant inverse (for matern), and get mask:
         DO k=1,Nr
          DO j=1-OLy,sNy+OLy
           DO i=1-OLx,sNx+OLx
-           smooth3Dnorm(i,j,k,bi,bj)=0. _d 0
            if (smooth3DmaskName(smoothOpNb)(1:5).eq.'maskC') then
             smooth3Dmask(i,j,k,bi,bj) = maskC(i,j,k,bi,bj)
            elseif (smooth3DmaskName(smoothOpNb)(1:5).eq.'maskW') then

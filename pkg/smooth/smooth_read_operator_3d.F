@@ -61,6 +61,20 @@ C --- Loop Counters
 
 C --- WC01: look for single file, smooth3Doperator
       if (smooth3DAlgorithm(smoothOpNb).eq.'WC01') then
+
+C       Initialize some stuff. Ignoring matern specific fields...
+        do bj = jtlo,jthi
+         do bi = itlo,ithi
+          do k = 1,Nr
+           do j = 1-OLy,sNy+OLy
+            do i = 1-OLx,sNx+OLx
+             smooth3DNorm(i,j,k,bi,bj) = 0. _d 0
+            enddo
+           enddo
+          enddo
+         enddo
+        enddo
+
         write(fnamegeneric(1:80),'(1a,i3.3,a)')
      &        'smooth3Doperator',smoothOpNb,'.data'
         inquire(file=fnamegeneric,exist=fexist)
@@ -97,7 +111,7 @@ C --- WC01: look for single file, smooth3Doperator
 c --- Initialize tensor with default values
         do bj = jtlo,jthi
          do bi = itlo,ithi
-          do k = 1,sNy
+          do k = 1,Nr
            do j = 1-OLy,sNy+OLy
             do i = 1-OLx,sNx+OLx
              smooth3D_Kux(i,j,k,bi,bj) = 1. _d 0
@@ -105,6 +119,7 @@ c --- Initialize tensor with default values
              smooth3D_Kwz(i,j,k,bi,bj) = 1. _d 0
              smooth3DDelta(i,j,k,bi,bj) = 0. _d 0
              smooth3DRandNorm(i,j,k,bi,bj) = 1. _d 0
+             smooth3DNorm(i,j,k,bi,bj) = 0. _d 0
 
              smooth3D_Kuy(i,j,k,bi,bj) = 0. _d 0
              smooth3D_Kuz(i,j,k,bi,bj) = 0. _d 0
