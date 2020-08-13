@@ -80,9 +80,9 @@ c--   Set default values.
         smooth2Dtype(smoothOpNb)=0
         smooth2Dsize(smoothOpNb)=0
         smooth2Dfilter(smoothOpNb)=0
-        smooth2DMaskName(smoothOpNb) = 'maskC'
-        smooth2DAlgorithm(smoothOpNb) = 'WC01  '
-        smooth2DDims(smoothOpNb) = 'xy '
+        smooth2DMaskName(smoothOpNb)(1:5) = 'maskC'
+        smooth2DAlgorithm(smoothOpNb)(1:6) = 'WC01  '
+        smooth2DDims(smoothOpNb)(1:3) = 'xy '
         smooth2DNbRand(smoothOpNb) = 1000
         smooth2DJacobiMaxIters(smoothOpNb) = 1000
 

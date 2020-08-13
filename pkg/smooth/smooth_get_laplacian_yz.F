@@ -2,6 +2,9 @@
 #ifdef ALLOW_AUTODIFF
 # include "AUTODIFF_OPTIONS.h"
 #endif
+#ifdef ALLOW_OBCS
+# include "OBCS_OPTIONS.h"
+#endif
 
       subroutine smooth_get_laplacian_yz (
      U     center, north, south, up, down,
@@ -51,7 +54,8 @@ C           up     = (j  , k+1); down   = (j  , k-1)
 
 C --- Local parameters
       _RL yA(1-OLy:sNy+OLy,Nr,nSx,nSy)
-      _RL ZA(1-OLy:sNy+OLy,Nr,nSx,nSy)
+      _RL zA(1-OLy:sNy+OLy,Nr,nSx,nSy)
+      _RL recip_vol(1-OLy:sNy+OLy,Nr,nSx,nSy)
       character*( 80) fnamegeneric
       integer i,j,k,bi,bj
       integer itlo,ithi
@@ -66,7 +70,7 @@ C --- Loop counters
 C --- Initialize output
       DO bj = jtlo,jthi
        DO bi = itlo,ithi
-        DO k = 1Nr
+        DO k = 1,Nr
          DO j = 1-OLy,sNy+OLy
           center(j,k,bi,bj)=0. _d 0
           north (j,k,bi,bj)=0. _d 0
@@ -75,6 +79,7 @@ C --- Initialize output
           down  (j,k,bi,bj)=0. _d 0
           yA    (j,k,bi,bj)=0. _d 0
           zA    (j,k,bi,bj)=0. _d 0
+          recip_vol(j,k,bi,bj) = 0. _d 0
          ENDDO
         ENDDO
        ENDDO
@@ -88,7 +93,7 @@ C           elements in applied to input field in smooth_rhs
 
 C ---   Eastside
         IF ((smooth2DDims(smoothOpNb).EQ.'yze').AND.
-     &      (tileHasOBE(bi,bj)) then
+     &      (tileHasOBE(bi,bj))) then
          DO j = 1-OLy,sNy+OLy
           i = OB_Ie(j,bi,bj)
           DO k = 1,Nr
@@ -109,7 +114,7 @@ C ---   Eastside
 
 C ---   Westside
         ELSEIF ((smooth2DDims(smoothOpNb).EQ.'yzw').AND.
-     &          (tileHasOBW(bi,bj)) then
+     &          (tileHasOBW(bi,bj))) then
          DO j = 1-OLy,sNy+OLy
           i = OB_Iw(j,bi,bj)
           DO k = 1,Nr
@@ -163,7 +168,7 @@ C ---   Westside
 
            center(j,k,bi,bj) = center(j,k,bi,bj) -
      &       north(j,k,bi,bj) - south(j,k,bi,bj) -
-     &       up   (j,k,bi,bj) - south(j,k,bi,bj)
+     &       up   (j,k,bi,bj) - down(j,k,bi,bj)
 
           ENDDO
          ENDDO
@@ -171,11 +176,11 @@ C ---   Westside
        ENDDO
       ENDDO
 
-      CALL EXCH_YZ_RL( center, myThid )
-      CALL EXCH_YZ_RL( north, myThid )
-      CALL EXCH_YZ_RL( south, myThid )
-      CALL EXCH_YZ_RL( up, myThid )
-      CALL EXCH_YZ_RL( down, myThid )
+      CALL SMOOTH_EXCH_YZ_RL( center, smoothOpNb, myThid )
+      CALL SMOOTH_EXCH_YZ_RL( north, smoothOpNb, myThid )
+      CALL SMOOTH_EXCH_YZ_RL( south, smoothOpNb, myThid )
+      CALL SMOOTH_EXCH_YZ_RL( up, smoothOpNb, myThid )
+      CALL SMOOTH_EXCH_YZ_RL( down, smoothOpNb, myThid )
 
 # endif
 #endif
