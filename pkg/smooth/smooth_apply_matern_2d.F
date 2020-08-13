@@ -52,8 +52,8 @@ C --- Loop counters
 C --- Initialize
       do bj = jtlo,jthi
        do bi = itlo,ithi
-        do j = 1,sNy
-         do i = 1,sNx
+        do j = 1+OLy,sNy-OLy
+         do i = 1-OLx,sNx+OLx
           fld_out(i,j,bi,bj) = 0. _d 0
          enddo
         enddo
