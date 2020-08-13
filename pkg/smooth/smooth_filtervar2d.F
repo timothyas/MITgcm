@@ -69,7 +69,6 @@ c     but is repeated here for package independence
        DO bi = itlo,ithi
         DO j = 1-OLy,sNy+OLy
          DO i = 1-OLx,sNx+OLx
-          smooth2Dnorm(i,j,bi,bj)=0. _d 0
           if (smooth2DmaskName(smoothOpNb)(1:5).eq.'maskC') then
            smooth2Dmask(i,j,bi,bj) = maskC(i,j,1,bi,bj)
           elseif (smooth2DmaskName(smoothOpNb)(1:5).eq.'maskW') then

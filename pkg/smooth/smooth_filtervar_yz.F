@@ -126,7 +126,6 @@ C --- 1. Initialize mean and variance
        DO bi=itlo,ithi
         DO k = 1,Nr
          DO j = 1-OLy,sNy+OLy
-          smoothYZNorm(j,k,bi,bj) = 0. _d 0
           smoothTmpMean(j,k,bi,bj) = 0. _d 0
           smoothTmpVar(j,k,bi,bj)  = 0. _d 0
          ENDDO

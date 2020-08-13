@@ -69,6 +69,7 @@ c --- Initialize tensor with default values
             smoothYZ_Kwz(j,k,bi,bj)  = 1. _d 0
             smoothYZDelta(j,k,bi,bj) = 0. _d 0
             smoothYZRandNorm(j,k,bi,bj) = 1. _d 0
+            smoothYZNorm(j,k,bi,bj) = 0. _d 0
            enddo
           enddo
          enddo
