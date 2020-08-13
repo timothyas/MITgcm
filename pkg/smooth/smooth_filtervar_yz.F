@@ -219,7 +219,7 @@ c --- 6. compute variance and convert it to normalization factor:
          DO k = 1,Nr
           DO j = 1-OLy,sNy+OLy
            if (smooth2dmask(j,k,bi,bj).NE.0) then
-            smooth2Dnorm(j,k,bi,bj)=
+            smoothYZnorm(j,k,bi,bj)=
      &       1/sqrt ( smooth2DNbRand(smoothOpNb)/
      &       (smooth2DNbRand(smoothOpNb)-1)*
      &       (smoothTmpVar(j,k,bi,bj) -
