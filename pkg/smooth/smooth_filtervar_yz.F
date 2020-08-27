@@ -156,7 +156,7 @@ c --- 3. set points wehre mask!=0 to random number
 
              smoothTmpFld(j,k,bi,bj)=port_rand_norm(-rand_seed)
 
-             if (smooth2DAlgorithm(smoothOpNb).eq.'matern') then
+             if (smooth2DAlgorithm(smoothOpNb)(1:6).eq.'matern') then
                smoothTmpFld(j,k,bi,bj)=smoothTmpFld(j,k,bi,bj)*
      &         smoothYZRandNorm(j,k,bi,bj)
              endif
@@ -177,7 +177,7 @@ c --- 3. set points wehre mask!=0 to random number
        CALL SMOOTH_EXCH_YZ_RL ( smoothTmpFld, smoothOpNb, myThid )
 
 c --- 4. Smooth random field with appropriate algorithm
-       if (smooth2DAlgorithm(smoothOpNb).eq.'matern')
+       if (smooth2DAlgorithm(smoothOpNb)(1:6).eq.'matern')
      &  call smooth_inverse_matern_yz(
      &          smoothTmpFld,smooth2DMask,smoothOpNb,doNormalize,myThid)
 
