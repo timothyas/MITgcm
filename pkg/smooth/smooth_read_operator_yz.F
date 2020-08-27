@@ -58,7 +58,7 @@ C --- Loop Counters
       ithi = mybxhi(mythid)
 
 
-      if (smooth2DAlgorithm(smoothOpNb).eq.'matern') then
+      if (smooth2DAlgorithm(smoothOpNb)(1:6).eq.'matern') then
 
 c --- Initialize tensor with default values
         do bj = jtlo,jthi

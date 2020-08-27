@@ -99,7 +99,7 @@ c
 c note: the exact method requires the adjoint of smooth_diff2D.F (see below)
 
 C --- Check which algorithm is used
-      if (smooth2DAlgorithm(smoothOpNb).eq.'matern') then
+      if (smooth2DAlgorithm(smoothOpNb)(1:6).eq.'matern') then
         WRITE(errorMessageUnit,'(A,/,A)' )
      &   "Exact method for matern prior covariance not "
      &   "implemented yet... but would be pretty expensive."
@@ -219,10 +219,10 @@ c --- WC01: divide by sqrt(area)
 
              smoothTmpFld(i,j,bi,bj)=port_rand_norm(-rand_seed)
 
-             if (smooth2DAlgorithm(smoothOpNb).eq.'WC01') then
+             if (smooth2DAlgorithm(smoothOpNb)(1:4).eq.'WC01') then
                smoothTmpFld(i,j,bi,bj)=
      &         smoothTmpFld(i,j,bi,bj)*sqrt(recip_rA(i,j,bi,bj))
-             elseif (smooth2DAlgorithm(smoothOpNb).eq.'matern') then
+             elseif (smooth2DAlgorithm(smoothOpNb)(1:6).eq.'matern') then
                smoothTmpFld(i,j,bi,bj)=smoothTmpFld(i,j,bi,bj)*
      &         smooth2DRandNorm(i,j,bi,bj)
             endif
@@ -234,10 +234,10 @@ c --- WC01: divide by sqrt(area)
        CALL EXCH_XY_RL ( smoothTmpFld, myThid )
 
 c --- 4. Smooth random field with appropriate algorithm
-       if (smooth2DAlgorithm(smoothOpNb).eq.'WC01')
+       if (smooth2DAlgorithm(smoothOpNb)(1:4).eq.'WC01')
      &  call smooth_diff2D(smoothTmpFld,smooth2dmask,nbt_in,mythid)
 
-       if (smooth2DAlgorithm(smoothOpNb).eq.'matern')
+       if (smooth2DAlgorithm(smoothOpNb)(1:6).eq.'matern')
      &  call smooth_inverse_matern_2d(
      &          smoothTmpFld,smooth2DMask,smoothOpNb,doNormalize,myThid)
 

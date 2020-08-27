@@ -100,7 +100,7 @@ c
 c note: the exact method requires the adjoint of smooth_diff2D.F (see below)
 
 C --- Check which algorithm is used
-       if (smooth3DAlgorithm(smoothOpNb).eq.'matern') then
+       if (smooth3DAlgorithm(smoothOpNb)(1:6).eq.'matern') then
         WRITE(errorMessageUnit,'(A,/,A)' )
      &   "Exact method for matern prior covariance not "
      &   "implemented yet... but would be pretty expensive."
@@ -235,11 +235,11 @@ C     matern: multiply by 1/sqrt(det(F)), provided by user
 
              smoothTmpFld(i,j,k,bi,bj)=port_rand_norm(-rand_seed)
 
-             if (smooth3DAlgorithm(smoothOpNb).eq.'WC01') then
+             if (smooth3DAlgorithm(smoothOpNb)(1:4).eq.'WC01') then
               smoothTmpFld(i,j,k,bi,bj)=smoothTmpFld(i,j,k,bi,bj)
      &        *sqrt(recip_rA(i,j,bi,bj)*recip_drF(k))
 
-             elseif (smooth3DAlgorithm(smoothOpNb).eq.'matern') then
+             elseif (smooth3DAlgorithm(smoothOpNb)(1:6).eq.'matern') then
               smoothTmpFld(i,j,k,bi,bj)=smoothTmpFld(i,j,k,bi,bj)*
      &         smooth3DRandNorm(i,j,k,bi,bj)
              endif
@@ -253,9 +253,9 @@ C     matern: multiply by 1/sqrt(det(F)), provided by user
       CALL EXCH_XYZ_RL ( smoothTmpFld, myThid )
 
 c --- 4. Smooth random field with appropriate algorithm
-      if (smooth3DAlgorithm(smoothOpNb).eq.'WC01')
+      if (smooth3DAlgorithm(smoothOpNb)(1:4).eq.'WC01')
      &  call smooth_diff3D(smoothTmpFld,nbt_in,myThid)
-      if (smooth3DAlgorithm(smoothOpNb).eq.'matern')
+      if (smooth3DAlgorithm(smoothOpNb)(1:6).eq.'matern')
      &  call smooth_inverse_matern_3d(
      &      smoothTmpFld,smooth3DMask,smoothOpNb,doNormalize,myThid)
 

@@ -58,7 +58,7 @@ C --- Loop Counters
 
 
 C --- WC01: look for single file, smooth2Doperator
-      if (smooth2DAlgorithm(smoothOpNb).eq.'WC01') then
+      if (smooth2DAlgorithm(smoothOpNb)(1:4).eq.'WC01') then
 
 C       Initialize some stuff. Ignoring matern specific fields...
         do bj = jtlo,jthi
@@ -87,7 +87,7 @@ c       read smoothing [i.e diffusion] operator:
           STOP 'ABNORMAL END: S/R SMOOTH_READ_OPERATOR_2D' 
         endif ! look for smooth2Doperator file
 
-      elseif (smooth2DAlgorithm(smoothOpNb).eq.'matern') then
+      elseif (smooth2DAlgorithm(smoothOpNb)(1:6).eq.'matern') then
 
 c --- Initialize tensor with default values
         do bj = jtlo,jthi

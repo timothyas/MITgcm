@@ -60,7 +60,7 @@ C --- Loop Counters
 
 
 C --- WC01: look for single file, smooth3Doperator
-      if (smooth3DAlgorithm(smoothOpNb).eq.'WC01') then
+      if (smooth3DAlgorithm(smoothOpNb)(1:4).eq.'WC01') then
 
 C       Initialize some stuff. Ignoring matern specific fields...
         do bj = jtlo,jthi
@@ -106,7 +106,7 @@ C       Initialize some stuff. Ignoring matern specific fields...
           STOP 'ABNORMAL END: S/R SMOOTH_READ_OPERATOR_3D' 
         endif ! look for smooth3Doperator file
 
-      elseif (smooth3DAlgorithm(smoothOpNb).eq.'matern') then
+      elseif (smooth3DAlgorithm(smoothOpNb)(1:6).eq.'matern') then
 
 c --- Initialize tensor with default values
         do bj = jtlo,jthi
