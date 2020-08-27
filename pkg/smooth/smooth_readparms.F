@@ -81,7 +81,7 @@ c--   Set default values.
         smooth2Dsize(smoothOpNb)=0
         smooth2Dfilter(smoothOpNb)=0
         smooth2DMaskName(smoothOpNb)(1:5) = 'maskC'
-        smooth2DAlgorithm(smoothOpNb)(1:6) = 'WC01  '
+        smooth2DAlgorithm(smoothOpNb)(1:11) = 'WC01       '
         smooth2DDims(smoothOpNb)(1:3) = 'xy '
         smooth2DNbRand(smoothOpNb) = 1000
         smooth2DJacobiMaxIters(smoothOpNb) = 1000
@@ -96,7 +96,7 @@ c--   Set default values.
         smooth3DsizeZ(smoothOpNb)=0
         smooth3Dfilter(smoothOpNb)=0
         smooth3DMaskName(smoothOpNb)(1:5) = 'maskC'
-        smooth3DAlgorithm(smoothOpNb)(1:6) = 'WC01  '
+        smooth3DAlgorithm(smoothOpNb)(1:11) = 'WC01       '
         smooth3DNbRand(smoothOpNb) = 1000
         smooth3DJacobiMaxIters(smoothOpNb) = 1000
       ENDDO

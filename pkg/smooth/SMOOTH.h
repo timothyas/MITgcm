@@ -50,7 +50,7 @@ C --- 3D Fields
      & smooth3DRandNorm(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
 
       character*(5) smooth3DmaskName(smoothOpNbMax)
-      character*(6) smooth3DAlgorithm(smoothOpNbMax)
+      character*(11) smooth3DAlgorithm(smoothOpNbMax)
 
 C --- 2D Fields
       integer smooth2Dnbt(smoothOpNbMax),
@@ -67,7 +67,7 @@ C --- 2D Fields
      & smoothYZnorm (1-OLy:sNy+OLy,Nr,nSx,nSy)
 
       character*(5) smooth2DmaskName(smoothOpNbMax)
-      character*(6) smooth2DAlgorithm(smoothOpNbMax)
+      character*(11) smooth2DAlgorithm(smoothOpNbMax)
       character*(3) smooth2DDims(smoothOpNbMax)
 
       _RL 

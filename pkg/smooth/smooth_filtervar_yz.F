@@ -40,11 +40,14 @@ C     *==========================================================*
       integer diLoc,djLoc,dkLoc
       integer nbt_in
       character*( 80) fnamegeneric
+      character*(MAX_LEN_MBUF) msgbuf
       logical doNormalize
+      logical fexist
       _RL smoothTmpFld (1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL smoothTmpVar (1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL smoothTmpMean(1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL smooth2Dmask (1-OLy:sNy+OLy,Nr,nSx,nSy)
+      _RL smooth2DInput (1-OLy:sNy+OLy,Nr,nSx,nSy)
 
       jtlo = mybylo(mythid)
       jthi = mybyhi(mythid)
@@ -142,6 +145,24 @@ c     seed is 1023 * pid * milliseconds from date/time
 
       DO ii=1,smooth2DNbRand(smoothOpNb)
 
+C --- check for inputs...
+       if (smooth2DAlgorithm(smoothOpNb)(7:11).eq.'apply') then
+        write(fnamegeneric(1:80),'(1a,i3.3,a)')
+     &        'smooth2DInput',smoothOpNb,'.data'
+        inquire(file=fnamegeneric,exist=fexist)
+        if (fexist) then
+          CALL READ_REC_YZ_RL(fnamegeneric, smoothprec, Nr,
+     &          smooth2DInput, ii, 1, myThid )
+          CALL SMOOTH_EXCH_YZ_RL( smooth2DInput, smoothOpNb, myThid )
+        else
+          WRITE(msgBuf,'(3A)') 'SMOOTH_FILTERVAR_YZ: ',
+     &      'cannot find file ', fnamegeneric,
+     &      ' aborting'
+          CALL PRINT_ERROR( msgBuf, myThid )
+          STOP ' S/R smooth_filtervar_yz'
+        endif
+       endif
+
 c --- 3. set points wehre mask!=0 to random number
        DO bj=jtlo,jthi
         DO bi=itlo,ithi
@@ -157,8 +178,12 @@ c --- 3. set points wehre mask!=0 to random number
              smoothTmpFld(j,k,bi,bj)=port_rand_norm(-rand_seed)
 
              if (smooth2DAlgorithm(smoothOpNb)(1:6).eq.'matern') then
-               smoothTmpFld(j,k,bi,bj)=smoothTmpFld(j,k,bi,bj)*
-     &         smoothYZRandNorm(j,k,bi,bj)
+               if (smooth2DAlgorithm(smoothOpNb)(7:11).eq.'apply') then
+                 smoothTmpFld(j,k,bi,bj)=smooth2DInput(j,k,bi,bj)
+               else
+                 smoothTmpFld(j,k,bi,bj)=smoothTmpFld(j,k,bi,bj)*
+     &           smoothYZRandNorm(j,k,bi,bj)
+               endif
              endif
             else
              smoothTmpFld(j,k,bi,bj)   = 0. _d 0
@@ -201,6 +226,12 @@ c --- 5. accumulate statistics (to compute the variance later)
          ENDIF
         ENDDO
        ENDDO
+
+C --- temporary, write out all samples
+      write(fnamegeneric(1:80),'(1a,i3.3)')
+     &    'smooth2Dfld',smoothOpNb
+      CALL WRITE_REC_YZ_RL( fnamegeneric, smoothprec,
+     &                      Nr, smoothTmpFld, ii, 1, myThid )
 
        WRITE(standardMessageUnit,'(A,I4,A,I4)')
      & 'smooth_filtervar_yz: ',ii,' members done out of ',
@@ -245,10 +276,6 @@ c write out mean too
       CALL WRITE_REC_YZ_RL(fnamegeneric,smoothprec,
      &            Nr,smoothTmpMean,1,1,mythid)
 
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth2Dfld',smoothOpNb
-      CALL WRITE_REC_YZ_RL( fnamegeneric, smoothprec,
-     &                      Nr, smoothTmpFld, 1, 1, myThid )
 
       ENDIF ! end smooth2Dtype != 0
 
