@@ -63,6 +63,7 @@ C --- Local parameters
       integer jtlo,jthi
 
       _RL TOL, TOL_SQ, fld_in_norm, relErr, absErr
+      _RL sor
       integer jacobi_iter
 
       _RL fld_rhs(1-OLy:sNy+OLy,Nr,nSx,nSy)
@@ -84,6 +85,7 @@ C --- Initialize solver stuff
       TOL_SQ = TOL*TOL
       relErr = 100. _d 0
       absErr = 0. _d 0 
+      sor = smooth2DSOROmega(smoothOpNb)
       
       do bj = jtlo,jthi
        do bi = itlo,ithi
@@ -125,6 +127,7 @@ C --- The jacobi iterations
        relErr = 0. _d 0
        jacobi_iter = jacobi_iter + 1
 
+      ! --- Odd indices
        do bj = jtlo,jthi
         do bi = itlo,ithi
          tile_in_norm(bi,bj) = 0. _d 0
@@ -135,19 +138,20 @@ C --- The jacobi iterations
      &        (tileHasOBW(bi,bj)))) then
           do j = 1,sNy
            do k = 1,Nr
-            ! Update "final" estimate
             fld_out(j,k,bi,bj) = fld_rhs(j,k,bi,bj) -
      &          north(j,k,bi,bj)*fld_in(j+1,k,bi,bj) -
-     &          south(j,k,bi,bj)*fld_in(j-1,k,bi,bj)
+     &          south(j,k,bi,bj)*fld_out(j-1,k,bi,bj)
 
             if (k.lt.Nr) fld_out(j,k,bi,bj) = fld_out(j,k,bi,bj) -
      &          down(j,k,bi,bj)*fld_in(j,k+1,bi,bj)
 
             if (k.gt.1) fld_out(j,k,bi,bj) = fld_out(j,k,bi,bj) -
-     &          up(j,k,bi,bj)*fld_in(j,k-1,bi,bj)
+     &          up(j,k,bi,bj)*fld_out(j,k-1,bi,bj)
 
-            fld_out(j,k,bi,bj) = 
-     &          fld_out(j,k,bi,bj)*recip_center(j,k,bi,bj)
+            fld_out(j,k,bi,bj) = fld_out(j,k,bi,bj) *
+     &          sor*recip_center(j,k,bi,bj) +
+     &          (1-sor)*fld_in(j,k,bi,bj)
+
            enddo
           enddo
          endif

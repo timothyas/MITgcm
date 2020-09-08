@@ -207,25 +207,28 @@ c --- 4. Smooth random field with appropriate algorithm
      &          smoothTmpFld,smooth2DMask,smoothOpNb,doNormalize,myThid)
 
 c --- 5. accumulate statistics (to compute the variance later)
-       DO bj=jtlo,jthi
-        DO bi=itlo,ithi
+C --- if statements protects against divide-by-zero
+       IF (smooth2DNbRand(smoothOpNb).GT.1) THEN
+         DO bj=jtlo,jthi
+          DO bi=itlo,ithi
 
-         IF (((smooth2DDims(smoothOpNb).EQ.'yze').AND.
-     &        (tileHasOBE(bi,bj))).OR.
-     &       ((smooth2DDims(smoothOpNb).EQ.'yzw').AND.
-     &        (tileHasOBW(bi,bj)))) then
-          DO k = 1,Nr
-           DO j = 1-OLy,sNy+OLy
-            smoothTmpVar(j,k,bi,bj)=smoothTmpVar(j,k,bi,bj)
-     &       +smoothTmpFld(j,k,bi,bj)*smoothTmpFld(j,k,bi,bj)/
-     &        smooth2DNbRand(smoothOpNb)
-            smoothTmpMean(j,k,bi,bj)=smoothTmpMean(j,k,bi,bj)
-     &       +smoothTmpFld(j,k,bi,bj)/smooth2DNbRand(smoothOpNb)
-           ENDDO
+           IF (((smooth2DDims(smoothOpNb).EQ.'yze').AND.
+     &          (tileHasOBE(bi,bj))).OR.
+     &         ((smooth2DDims(smoothOpNb).EQ.'yzw').AND.
+     &          (tileHasOBW(bi,bj)))) then
+            DO k = 1,Nr
+             DO j = 1-OLy,sNy+OLy
+              smoothTmpVar(j,k,bi,bj)=smoothTmpVar(j,k,bi,bj)
+     &         +smoothTmpFld(j,k,bi,bj)*smoothTmpFld(j,k,bi,bj)/
+     &          smooth2DNbRand(smoothOpNb)
+              smoothTmpMean(j,k,bi,bj)=smoothTmpMean(j,k,bi,bj)
+     &         +smoothTmpFld(j,k,bi,bj)/smooth2DNbRand(smoothOpNb)
+             ENDDO
+            ENDDO
+           ENDIF
           ENDDO
-         ENDIF
-        ENDDO
-       ENDDO
+         ENDDO
+      ENDIF
 
 C --- temporary, write out all samples
       write(fnamegeneric(1:80),'(1a,i3.3)')
@@ -240,26 +243,29 @@ C --- temporary, write out all samples
       ENDDO ! end ii->nbRand
 
 c --- 6. compute variance and convert it to normalization factor:
-      DO bj=jtlo,jthi
-       DO bi=itlo,ithi
-        IF (((smooth2DDims(smoothOpNb).EQ.'yze').AND.
-     &       (tileHasOBE(bi,bj))).OR.
-     &      ((smooth2DDims(smoothOpNb).EQ.'yzw').AND.
-     &       (tileHasOBW(bi,bj)))) then
-         DO k = 1,Nr
-          DO j = 1-OLy,sNy+OLy
-           if (smooth2dmask(j,k,bi,bj).NE.0) then
-            smoothYZnorm(j,k,bi,bj)=
-     &       1/sqrt ( smooth2DNbRand(smoothOpNb)/
-     &       (smooth2DNbRand(smoothOpNb)-1)*
-     &       (smoothTmpVar(j,k,bi,bj) -
-     &           smoothTmpMean(j,k,bi,bj)*smoothTmpMean(j,k,bi,bj)) )
-           endif
-          ENDDO
+C --- if statements protects against divide-by-zero
+      IF (smooth2DNbRand(smoothOpNb).GT.1) THEN
+        DO bj=jtlo,jthi
+         DO bi=itlo,ithi
+          IF (((smooth2DDims(smoothOpNb).EQ.'yze').AND.
+     &         (tileHasOBE(bi,bj))).OR.
+     &        ((smooth2DDims(smoothOpNb).EQ.'yzw').AND.
+     &         (tileHasOBW(bi,bj)))) then
+           DO k = 1,Nr
+            DO j = 1-OLy,sNy+OLy
+             if (smooth2dmask(j,k,bi,bj).NE.0) then
+              smoothYZnorm(j,k,bi,bj)=
+     &         1/sqrt ( smooth2DNbRand(smoothOpNb)/
+     &         (smooth2DNbRand(smoothOpNb)-1)*
+     &         (smoothTmpVar(j,k,bi,bj) -
+     &             smoothTmpMean(j,k,bi,bj)*smoothTmpMean(j,k,bi,bj)) )
+             endif
+            ENDDO
+           ENDDO
+          ENDIF
          ENDDO
-        ENDIF
-       ENDDO
-      ENDDO
+        ENDDO
+      ENDIF
 
       ENDIF ! end smooth2Dfilter == 1 or 2
 
