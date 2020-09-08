@@ -64,7 +64,8 @@ C --- 2D Fields
      & smooth2D_Ly(1-Olx:sNx+Olx,1-Oly:sNy+Oly,nSx,nSy),
      & smooth2Dnorm (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy),
      & smoothXZnorm (1-OLx:sNx+OLx,Nr,nSx,nSy),
-     & smoothYZnorm (1-OLy:sNy+OLy,Nr,nSx,nSy)
+     & smoothYZnorm (1-OLy:sNy+OLy,Nr,nSx,nSy),
+     & smooth2DSOROmega(smoothOpNbMax)
 
       character*(5) smooth2DmaskName(smoothOpNbMax)
       character*(11) smooth2DAlgorithm(smoothOpNbMax)
@@ -95,7 +96,8 @@ C --- Common Blocks
      & smooth3D_Lx,smooth3D_Ly,smooth3D_Lz,
      & smooth2D_Lx0,smooth2D_Ly0,
      & smooth2D_Lx,smooth2D_Ly,
-     & smoothXZNorm, smoothYZNorm
+     & smoothXZNorm, smoothYZNorm,
+     & smooth2DSOROmega
 
 
       COMMON /smooth_flds_c/

@@ -44,6 +44,7 @@ c--   Read the namelist input.
      &                   smooth2DAlgorithm,
      &                   smooth2DDims,
      &                   smooth2DJacobiMaxIters,
+     &                   smooth2DSOROmega,
      &                   smooth3Dnbt,
      &                   smooth3DtypeH,
      &                   smooth3DsizeH,
@@ -85,6 +86,7 @@ c--   Set default values.
         smooth2DDims(smoothOpNb)(1:3) = 'xy '
         smooth2DNbRand(smoothOpNb) = 1000
         smooth2DJacobiMaxIters(smoothOpNb) = 1000
+        smooth2DSOROmega(smoothOpNb) = 1. _d 0
 
         smooth3Dnbt(smoothOpNb)=0
         smooth3D_Lx0(smoothOpNb)=0. _d 0
