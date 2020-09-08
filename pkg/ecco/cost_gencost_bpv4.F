@@ -54,6 +54,7 @@ c     == local variables ==
       _RL locbpdat(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL locbpmask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL locwbp(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL mask2D(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
 
       _RL bpdifmean ( 1-OLx:sNx+OLx, 1-OLy:sNy+OLy, nSx, nSy )
       _RL bpdifanom ( 1-OLx:sNx+OLx, 1-OLy:sNy+OLy, nSx, nSy )
@@ -115,6 +116,9 @@ cgf convert phibot from m2/s2 to cm
              locbpbar(i,j,bi,bj) = 0. _d 0
              locbpdat(i,j,bi,bj) = 0. _d 0
              locbpmask(i,j,bi,bj) = 0. _d 0
+
+             ! For smoothing routines
+             mask2D(i,j,bi,bj) = maskC(i,j,1,bi,bj)
            enddo
           enddo
         enddo
@@ -166,6 +170,7 @@ c--     Compute the mean over all bpdat records.
          do bi = itlo,ithi
            do j = 1,sNy
             do i = 1,sNx
+
               if ( (locbpmask(i,j,bi,bj).NE. 0. _d 0).AND.
      &             (maskc(i,j,1,bi,bj).NE. 0. _d 0) ) then
                 bpdifmean(i,j,bi,bj) = bpdifmean(i,j,bi,bj) +
@@ -220,6 +225,8 @@ c--    Compute field of anomalies
          do bi = itlo,ithi
            do j = 1,sNy
             do i = 1,sNx
+              ! mask2D for smoothing. here to avoid TAF recomp
+              mask2D(i,j,bi,bj)=maskC(i,j,1,bi,bj)
               if ( (locbpmask(i,j,bi,bj).NE. 0. _d 0).AND.
      &             (maskc(i,j,1,bi,bj).NE. 0. _d 0) ) then
                 bpdifanom(i,j,bi,bj) =
@@ -284,13 +291,13 @@ c--    Smooth field of anomalies
 
 #ifdef ALLOW_SMOOTH
         if ( useSMOOTH )
-     &   call smooth_basic2D(bpdifanom,maskc,300000. _d 0,3000,myThid)
+     &   call smooth_basic2D(bpdifanom,mask2D,300000. _d 0,3000,myThid)
 #endif
 
         if (gencost_outputlevel(kgen).GT.0) then
 #ifdef ALLOW_SMOOTH
          if ( useSMOOTH )
-     &   call smooth_basic2D(bpdatanom,maskc,300000. _d 0,3000,myThid)
+     &   call smooth_basic2D(bpdatanom,mask2D,300000. _d 0,3000,myThid)
 #endif
 
          write(fname4test(1:80),'(1a)') 'bpdifanom_smooth'

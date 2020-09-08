@@ -60,6 +60,7 @@ c     == local variables ==
       integer endrec
       integer diffrec
       integer iarr
+      character*(1) ncvargrdTmp(maxcvars)
 
       _RL dummy
       _RL loctmp3d (1-olx:snx+olx,1-oly:sny+oly,Nr,nsx,nsy)
@@ -275,7 +276,7 @@ c--   initial forcing only
 
 #if (defined (ALLOW_UWIND_CONTROL))
 #ifdef ALLOW_EXF
-      IF ( useAtmWind ) THEN 
+      IF ( useAtmWind ) THEN
 #endif
 c--   Zonal wind speed.
       call ctrl_init_rec ( xx_uwind_file,
@@ -819,15 +820,24 @@ c----------------------------------------------------------------------
 c--
 #ifdef ALLOW_GENARR2D_CONTROL
        do iarr = 1, maxCtrlArr2D
-#ifndef ALLOW_OPENAD
+        ncvargrdtmp='c'
+# ifdef ALLOW_SHI2D_CONTROL
+C       Under iceshelf, use maskSHI for these
+        if ((xx_genarr2d_file(iarr)(1:11).eq.'xx_shicoeff').or.
+     &      (xx_genarr2d_file(iarr)(1:11).eq.'xx_shicdrag')) then
+            ncvargrdtmp='i'
+        endif
+# endif /* ALLOW_SHI2D_CONTROL */
+
+# ifndef ALLOW_OPENAD
         if (xx_genarr2d_weight(iarr).NE.' ')
      &  call ctrl_init_ctrlvar (
-#else
+# else
         call ctrl_init_ctrlvar (
-#endif
+# endif
      &       xx_genarr2d_file(iarr)(1:MAX_LEN_FNAM),
      &       100+iarr, 200+iarr, 1, 1, 1,
-     &       snx, sny, 1, 'c', 'xy', myThid )
+     &       snx, sny, 1, ncvargrdtmp, 'xy', myThid )
 
        enddo
 #endif /* ALLOW_GENARR2D_CONTROL */
@@ -861,11 +871,11 @@ c--
 #endif
 
         call ctrl_init_rec ( xx_gentim2d_file(iarr)(1:MAX_LEN_FNAM),
-     I       xx_gentim2d_startdate1(iarr), 
-     I       xx_gentim2d_startdate2(iarr), 
-     I       xx_gentim2d_period(iarr), 
+     I       xx_gentim2d_startdate1(iarr),
+     I       xx_gentim2d_startdate2(iarr),
+     I       xx_gentim2d_period(iarr),
      I       1,
-     O       xx_gentim2d_startdate(1,iarr), 
+     O       xx_gentim2d_startdate(1,iarr),
      O       diffrec, startrec, endrec,
      I       myThid )
 C

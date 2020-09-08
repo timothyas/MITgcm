@@ -62,6 +62,7 @@ c     == local variables ==
       _RL nb_sst (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL msk_sst (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL tmp_sst (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL mask2D (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL spval
 
       _RL junk,junkweight
@@ -173,6 +174,9 @@ cgf =======================================================
               obs_sst(i,j,bi,bj)  = 0. _d 0
               nb_sst(i,j,bi,bj)  = 0. _d 0
               msk_sst(i,j,bi,bj)  = 0. _d 0
+
+              ! mask2D for smoothing
+              mask2D(i,j,bi,bj) = maskC(i,j,1,bi,bj)
             enddo
            enddo
           enddo
@@ -293,13 +297,13 @@ c ----------------------------------------
 #endif
 
          if ( useSMOOTH.AND.(k2_lsc.GT.0) )
-     &     call smooth_hetero2d(anom_sst,maskc,
+     &     call smooth_hetero2d(anom_sst,mask2D,
      &     gencost_posproc_c(k2_lsc,kgen_lsc),
      &     gencost_posproc_i(k2_lsc,kgen_lsc),myThid)
 
 #ifdef ALLOW_GENCOST_SSTV4_OUTPUT
          if ( useSMOOTH.AND.(k2_lsc.GT.0) )
-     &     call smooth_hetero2d(obs_sst,maskc,
+     &     call smooth_hetero2d(obs_sst,mask2D,
      &     gencost_posproc_c(k2_lsc,kgen_lsc),
      &     gencost_posproc_i(k2_lsc,kgen_lsc),myThid)
 

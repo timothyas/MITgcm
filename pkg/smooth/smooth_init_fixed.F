@@ -42,29 +42,36 @@ C     *==========================================================*
       ENDDO
 
       DO smoothOpNb=1,smoothOpNbMax
-      if (smooth2Dtype(smoothOpNb).NE.0) then
-      call smooth_init2D(smoothOpNb,mythid)
-      endif
+        if ((smooth2Dtype(smoothOpNb).NE.0) .and.
+     &      (smooth2DAlgorithm(smoothOpNb)(1:4).eq.'WC01')) then
+          call smooth_init2D(smoothOpNb,mythid)
+        endif
       ENDDO 
 
       DO smoothOpNb=1,smoothOpNbMax
-      if (smooth2Dtype(smoothOpNb).NE.0) then
-      call smooth_filtervar2D(smoothOpNb,mythid)
-      endif
+        if (smooth2DFilter(smoothOpNb).NE.0) then
+          if (smooth2DDims(smoothOpNb)(1:2).eq.'xy') then
+            call smooth_filtervar2D(smoothOpNb,mythid)
+          elseif (smooth2DDims(smoothOpNb)(1:2).eq.'xz') then
+            call smooth_filtervar_xz(smoothOpNb,mythid)
+          else
+            call smooth_filtervar_yz(smoothOpNb,mythid)
+          endif
+        endif
       ENDDO
 
       DO smoothOpNb=1,smoothOpNbMax
-      if ((smooth3DtypeZ(smoothOpNb).NE.0).OR.
-     & (smooth3DtypeH(smoothOpNb).NE.0)) then
-      call smooth_init3D(smoothOpNb,mythid)
-      endif
+        if (((smooth3DtypeZ(smoothOpNb).NE.0).OR.
+     &       (smooth3DtypeH(smoothOpNb).NE.0)).and.
+     &      (smooth2DAlgorithm(smoothOpNb)(1:4).eq.'WC01')) then
+          call smooth_init3D(smoothOpNb,mythid)
+        endif
       ENDDO
 
       DO smoothOpNb=1,smoothOpNbMax
-      if ((smooth3DtypeZ(smoothOpNb).NE.0).OR.
-     & (smooth3DtypeH(smoothOpNb).NE.0)) then
-      call smooth_filtervar3D(smoothOpNb,mythid)
-      endif
+        if (smooth3DFilter(smoothOpNb).NE.0) then
+          call smooth_filtervar3D(smoothOpNb,mythid)
+        endif
       ENDDO
 
         END 

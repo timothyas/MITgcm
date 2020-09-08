@@ -22,6 +22,12 @@ C     === Global variables ===
 #endif
 #include "CTRL_SIZE.h"
 #include "CTRL_GENARR.h"
+#ifdef ALLOW_SHI2D_CONTROL
+# include "SHELFICE_OPTIONS.h"
+#endif
+#ifdef ALLOW_SMOOTH
+# include "SMOOTH.h"
+#endif
 
 C     === Routine arguments ===
 C     myThid -  Number of this instance
@@ -30,11 +36,16 @@ C     myThid -  Number of this instance
 C     === Local variables ===
 C     msgBuf      - Informational/error message buffer
       CHARACTER*(MAX_LEN_MBUF) msgBuf
-      LOGICAL solve4Stress
+      CHARACTER*(80) fnamegeneric
+      LOGICAL solve4Stress, fexist
 
 #ifndef ALLOW_OPENAD
 #if (defined (ALLOW_GENARR2D_CONTROL) || defined (ALLOW_GENARR3D_CONTROL) || defined (ALLOW_GENTIM2D_CONTROL))
-      integer iarr
+      integer iarr, k2
+# ifdef ALLOW_SMOOTH
+      integer numsmo
+      logical doWC01, doSmooth, doMatern
+# endif
 #endif
 #endif
 
@@ -158,11 +169,11 @@ C-    to use DIFFKR_CONTROL, needs to define ALLOW_3D_DIFFKR in CPP_OPTIONS.h
 
 #if ( defined ALLOW_UWIND_CONTROL || defined ALLOW_VWIND_CONTROL )
 #ifdef ALLOW_EXF
-      IF ( .NOT.useEXF .OR. .NOT.useAtmWind ) THEN 
+      IF ( .NOT.useEXF .OR. .NOT.useAtmWind ) THEN
 #endif
       WRITE(msgBuf,'(3A)') 'CTRL_CHECK : ',
      &     'ALLOW_U / VWIND_CONTROL used without exf & ',
-     &     'useAtmWind will have no effect '      
+     &     'useAtmWind will have no effect '
         CALL PRINT_MESSAGE( msgBuf, errorMessageUnit,
      &  SQUEEZE_RIGHT, myThid )
 #ifdef ALLOW_EXF
@@ -232,7 +243,7 @@ C     which in turn require a particular set of input fields
         WRITE(msgBuf,'(3A)') '** WARNING ** CTRL_CHECK: ',
      &        'relying on mdsio_gl.F to pack/unpack the control',
      &        'vector is unsafe when useSingleCpuIO is true.'
-        CALL PRINT_MESSAGE( msgBuf, errorMessageUnit, 
+        CALL PRINT_MESSAGE( msgBuf, errorMessageUnit,
      &  SQUEEZE_RIGHT, myThid )
        ENDIF
 # endif
@@ -244,13 +255,227 @@ C     which in turn require a particular set of input fields
      defined (ALLOW_OBCSS_CONTROL) || \
      defined (ALLOW_OBCSW_CONTROL) || \
      defined (ALLOW_OBCSE_CONTROL))
-        WRITE(msgBuf,'(2A)') 
+        WRITE(msgBuf,'(2A)')
      &        'ALLOW_PACKUNPACK_METHOD2 does not work with',
      &        'open boundary controls (see verif/obcs_ctrl).'
          CALL PRINT_ERROR( msgBuf, myThid )
          STOP 'ABNORMAL END: S/R CTRL_CHECK'
 #endif
 #endif
+#endif
+
+#ifdef ALLOW_GENARR2D_CONTROL
+c       Warn user: doscaling must be true to do log10 ctrl
+        do iarr = 1, maxCtrlArr2D
+          do k2 = 1, maxCtrlProc
+            if ( (xx_genarr2d_preproc(k2,iarr).eq.'noscaling') .and.
+     &         (xx_genarr2d_preproc_c(k2,iarr).eq.'log10ctrl') ) then
+              write(msgBuf,'(2A)')
+     &        'CTRL_CHECK: conflicting ',
+     &        'preproc_c & preproc flags '
+              call print_error( msgBuf, myThid )
+              write(msgBuf,'(A,I2,A)')
+     &        'log10ctrl and noscaling set for xx_genarr2d(',iarr,
+     &        '). '
+              call print_error( msgBuf, myThid )
+              STOP 'ABNORMAL END: S/R CTRL_CHECK'
+            endif
+          enddo
+        enddo
+#endif
+
+#ifdef ALLOW_GENARR3D_CONTROL
+c       Warn user: doscaling must be true to do log10 ctrl
+        do iarr = 1, maxCtrlArr3D
+          do k2 = 1, maxCtrlProc
+            if ( (xx_genarr3d_preproc(k2,iarr).eq.'noscaling') .and.
+     &         (xx_genarr3d_preproc_c(k2,iarr).eq.'log10ctrl') ) then
+              write(msgBuf,'(2A)')
+     &        'CTRL_CHECK: conflicting ',
+     &        'preproc_c & preproc flags '
+              call print_error( msgBuf, myThid )
+              write(msgBuf,'(A,I2,A)')
+     &        'log10ctrl and noscaling set for xx_genarr2d(',iarr,
+     &        '). '
+              call print_error( msgBuf, myThid )
+              STOP 'ABNORMAL END: S/R CTRL_CHECK'
+            endif
+          enddo
+        enddo
+#endif
+
+#ifdef ALLOW_SHI2D_CONTROL
+# ifndef ALLOW_GENARR2D_CONTROL
+         WRITE(msgBuf,'(3A)')
+     &        'ALLOW_SHI2D_CONTROL: used for 2D control var ',
+     &        'of 2D wet points with pkg/shelfice only works with ',
+     &        'ALLOW_GENARR2D_CONTROL'
+         CALL PRINT_ERROR( msgBuf, myThid )
+         STOP 'ABNORMAL END: S/R CTRL_CHECK'
+# endif
+
+C Can't have shiTransCoeffT/S as control variables in gammafrict form
+# ifdef SHI_ALLOW_GAMMAFRICT
+        do iarr = 1, maxCtrlArr2D
+          if ( (xx_genarr2d_file(iarr)(1:11).eq.'xx_shicoeff')) then
+              write(msgBuf,'(2A,I2,A)')
+     &        'shiTransCoeffT or S set as control variable for ',
+     &        'xx_genarr2d(', iarr,
+     &        '). '
+              call print_error( msgBuf, myThid )
+              write(msgBuf,'(2A)')
+     &        'Cannot use shiTransCoeffT/S when SHI_ALLOW_GAMMAFRICT ',
+     &        'is defined'
+              call print_error( msgBuf, myThid )
+              STOP 'ABNORMAL END: S/R CTRL_CHECK'
+          endif
+        enddo
+# else
+
+C Can't have shiCDrag as control variable without gammafrict form
+C this could be changed to control cdrag for momentum equation...
+        do iarr = 1, maxCtrlArr2D
+          if ( (xx_genarr2d_file(iarr)(1:11).eq.'xx_shicdrag')) then
+              write(msgBuf,'(2A,I2,A)')
+     &        'shiCDrag set as control variable for ',
+     &        'xx_genarr2d(', iarr,
+     &        '). '
+              call print_error( msgBuf, myThid )
+              write(msgBuf,'(2A)')
+     &        'Cannot use shiCDrag when SHI_ALLOW_GAMMAFRICT ',
+     &        'is NOT defined'
+              call print_error( msgBuf, myThid )
+              STOP 'ABNORMAL END: S/R CTRL_CHECK'
+          endif
+        enddo
+# endif
+#endif
+
+#ifdef ALLOW_SMOOTH
+# ifdef ALLOW_GENARR2D_CONTROL
+      do iarr = 1, maxCtrlArr2D
+         do k2 = 1, maxCtrlProc
+           if ((xx_genarr2d_preproc(k2,iarr)(1:4).EQ.'WC01').or.
+     &         (xx_genarr2d_preproc(k2,iarr)(1:6).EQ.'matern')) then
+             if (xx_genarr2d_preproc_i(k2,iarr).NE.0) then
+               numsmo=xx_genarr2d_preproc_i(k2,iarr)
+             else
+               numsmo=1
+             endif
+             if (smooth2DFilter(numsmo).EQ.0) then
+               fexist = .FALSE.
+               write(fnamegeneric(1:80),'(1a,i3.3,a)')
+     &           'smooth2Dnorm',numsmo,'.data'
+               inquire(file=fnamegeneric,exist=fexist)
+               IF (.not.fexist) THEN
+                  write(msgBuf,'(2A)')
+     &            'CTRL_CHECK: Using WC01 or Matern but ',
+     &            'not computing normalization and cannot find file: ',
+     &            fnamegeneric
+                  call print_error( msgBuf, myThid )
+                  STOP 'ABNORMAL END: S/R CTRL_CHECK'
+              ENDIF
+            ENDIF ! test if computing filtervar
+          ENDIF ! test if WC01 or matern
+        enddo
+        doWC01=.FALSE.
+        doSmooth=.FALSE.
+        doMatern=.FALSE.
+        do k2 = 1, maxCtrlProc
+          if (xx_genarr2d_preproc(k2,iarr)(1:4).eq.'WC01')
+     &      doWC01 = .TRUE.
+          if (xx_genarr2d_preproc(k2,iarr)(1:6).eq.'smooth')
+     &      doSmooth = .TRUE.
+          if (xx_genarr2d_preproc(k2,iarr)(1:6).eq.'matern')
+     &      doMatern=.TRUE.
+        enddo
+        if((doWC01.and.doSmooth)     .or.(doWC01.and.doMatern).or.
+     &     (doSmooth.and.doMatern)) then
+          write(msgBuf,'(A,I)')
+     &    'CTRL_CHECK: Using 2 or more of smooth, WC01, & Matern ',
+     &    'for genarr2d, iarr = ',iarr
+          STOP "ABNORMAL END: S/R CTRL_CHECK"
+        endif
+      enddo
+# endif
+
+
+# ifdef ALLOW_GENARR3D_CONTROL
+      do iarr = 1, maxCtrlArr3D
+         do k2 = 1, maxCtrlProc
+           if ((xx_genarr3d_preproc(k2,iarr).EQ.'WC01').or.
+     &         (xx_genarr3d_preproc(k2,iarr)(1:6).EQ.'matern')) then
+             if (xx_genarr3d_preproc_i(k2,iarr).NE.0) then
+               numsmo=xx_genarr3d_preproc_i(k2,iarr)
+             else
+               numsmo=1
+             endif
+             if (smooth3DFilter(numsmo).EQ.0) then
+               fexist = .FALSE.
+               write(fnamegeneric(1:80),'(1a,i3.3,a)')
+     &           'smooth3Dnorm',numsmo,'.data'
+               inquire(file=fnamegeneric,exist=fexist)
+               IF (.not.fexist) THEN
+                  write(msgBuf,'(2A)')
+     &            'CTRL_CHECK: Using WC01 or Matern but ',
+     &            'not computing normalization and cannot find file: ',
+     &            fnamegeneric
+                  call print_error( msgBuf, myThid )
+                  STOP 'ABNORMAL END: S/R CTRL_CHECK'
+              ENDIF
+            ENDIF ! test if computing filtervar
+          ENDIF ! test if WC01 or matern
+        enddo
+        doWC01=.FALSE.
+        doSmooth=.FALSE.
+        doMatern=.FALSE.
+        do k2 = 1, maxCtrlProc
+          if (xx_genarr3d_preproc(k2,iarr)(1:4).eq.'WC01')
+     &      doWC01 = .TRUE.
+          if (xx_genarr3d_preproc(k2,iarr)(1:6).eq.'smooth')
+     &      doSmooth = .TRUE.
+          if (xx_genarr3d_preproc(k2,iarr)(1:6).eq.'matern')
+     &      doMatern=.TRUE.
+        enddo
+        if((doWC01.and.doSmooth)     .or.(doWC01.and.doMatern).or.
+     &     (doSmooth.and.doMatern)) then
+          write(msgBuf,'(A,I)')
+     &    'CTRL_CHECK: Using 2 or more of smooth, WC01, & Matern ',
+     &    'for genarr3d, iarr = ',iarr
+          STOP "ABNORMAL END: S/R CTRL_CHECK"
+        endif
+      enddo
+# endif
+
+# ifdef ALLOW_GENTIM2D_CONTROL
+      do iarr = 1, maxCtrlTim2D
+         do k2 = 1, maxCtrlProc
+           if ((xx_gentim2d_preproc(k2,iarr).EQ.'WC01').or.
+     &         (xx_gentim2d_preproc(k2,iarr)(1:6).EQ.'matern')) then
+             if (xx_gentim2d_preproc_i(k2,iarr).NE.0) then
+               numsmo=xx_gentim2d_preproc_i(k2,iarr)
+             else
+               numsmo=1
+             endif
+             if (smooth2DFilter(numsmo).EQ.0) then
+               fexist = .FALSE.
+               write(fnamegeneric(1:80),'(1a,i3.3,a)')
+     &           'smooth2Dnorm',numsmo,'.data'
+               inquire(file=fnamegeneric,exist=fexist)
+               IF (.not.fexist) THEN
+                  write(msgBuf,'(2A)')
+     &            'CTRL_CHECK: Using WC01 or Matern but ',
+     &            'not computing normalization and cannot find file: ',
+     &            fnamegeneric
+                  call print_error( msgBuf, myThid )
+                  STOP 'ABNORMAL END: S/R CTRL_CHECK'
+              ENDIF
+            ENDIF ! test if computing filtervar
+          ENDIF ! test if WC01 or matern
+
+        enddo
+      enddo
+# endif
 #endif
 
       RETURN

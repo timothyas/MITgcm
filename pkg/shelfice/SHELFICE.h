@@ -36,15 +36,18 @@ C     SHI_withBL_uStarTopDz    :: with SHELFICEboundaryLayer, compute uStar from
 C                                 uVel,vVel avergaged over top Dz thickness;
 C                                 def: F
 C     SHELFICEadvDiffHeatFlux  :: use advective-diffusive heat flux into the
-C                                 ice shelf instead of default diffusive heat
+C                                 shelf instead of default diffusive heat
 C                                 flux, see Holland and Jenkins (1999),
 C                                 eq.21,22,26,31; def: F
+C     SHELFICEsaltToHeatRatio  :: constant ratio giving
+C                                 SHELFICEsaltTransCoeff/SHELFICEheatTransCoeff
+C                                 (def: 5.05e-3)
 C     SHELFICEheatTransCoeff   :: constant heat transfer coefficient that
 C                                 determines heat flux into shelfice
 C                                 (def: 1e-4 m/s)
 C     SHELFICEsaltTransCoeff   :: constant salinity transfer coefficient that
 C                                 determines salt flux into shelfice
-C                                 (def: 5.05e-3 * 1e-4 m/s)
+C                                 (def: SHELFICEsaltToHeatRatio * SHELFICEheatTransCoeff)
 C     -----------------------------------------------------------------------
 C     SHELFICEuseGammaFrict    :: use velocity dependent exchange coefficients,
 C                                 see Holland and Jenkins (1999), eq.11-18,
@@ -114,6 +117,7 @@ CEOP
 
       COMMON /SHELFICE_PARMS_R/
      &     SHELFICE_dumpFreq, SHELFICE_taveFreq,
+     &     SHELFICEsaltToHeatRatio,
      &     SHELFICEheatTransCoeff, SHELFICEsaltTransCoeff,
      &     rhoShelfice, SHELFICEkappa,
      &     SHELFICElatentHeat,
@@ -126,6 +130,7 @@ CEOP
      &     SHELFICEsplitThreshold, SHELFICEmergeThreshold
 
       _RL SHELFICE_dumpFreq, SHELFICE_taveFreq
+      _RL SHELFICEsaltToHeatRatio
       _RL SHELFICEheatTransCoeff
       _RL SHELFICEsaltTransCoeff
       _RL SHELFICElatentHeat
@@ -145,7 +150,9 @@ CEOP
      &     shelficeMass, shelficeMassInit,
      &     shelficeLoadAnomaly,
      &     shelficeForcingT, shelficeForcingS,
-     &     shiTransCoeffT, shiTransCoeffS
+     &     shiTransCoeffT, shiTransCoeffS,
+     &     shiCDragFld, shiDragQuadFld
+
       _RL shelficeMass          (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL shelficeMassInit      (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL shelficeLoadAnomaly   (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
@@ -153,6 +160,8 @@ CEOP
       _RL shelficeForcingS      (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL shiTransCoeffT        (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL shiTransCoeffS        (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL shiCDragFld           (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL shiDragQuadFld        (1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
 
       COMMON /SHELFICE_FIELDS_RS/
      &     R_shelfIce,
@@ -165,10 +174,15 @@ CEOP
       _RS
      &   shelfIceMassDynTendency(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
 
-#ifdef ALLOW_SHIFWFLX_CONTROL
+#if (defined ALLOW_SHIFWFLX_CONTROL) || (defined ALLOW_SHI2D_CONTROL)
+C   maskSHI           ::  Mask=1 where ice shelf is present on surface
+C                           layer, showing full 2D ice shelf extent.
+C                           =maskC for rest of k values
+C                           Used with ice shelf fwflx 
+C                           or shiTransCoeffT/S ctrl.
       COMMON /SHELFICE_MASKS_CTRL/ maskSHI
       _RS maskSHI  (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
-#endif /* ALLOW_SHIFWFLX_CONTROL */
+#endif /* ALLOW_SHIFWFLX_CONTROL || ALLOW_SHI2D_CONTROL */
 
 #ifdef ALLOW_DIAGNOSTICS
       COMMON /SHELFICE_DIAG_DRAG/ shelficeDragU, shelficeDragV

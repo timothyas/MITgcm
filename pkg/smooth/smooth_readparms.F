@@ -39,6 +39,12 @@ c--   Read the namelist input.
      &                   smooth2D_Lx0,
      &                   smooth2D_Ly0,
      &                   smooth2Dfilter,
+     &                   smooth2DNbRand,
+     &                   smooth2DMaskName,
+     &                   smooth2DAlgorithm,
+     &                   smooth2DDims,
+     &                   smooth2DJacobiMaxIters,
+     &                   smooth2DSOROmega,
      &                   smooth3Dnbt,
      &                   smooth3DtypeH,
      &                   smooth3DsizeH,
@@ -47,7 +53,12 @@ c--   Read the namelist input.
      &                   smooth3D_Lx0,
      &                   smooth3D_Ly0,
      &                   smooth3D_Lz0,
-     &                   smooth3Dfilter
+     &                   smooth3Dfilter,
+     &                   smooth3DNbRand,
+     &                   smooth3DMaskName,
+     &                   smooth3DAlgorithm,
+     &                   smooth3DJacobiMaxIters,
+     &                   smooth3DSOROmega
 
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
 
@@ -71,6 +82,12 @@ c--   Set default values.
         smooth2Dtype(smoothOpNb)=0
         smooth2Dsize(smoothOpNb)=0
         smooth2Dfilter(smoothOpNb)=0
+        smooth2DMaskName(smoothOpNb)(1:5) = 'maskC'
+        smooth2DAlgorithm(smoothOpNb)(1:11) = 'WC01       '
+        smooth2DDims(smoothOpNb)(1:3) = 'xy '
+        smooth2DNbRand(smoothOpNb) = 1000
+        smooth2DJacobiMaxIters(smoothOpNb) = 1000
+        smooth2DSOROmega(smoothOpNb) = 1. _d 0
 
         smooth3Dnbt(smoothOpNb)=0
         smooth3D_Lx0(smoothOpNb)=0. _d 0
@@ -81,6 +98,11 @@ c--   Set default values.
         smooth3DtypeZ(smoothOpNb)=0
         smooth3DsizeZ(smoothOpNb)=0
         smooth3Dfilter(smoothOpNb)=0
+        smooth3DMaskName(smoothOpNb)(1:5) = 'maskC'
+        smooth3DAlgorithm(smoothOpNb)(1:11) = 'WC01       '
+        smooth3DNbRand(smoothOpNb) = 1000
+        smooth3DJacobiMaxIters(smoothOpNb) = 1000
+        smooth3DSOROmega(smoothOpNb) = 1. _d 0
       ENDDO
 
 C--   Read settings from model parameter file "data.smooth".
@@ -121,9 +143,11 @@ C--   Print pkg/smooth settings to standard output:
 
       DO smoothOpNb=1,smoothOpNbMax
         IF (smooth2Dtype(smoothOpNb).NE.0) THEN
-          WRITE(msgBuf,'(A,I2,I6,2f6.0)') 'smooth 2D parameters: ',
+          WRITE(msgBuf,'(A,I2,I6,2f6.0,4A)') 'smooth 2D parameters: ',
      &       smoothOpNb,smooth2Dnbt(smoothOpNb),
-     &       smooth2D_Lx0(smoothOpNb),smooth2D_Ly0(smoothOpNb)
+     &       smooth2D_Lx0(smoothOpNb),smooth2D_Ly0(smoothOpNb),
+     &       '  ', smooth2DmaskName(smoothOpNb),
+     &       '  ', smooth2DAlgorithm(smoothOpNb)
           CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
      &       SQUEEZE_RIGHT , 1)
         ENDIF
@@ -132,10 +156,12 @@ C--   Print pkg/smooth settings to standard output:
       DO smoothOpNb=1,smoothOpNbMax
         IF ((smooth3DtypeZ(smoothOpNb).NE.0).OR.
      &      (smooth3DtypeH(smoothOpNb).NE.0)) then
-          WRITE(msgBuf,'(A,I2,I6,3f6.0)') 'smooth 3D parameters: ',
+          WRITE(msgBuf,'(A,I2,I6,3f6.0,4A)') 'smooth 3D parameters: ',
      &       smoothOpNb,smooth3Dnbt(smoothOpNb),
      &       smooth3D_Lx0(smoothOpNb),smooth3D_Ly0(smoothOpNb),
-     &       smooth3D_Lz0(smoothOpNb)
+     &       smooth3D_Lz0(smoothOpNb),
+     &       '  ', smooth3DmaskName(smoothOpNb),
+     &       '  ', smooth3DAlgorithm(smoothOpNb)
           CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
      &       SQUEEZE_RIGHT , 1)
         ENDIF
