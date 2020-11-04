@@ -10,13 +10,13 @@
 C     *==========================================================*
 C     | SUBROUTINE smooth_inverse_matern_yz
 C     | o Given the laplace-like differential operator
-C     |         
-C     |         A=( K^2 - laplacian() )
+C     |
+C     |         A=( delta - div( kappa * grad() )
 C     |
 C     |   this employs an iterative method to find the solution
-C     |         
+C     |
 C     |         u = A^{-1}b
-C     |         
+C     |
 C     | o This is used as a preconditioner to get an estimate
 C     |   of the prior preconditioned misfit Hessian (Gauss Newton
 C     |   approximation)
@@ -74,6 +74,26 @@ C ------------------------------------------------------------------
 C the actual algorithm
 C ------------------------------------------------------------------
 
+
+c --- 0. Apply inv sqrt of cell volume and determinant of mapping:
+      if (doNormalize) then
+       do bj = jtlo,jthi
+        do bi = itlo,ithi
+         IF (((smooth2DDims(smoothOpNb).EQ.'yze').AND.
+     &        (tileHasOBE(bi,bj))).OR.
+     &       ((smooth2DDims(smoothOpNb).EQ.'yzw').AND.
+     &        (tileHasOBW(bi,bj)))) then
+          do k = 1,Nr
+           do j = 1-OLy,sNy+OLy
+           fld_in(j,k,bi,bj) = fld_in(j,k,bi,bj)*
+     &         smoothYZRandNorm(j,k,bi,bj)
+           enddo
+          enddo
+         ENDIF
+        enddo
+       enddo
+      endif
+
 c --- 1. Get laplacian matrix elements
       call smooth_get_laplacian_yz(
      &      center, north, south, up, down,
@@ -119,7 +139,7 @@ c --- 4. Apply normalization field [i.e. 1/sqrt(var(filter))]:
         enddo
        enddo
       endif
-       
+
 # endif
 #endif
       end
