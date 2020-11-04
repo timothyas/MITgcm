@@ -40,6 +40,7 @@ C     *==========================================================*
       integer diLoc,djLoc,dkLoc
       integer nbt_in
       character*( 80) fnamegeneric
+      character*(  5) slice
       logical doNormalize
       _RL smoothTmpFld (1-OLx:sNx+OLx,Nr,nSx,nSy)
       _RL smoothTmpVar (1-OLx:sNx+OLx,Nr,nSx,nSy)
@@ -60,6 +61,8 @@ c so this routine does not do anything
       IF (smooth2Dfilter(smoothOpNb).NE.0) then
 
        nbt_in=smooth2Dnbt(smoothOpNb)/2
+       IF (smooth2DDims(smoothOpNb)(3:3).EQ.'n') slice='north'
+       IF (smooth2DDims(smoothOpNb)(3:3).EQ.'s') slice='south'
 
 c --- allow a different mask other than maskC
 c     Note: this is essentially a copy of ctrl_get_mask
@@ -236,19 +239,19 @@ c write smooth2Dnorm to file:
       write(fnamegeneric(1:80),'(1a,i3.3)')
      &    'smooth2Dnorm',smoothOpNb
       CALL WRITE_REC_XZ_RL(fnamegeneric,smoothprec,
-     &            Nr,smoothXZnorm,1,1,mythid)
+     &            Nr,smoothXZnorm,1,slice,1,mythid)
       CALL SMOOTH_EXCH_XZ_RL ( smoothXZnorm,  smoothOpNb, myThid )
 
 c write out mean too
       write(fnamegeneric(1:80),'(1a,i3.3)')
      &    'smooth2Dmean',smoothOpNb
       CALL WRITE_REC_XZ_RL(fnamegeneric,smoothprec,
-     &            Nr,smoothTmpMean,1,1,mythid)
+     &            Nr,smoothTmpMean,1,slice,1,mythid)
 
       write(fnamegeneric(1:80),'(1a,i3.3)')
      &    'smooth2Dfld',smoothOpNb
       CALL WRITE_REC_XZ_RL( fnamegeneric, smoothprec,
-     &                      Nr, smoothTmpFld, 1, 1, myThid )
+     &                      Nr, smoothTmpFld, 1, slice, 1, myThid )
 
       ENDIF ! end smooth2Dtype != 0
 

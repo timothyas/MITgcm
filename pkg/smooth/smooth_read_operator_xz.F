@@ -45,7 +45,8 @@ C --- Inputs
 
 C --- Local parameters
       character*( 80) fnamegeneric
-      character*(MAX_LEN_MBUF) msgBuf
+      character*(MAX_LEN_MBUF) slice
+      character*(5) msgBuf
       integer i,j,k,bi,bj
       integer itlo,ithi
       integer jtlo,jthi
@@ -75,13 +76,16 @@ C     Doing this before if statement helps TAF
 
       if (smooth2DAlgorithm(smoothOpNb)(1:6).eq.'matern') then
 
+        IF (smooth2DDims(smoothOpNb)(3:3).EQ.'n') slice='north'
+        IF (smooth2DDims(smoothOpNb)(3:3).EQ.'s') slice='south'
+
 C ---   Kux
         write(fnamegeneric(1:80),'(1a,i3.3,a)')
      &        'smooth2DKux',smoothOpNb,'.data'
         inquire(file=fnamegeneric,exist=fexist)
         if (fexist) then
           CALL READ_REC_XZ_RL(fnamegeneric, smoothprec, Nr,
-     &          smoothXZ_Kux, 1, 1, myThid )
+     &          smoothXZ_Kux, 1, slice, 1, myThid )
           CALL SMOOTH_EXCH_XZ_RL( smoothXZ_Kux, smoothOpNb, myThid )
         else
           WRITE(msgBuf,'(3A)') 'SMOOTH_READ_OPERATOR_XZ: ',
@@ -96,7 +100,7 @@ C ---   Kwz
         inquire(file=fnamegeneric,exist=fexist)
         if (fexist) then
           CALL READ_REC_XZ_RL(fnamegeneric, smoothprec, Nr,
-     &          smoothXZ_Kwz, 1, 1, myThid )
+     &          smoothXZ_Kwz, 1, slice, 1, myThid )
           CALL SMOOTH_EXCH_XZ_RL( smoothXZ_Kwz, smoothOpNb, myThid )
         else
           WRITE(msgBuf,'(3A)') 'SMOOTH_READ_OPERATOR_XZ: ',
@@ -112,7 +116,7 @@ C ---   delta:
         inquire(file=fnamegeneric,exist=fexist)
         IF (fexist) THEN
           CALL READ_REC_XZ_RL(fnamegeneric,smoothprec,
-     &               Nr, smoothXZDelta,1, 1, myThid )
+     &               Nr, smoothXZDelta,1, slice, 1, myThid )
           CALL SMOOTH_EXCH_XZ_RL( smoothXZDelta, smoothOpNb, myThid )
         ELSE
           WRITE(msgBuf,'(4a)')
@@ -130,7 +134,7 @@ C       i.e. 1/sqrt(det(F))
         inquire(file=fnamegeneric,exist=fexist)
         if (fexist) then
           CALL READ_REC_XZ_RL(fnamegeneric,smoothprec,
-     &               Nr, smoothXZRandNorm,1, 1, myThid )
+     &               Nr, smoothXZRandNorm,1, slice, 1, myThid )
           CALL SMOOTH_EXCH_XZ_RL( smoothXZRandNorm, smoothOpNb, myThid )
         else
           write(msgBuf,'(4a)')
@@ -151,7 +155,7 @@ c     ctrl_check ensures this file exists or is computed, if needed
       inquire(file=fnamegeneric,exist=fexist)
       IF (fexist) THEN
         CALL READ_REC_XZ_RL(fnamegeneric,smoothprec,
-     &             Nr, smoothXZnorm,1,1,mythid)
+     &             Nr, smoothXZnorm,1,slice,1,mythid)
         CALL SMOOTH_EXCH_XZ_RL( smoothXZNorm, smoothOpNb, myThid )
       ENDIF
 
