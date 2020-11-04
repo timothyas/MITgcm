@@ -7,13 +7,13 @@
 C     *==========================================================*
 C     | SUBROUTINE smooth_inverse_matern_2d
 C     | o Given the laplace-like differential operator
-C     |         
-C     |         A=( K^2 - laplacian() )
+C     |
+C     |         A=( delta - div( kappa * grad() )
 C     |
 C     |   this employs an iterative method to find the solution
-C     |         
+C     |
 C     |         u = A^{-1}b
-C     |         
+C     |
 C     | o This is used as a preconditioner to get an estimate
 C     |   of the prior preconditioned misfit Hessian (Gauss Newton
 C     |   approximation)
@@ -64,6 +64,20 @@ C ------------------------------------------------------------------
 C the actual algorithm
 C ------------------------------------------------------------------
 
+c --- 0. Apply inv sqrt of cell volume and determinant of mapping:
+      if (doNormalize) then
+       do bj = jtlo,jthi
+        do bi = itlo,ithi
+         do j = 1-OLy,sNy+OLy
+          do i = 1-OLx,sNx+OLx
+           fld_in(i,j,bi,bj) = fld_in(i,j,bi,bj)*
+     &         smooth2DRandNorm(i,j,bi,bj)
+          enddo
+         enddo
+        enddo
+       enddo
+      endif
+
 c --- 1. Get laplacian matrix elements
       call smooth_get_laplacian_2d(
      &      center, east, west, north, south,
@@ -76,7 +90,7 @@ c        operate directly on overlap region, inputs "pre-exchanged"
         do j = 1-OLy,sNy+OLy
          do i = 1-OLx,sNx+OLx
           center(i,j,bi,bj) = -center(i,j,bi,bj) +
-     &      smooth2DDelta(i,j,bi,bj) 
+     &      smooth2DDelta(i,j,bi,bj)
           east(i,j,bi,bj)   = -east (i,j,bi,bj)
           west(i,j,bi,bj)   = -west (i,j,bi,bj)
           north(i,j,bi,bj)  = -north(i,j,bi,bj)
@@ -104,5 +118,5 @@ c --- 4. Apply normalization field [i.e. 1/sqrt(var(filter))]:
         enddo
        enddo
       endif
-       
+
       end
