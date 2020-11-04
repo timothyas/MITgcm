@@ -46,6 +46,7 @@ C --- Inputs
 C --- Local parameters
       character*( 80) fnamegeneric
       character*(MAX_LEN_MBUF) msgBuf
+      character*(5) slice
       integer i,j,k,bi,bj
       integer itlo,ithi
       integer jtlo,jthi
@@ -75,13 +76,16 @@ C     Doing this before if statement helps TAF
 
       if (smooth2DAlgorithm(smoothOpNb)(1:6).eq.'matern') then
 
+        IF (smooth2DDims(smoothOpNb)(3:3).EQ.'w') slice='west '
+        IF (smooth2DDims(smoothOpNb)(3:3).EQ.'e') slice='east '
+
 C ---   Kvy
         write(fnamegeneric(1:80),'(1a,i3.3,a)')
      &        'smooth2DKvy',smoothOpNb,'.data'
         inquire(file=fnamegeneric,exist=fexist)
         if (fexist) then
           CALL READ_REC_YZ_RL(fnamegeneric, smoothprec, Nr,
-     &          smoothYZ_Kvy, 1, 1, myThid )
+     &          smoothYZ_Kvy, 1, slice, 1, myThid )
           CALL SMOOTH_EXCH_YZ_RL( smoothYZ_Kvy, smoothOpNb, myThid )
         else
           WRITE(msgBuf,'(3A)') 'SMOOTH_READ_OPERATOR_YZ: ',
@@ -96,7 +100,7 @@ C ---   Kwz
         inquire(file=fnamegeneric,exist=fexist)
         if (fexist) then
           CALL READ_REC_YZ_RL(fnamegeneric, smoothprec, Nr,
-     &          smoothYZ_Kwz, 1, 1, myThid )
+     &          smoothYZ_Kwz, 1, slice, 1, myThid )
           CALL SMOOTH_EXCH_YZ_RL( smoothYZ_Kwz, smoothOpNb, myThid )
         else
           WRITE(msgBuf,'(3A)') 'SMOOTH_READ_OPERATOR_YZ: ',
@@ -112,7 +116,7 @@ C ---   delta:
         inquire(file=fnamegeneric,exist=fexist)
         IF (fexist) THEN
           CALL READ_REC_YZ_RL(fnamegeneric,smoothprec,
-     &               Nr, smoothYZDelta,1, 1, myThid )
+     &               Nr, smoothYZDelta,1, slice, 1, myThid )
           CALL SMOOTH_EXCH_YZ_RL( smoothYZDelta, smoothOpNb, myThid )
         ELSE
           WRITE(msgBuf,'(4a)')
@@ -130,7 +134,7 @@ C       i.e. 1/sqrt(det(F))
         inquire(file=fnamegeneric,exist=fexist)
         if (fexist) then
           CALL READ_REC_YZ_RL(fnamegeneric,smoothprec,
-     &               Nr, smoothYZRandNorm,1, 1, myThid )
+     &               Nr, smoothYZRandNorm,1, slice, 1, myThid )
           CALL SMOOTH_EXCH_YZ_RL( smoothYZRandNorm, smoothOpNb, myThid )
         else
           write(msgBuf,'(4a)')
@@ -151,7 +155,7 @@ c     ctrl_check ensures this file exists or is computed, if needed
       inquire(file=fnamegeneric,exist=fexist)
       IF (fexist) THEN
         CALL READ_REC_YZ_RL(fnamegeneric,smoothprec,
-     &             Nr, smoothYZnorm,1,1,mythid)
+     &             Nr, smoothYZnorm,1,slice,1,mythid)
         CALL SMOOTH_EXCH_YZ_RL( smoothYZNorm, smoothOpNb, myThid )
       ENDIF
 

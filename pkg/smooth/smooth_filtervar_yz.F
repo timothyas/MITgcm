@@ -41,6 +41,7 @@ C     *==========================================================*
       integer nbt_in
       character*( 80) fnamegeneric
       character*(MAX_LEN_MBUF) msgbuf
+      character*(5) slice
       logical doNormalize
       logical fexist
       _RL smoothTmpFld (1-OLy:sNy+OLy,Nr,nSx,nSy)
@@ -63,6 +64,8 @@ c so this routine does not do anything
       IF (smooth2Dfilter(smoothOpNb).NE.0) then
 
        nbt_in=smooth2Dnbt(smoothOpNb)/2
+       IF (smooth2DDims(smoothOpNb)(3:3).EQ.'e') slice = 'east '
+       IF (smooth2DDims(smoothOpNb)(3:3).EQ.'w') slice = 'west '
 
 c --- allow a different mask other than maskC
 c     Note: this is essentially a copy of ctrl_get_mask
@@ -152,7 +155,7 @@ C --- check for inputs...
         inquire(file=fnamegeneric,exist=fexist)
         if (fexist) then
           CALL READ_REC_YZ_RL(fnamegeneric, smoothprec, Nr,
-     &          smooth2DInput, ii, 1, myThid )
+     &          smooth2DInput, ii, slice, 1, myThid )
           CALL SMOOTH_EXCH_YZ_RL( smooth2DInput, smoothOpNb, myThid )
         else
           WRITE(msgBuf,'(3A)') 'SMOOTH_FILTERVAR_YZ: ',
@@ -234,7 +237,7 @@ C --- temporary, write out all samples
       write(fnamegeneric(1:80),'(1a,i3.3)')
      &    'smooth2Dfld',smoothOpNb
       CALL WRITE_REC_YZ_RL( fnamegeneric, smoothprec,
-     &                      Nr, smoothTmpFld, ii, 1, myThid )
+     &                      Nr, smoothTmpFld, ii, slice, 1, myThid )
 
        WRITE(standardMessageUnit,'(A,I4,A,I4)')
      & 'smooth_filtervar_yz: ',ii,' members done out of ',
@@ -273,14 +276,14 @@ c write smooth2Dnorm to file:
       write(fnamegeneric(1:80),'(1a,i3.3)')
      &    'smooth2Dnorm',smoothOpNb
       CALL WRITE_REC_YZ_RL(fnamegeneric,smoothprec,
-     &            Nr,smoothYZnorm,1,1,mythid)
+     &            Nr,smoothYZnorm,1,slice,1,mythid)
       CALL SMOOTH_EXCH_YZ_RL ( smoothYZnorm,  smoothOpNb, myThid )
 
 c write out mean too
       write(fnamegeneric(1:80),'(1a,i3.3)')
      &    'smooth2Dmean',smoothOpNb
       CALL WRITE_REC_YZ_RL(fnamegeneric,smoothprec,
-     &            Nr,smoothTmpMean,1,1,mythid)
+     &            Nr,smoothTmpMean,1,slice,1,mythid)
 
 
       ENDIF ! end smooth2Dtype != 0
