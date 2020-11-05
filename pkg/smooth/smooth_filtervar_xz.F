@@ -1,7 +1,7 @@
 #include "SMOOTH_OPTIONS.h"
 #ifdef ALLOW_OBCS
 # include "OBCS_OPTIONS.h"
-#endif 
+#endif
 
       subroutine smooth_filtervar_xz (smoothOpNb,mythid)
 
@@ -73,12 +73,12 @@ C ---   Northside
          DO i = 1-OLx,sNx+OLx
           j = OB_Jn(i,bi,bj)
           DO k = 1,Nr
-           if (smooth2DmaskName(smoothOpNb)(1:5).eq.'maskC') then
-            smooth2Dmask(i,k,bi,bj) = maskC(i,j,k,bi,bj)
-           elseif (smooth2DmaskName(smoothOpNb)(1:5).eq.'maskW') then
-            smooth2Dmask(i,k,bi,bj) = maskW(i,j,k,bi,bj)
-           elseif (smooth2DmaskName(smoothOpNb)(1:5).eq.'maskS') then
+           if (smooth2DmaskName(smoothOpNb)(1:5).ne.'maskW') then
+            ! T, S, V
             smooth2Dmask(i,k,bi,bj) = maskS(i,j,k,bi,bj)
+           else
+            ! U
+            smooth2Dmask(i,k,bi,bj) = maskW(i,j,k,bi,bj)
            endif
           ENDDO
          ENDDO
@@ -89,12 +89,12 @@ C ---   Southside
          DO i = 1-OLx,sNx+OLx
           j = OB_Js(i,bi,bj)
           DO k = 1,Nr
-           if (smooth2DmaskName(smoothOpNb)(1:5).eq.'maskC') then
-            smooth2Dmask(i,k,bi,bj) = maskC(i,j,k,bi,bj)
-           elseif (smooth2DmaskName(smoothOpNb)(1:5).eq.'maskW') then
+           if (smooth2DmaskName(smoothOpNb)(1:5).ne.'maskW') then
+            ! T, S, V
+            smooth2Dmask(i,k,bi,bj) = maskS(i,j+1,k,bi,bj)
+           else
+            ! U
             smooth2Dmask(i,k,bi,bj) = maskW(i,j,k,bi,bj)
-           elseif (smooth2DmaskName(smoothOpNb)(1:5).eq.'maskS') then
-            smooth2Dmask(i,k,bi,bj) = maskS(i,j,k,bi,bj)
            endif
           ENDDO
          ENDDO
