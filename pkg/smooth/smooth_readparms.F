@@ -57,7 +57,8 @@ c--   Read the namelist input.
      &                   smooth3DNbRand,
      &                   smooth3DMaskName,
      &                   smooth3DAlgorithm,
-     &                   smooth3DJacobiMaxIters
+     &                   smooth3DJacobiMaxIters,
+     &                   smooth3DSOROmega
 
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
 
@@ -101,6 +102,7 @@ c--   Set default values.
         smooth3DAlgorithm(smoothOpNb)(1:11) = 'WC01       '
         smooth3DNbRand(smoothOpNb) = 1000
         smooth3DJacobiMaxIters(smoothOpNb) = 1000
+        smooth3DSOROmega(smoothOpNb) = 1. _d 0
       ENDDO
 
 C--   Read settings from model parameter file "data.smooth".

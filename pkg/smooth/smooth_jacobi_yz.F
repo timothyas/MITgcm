@@ -19,7 +19,7 @@ C     | o Invert matrix A via jacobi iterations to solve for u,
 C     |   given right hand side b:
 C     |          Au = b
 C     |
-C     | o matrix A is "Laplacian like" and defined by 
+C     | o matrix A is "Laplacian like" and defined by
 C     |   center, north, south, up, down fields
 C     |
 C     | o b := fld_in -> fld_rhs
@@ -84,9 +84,9 @@ C --- Initialize solver stuff
       TOL = 1.0 _d -15
       TOL_SQ = TOL*TOL
       relErr = 100. _d 0
-      absErr = 0. _d 0 
+      absErr = 0. _d 0
       sor = smooth2DSOROmega(smoothOpNb)
-      
+
       do bj = jtlo,jthi
        do bi = itlo,ithi
         IF (((smooth2DDims(smoothOpNb).EQ.'yze').AND.
@@ -117,7 +117,7 @@ C --- Initialize solver stuff
         endif
        enddo
       enddo
-    
+
 C --- The jacobi iterations
       do while ((jacobi_iter.lt.smooth2DJacobiMaxIters(smoothOpNb))
      &     .and.(relErr.ge.TOL_SQ))
@@ -127,7 +127,6 @@ C --- The jacobi iterations
        relErr = 0. _d 0
        jacobi_iter = jacobi_iter + 1
 
-      ! --- Odd indices
        do bj = jtlo,jthi
         do bi = itlo,ithi
          tile_in_norm(bi,bj) = 0. _d 0

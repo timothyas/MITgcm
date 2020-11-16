@@ -16,7 +16,7 @@ C     | o Invert matrix A via jacobi iterations to solve for u,
 C     |   given right hand side b:
 C     |          Au = b
 C     |
-C     | o matrix A is "Laplacian like" and defined by 
+C     | o matrix A is "Laplacian like" and defined by
 C     |   center, north, south, east, west fields
 C     |
 C     | o b := fld_in -> fld_rhs
@@ -57,6 +57,7 @@ C --- Local parameters
       integer jtlo,jthi
 
       _RL TOL, TOL_SQ, fld_in_norm, relErr, absErr
+      _RL sor
       integer jacobi_iter
 
       _RL fld_rhs(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
@@ -77,8 +78,9 @@ C --- Initialize solver stuff
       TOL = 1.0 _d -15
       TOL_SQ = TOL*TOL
       relErr = 100. _d 0
-      absErr = 0. _d 0 
-      
+      absErr = 0. _d 0
+      sor = smooth3DSOROmega(smoothOpNb)
+
       do bj = jtlo,jthi
        do bi = itlo,ithi
         do k = 1,Nr
@@ -97,7 +99,7 @@ C --- Initialize solver stuff
         enddo
        enddo
       enddo
-    
+
 C --- The jacobi iterations
       do while ((jacobi_iter.lt.smooth3DJacobiMaxIters(smoothOpNb))
      &     .and.(relErr.ge.TOL_SQ))
@@ -117,19 +119,20 @@ C --- The jacobi iterations
             ! Update "final" estimate
             fld_out(i,j,k,bi,bj) = fld_rhs(i,j,k,bi,bj) -
      &          east(i,j,k,bi,bj) *fld_in(i+1,j,k,bi,bj) -
-     &          west(i,j,k,bi,bj) *fld_in(i-1,j,k,bi,bj) -
+     &          west(i,j,k,bi,bj) *fld_out(i-1,j,k,bi,bj) -
      &          north(i,j,k,bi,bj)*fld_in(i,j+1,k,bi,bj) -
-     &          south(i,j,k,bi,bj)*fld_in(i,j-1,k,bi,bj)
+     &          south(i,j,k,bi,bj)*fld_out(i,j-1,k,bi,bj)
 
 
             if (k.lt.Nr) fld_out(i,j,k,bi,bj) = fld_out(i,j,k,bi,bj) -
      &          down(i,j,k,bi,bj)*fld_in(i,j,k+1,bi,bj)
 
             if (k.gt.1) fld_out(i,j,k,bi,bj) = fld_out(i,j,k,bi,bj) -
-     &          up(i,j,k,bi,bj)*fld_in(i,j,k-1,bi,bj)
+     &          up(i,j,k,bi,bj)*fld_out(i,j,k-1,bi,bj)
 
-            fld_out(i,j,k,bi,bj) = 
-     &          fld_out(i,j,k,bi,bj)*recip_center(i,j,k,bi,bj)
+            fld_out(i,j,k,bi,bj) = fld_out(i,j,k,bi,bj) *
+     &          sor*recip_center(i,j,k,bi,bj) +
+     &          (1-sor)*fld_in(i,j,k,bi,bj)
            enddo
           enddo
          enddo
