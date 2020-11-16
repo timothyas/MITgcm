@@ -19,7 +19,7 @@ C     | o Invert matrix A via jacobi iterations to solve for u,
 C     |   given right hand side b:
 C     |          Au = b
 C     |
-C     | o matrix A is "Laplacian like" and defined by 
+C     | o matrix A is "Laplacian like" and defined by
 C     |   center, east, west, up, down fields
 C     |
 C     | o b := fld_in -> fld_rhs
@@ -63,6 +63,7 @@ C --- Local parameters
       integer jtlo,jthi
 
       _RL TOL, TOL_SQ, fld_in_norm, relErr, absErr
+      _RL sor
       integer jacobi_iter
 
       _RL fld_rhs(1-OLx:sNx+OLx,Nr,nSx,nSy)
@@ -83,8 +84,9 @@ C --- Initialize solver stuff
       TOL = 1.0 _d -15
       TOL_SQ = TOL*TOL
       relErr = 100. _d 0
-      absErr = 0. _d 0 
-      
+      absErr = 0. _d 0
+      sor = smooth2DSOROmega(smoothOpNb)
+
       do bj = jtlo,jthi
        do bi = itlo,ithi
         IF (((smooth2DDims(smoothOpNb).EQ.'xzn').AND.
@@ -115,7 +117,7 @@ C --- Initialize solver stuff
         endif
        enddo
       enddo
-    
+
 C --- The jacobi iterations
       do while ((jacobi_iter.lt.smooth2DJacobiMaxIters(smoothOpNb))
      &     .and.(relErr.ge.TOL_SQ))
@@ -138,16 +140,17 @@ C --- The jacobi iterations
             ! Update "final" estimate
             fld_out(i,k,bi,bj) = fld_rhs(i,k,bi,bj) -
      &          east(i,k,bi,bj)*fld_in(i+1,k,bi,bj) -
-     &          west(i,k,bi,bj)*fld_in(i-1,k,bi,bj)
+     &          west(i,k,bi,bj)*fld_out(i-1,k,bi,bj)
 
             if (k.lt.Nr) fld_out(i,k,bi,bj) = fld_out(i,k,bi,bj) -
      &          down(i,k,bi,bj)*fld_in(i,k+1,bi,bj)
 
             if (k.gt.1) fld_out(i,k,bi,bj) = fld_out(i,k,bi,bj) -
-     &          up(i,k,bi,bj)*fld_in(i,k-1,bi,bj)
+     &          up(i,k,bi,bj)*fld_out(i,k-1,bi,bj)
 
-            fld_out(i,k,bi,bj) = 
-     &          fld_out(i,k,bi,bj)*recip_center(i,k,bi,bj)
+            fld_out(i,k,bi,bj) = fld_out(i,k,bi,bj) *
+     &          sor*recip_center(i,k,bi,bj) +
+     &          (1-sor)*fld_in(i,k,bi,bj)
            enddo
           enddo
          endif

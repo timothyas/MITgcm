@@ -33,7 +33,8 @@ C --- 3D Fields
      & smooth3D_Lx(1-Olx:sNx+Olx,1-Oly:sNy+Oly,Nr,nSx,nSy),
      & smooth3D_Ly(1-Olx:sNx+Olx,1-Oly:sNy+Oly,Nr,nSx,nSy),
      & smooth3D_Lz(1-Olx:sNx+Olx,1-Oly:sNy+Oly,Nr,nSx,nSy),
-     & smooth3Dnorm (1-Olx:sNx+Olx,1-Oly:sNy+Oly,Nr,nSx,nSy)
+     & smooth3Dnorm (1-Olx:sNx+Olx,1-Oly:sNy+Oly,Nr,nSx,nSy),
+     & smooth3DSOROmega(smoothOpNbMax)
 
       _RL 
      & smooth3D_kappaR (1-Olx:sNx+Olx,1-Oly:sNy+Oly,Nr,nSx,nSy),
@@ -97,7 +98,7 @@ C --- Common Blocks
      & smooth2D_Lx0,smooth2D_Ly0,
      & smooth2D_Lx,smooth2D_Ly,
      & smoothXZNorm, smoothYZNorm,
-     & smooth2DSOROmega
+     & smooth3DSOROmega, smooth2DSOROmega
 
 
       COMMON /smooth_flds_c/
