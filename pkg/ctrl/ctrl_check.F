@@ -27,7 +27,7 @@ C     === Global variables ===
 #endif
 #ifdef ALLOW_SMOOTH
 # include "SMOOTH.h"
-#endif      
+#endif
 
 C     === Routine arguments ===
 C     myThid -  Number of this instance
@@ -168,11 +168,11 @@ C-    to use DIFFKR_CONTROL, needs to define ALLOW_3D_DIFFKR in CPP_OPTIONS.h
 
 #if ( defined ALLOW_UWIND_CONTROL || defined ALLOW_VWIND_CONTROL )
 #ifdef ALLOW_EXF
-      IF ( .NOT.useEXF .OR. .NOT.useAtmWind ) THEN 
+      IF ( .NOT.useEXF .OR. .NOT.useAtmWind ) THEN
 #endif
       WRITE(msgBuf,'(3A)') 'CTRL_CHECK : ',
      &     'ALLOW_U / VWIND_CONTROL used without exf & ',
-     &     'useAtmWind will have no effect '      
+     &     'useAtmWind will have no effect '
         CALL PRINT_MESSAGE( msgBuf, errorMessageUnit,
      &  SQUEEZE_RIGHT, myThid )
 #ifdef ALLOW_EXF
@@ -242,7 +242,7 @@ C     which in turn require a particular set of input fields
         WRITE(msgBuf,'(3A)') '** WARNING ** CTRL_CHECK: ',
      &        'relying on mdsio_gl.F to pack/unpack the control',
      &        'vector is unsafe when useSingleCpuIO is true.'
-        CALL PRINT_MESSAGE( msgBuf, errorMessageUnit, 
+        CALL PRINT_MESSAGE( msgBuf, errorMessageUnit,
      &  SQUEEZE_RIGHT, myThid )
        ENDIF
 # endif
@@ -254,7 +254,7 @@ C     which in turn require a particular set of input fields
      defined (ALLOW_OBCSS_CONTROL) || \
      defined (ALLOW_OBCSW_CONTROL) || \
      defined (ALLOW_OBCSE_CONTROL))
-        WRITE(msgBuf,'(2A)') 
+        WRITE(msgBuf,'(2A)')
      &        'ALLOW_PACKUNPACK_METHOD2 does not work with',
      &        'open boundary controls (see verif/obcs_ctrl).'
          CALL PRINT_ERROR( msgBuf, myThid )
@@ -281,7 +281,7 @@ c       Warn user: doscaling must be true to do log10 ctrl
             endif
           enddo
         enddo
-#endif 
+#endif
 
 #ifdef ALLOW_GENARR3D_CONTROL
 c       Warn user: doscaling must be true to do log10 ctrl
@@ -301,7 +301,7 @@ c       Warn user: doscaling must be true to do log10 ctrl
             endif
           enddo
         enddo
-#endif 
+#endif
 
 #ifdef ALLOW_SHI2D_CONTROL
 # ifndef ALLOW_GENARR2D_CONTROL
@@ -313,7 +313,7 @@ c       Warn user: doscaling must be true to do log10 ctrl
          STOP 'ABNORMAL END: S/R CTRL_CHECK'
 # endif
 
-C Can't have shiTransCoeffT/S as control variables in gammafrict form 
+C Can't have shiTransCoeffT/S as control variables in gammafrict form
 # ifdef SHI_ALLOW_GAMMAFRICT
         do iarr = 1, maxCtrlArr2D
           if ( (xx_genarr2d_file(iarr)(1:11).eq.'xx_shicoeff')) then
@@ -331,7 +331,7 @@ C Can't have shiTransCoeffT/S as control variables in gammafrict form
         enddo
 # else
 
-C Can't have shiCDrag as control variable without gammafrict form 
+C Can't have shiCDrag as control variable without gammafrict form
 C this could be changed to control cdrag for momentum equation...
         do iarr = 1, maxCtrlArr2D
           if ( (xx_genarr2d_file(iarr)(1:11).eq.'xx_shicdrag')) then
@@ -415,7 +415,7 @@ C this could be changed to control cdrag for momentum equation...
          do k2 = 1, maxCtrlProc
            if ((xx_gentim2d_preproc(k2,iarr).EQ.'WC01').or.
      &         (xx_gentim2d_preproc(k2,iarr)(1:6).EQ.'matern')) then
-             if (xx_gentim3d_preproc_i(k2,iarr).NE.0) then
+             if (xx_gentim2d_preproc_i(k2,iarr).NE.0) then
                numsmo=xx_gentim2d_preproc_i(k2,iarr)
              else
                numsmo=1
