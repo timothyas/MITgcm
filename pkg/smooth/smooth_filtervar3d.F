@@ -190,7 +190,7 @@ c convert variance to normalization factor:
         ENDDO      !DO ii=1,diLoc
         ENDDO      !DO jj=1,djLoc
         ENDDO      !DO kk=1,dkLoc
-       
+
        ENDIF ! check smooth algorithm
 
       ELSEIF (smooth3Dfilter(smoothOpNb).EQ.1) then
@@ -276,6 +276,12 @@ c --- 5. accumulate statistics (to compute the variance later)
        ENDDO
       ENDDO
 
+C --- temporary, write out all samples
+      write(fnamegeneric(1:80),'(1a,i3.3)')
+     &    'smooth3Dfld',smoothOpNb
+      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
+     &                      Nr, smoothTmpFld, ii, 1, myThid )
+
        WRITE(standardMessageUnit,'(A,I4,A,I4)')
      & 'smooth_filtervar3D: ',ii,' members done out of ',
      &  smooth3DNbRand(smoothOpNb)
@@ -315,10 +321,6 @@ c write out mean and the last sample
      &    'smooth3Dmean',smoothOpNb
       CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
      &                      Nr, smoothTmpMean, 1, 1, myThid )
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth3Dfld',smoothOpNb
-      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
-     &                      Nr, smoothTmpFld, 1, 1, myThid )
 
       ENDIF
 

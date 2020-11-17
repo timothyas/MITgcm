@@ -203,10 +203,6 @@ c     seed is 1023 * pid * milliseconds from date/time
       smoothTmpFld(1,1,1,1)=port_rand(rand_seed)
 
       DO ii=1,smooth2DNbRand(smoothOpNb)
-       WRITE(standardMessageUnit,'(A,I4,A,I4)')
-     & 'smooth_filtervar2D: ',ii,' members done out of ',
-     & smooth2DNbRand(smoothOpNb)
-
 c --- 3. set points wehre mask!=0 to random number
 c --- WC01: divide by sqrt(area)
        DO bj=jtlo,jthi
@@ -256,6 +252,12 @@ c --- 5. accumulate statistics (to compute the variance later)
         ENDDO
        ENDDO
 
+C --- temporary, write out all samples
+      write(fnamegeneric(1:80),'(1a,i3.3)')
+     &    'smooth2Dfld',smoothOpNb
+      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
+     &                      1, smoothTmpFld, ii, 1, myThid )
+
        WRITE(standardMessageUnit,'(A,I4,A,I4)')
      & 'smooth_filtervar2D: ',ii,' members done out of ',
      &  smooth2DNbRand(smoothOpNb)
@@ -293,11 +295,6 @@ c write out mean too
      &    'smooth2Dmean',smoothOpNb
       CALL WRITE_REC_3D_RL(fnamegeneric,smoothprec,
      &            1,smoothTmpMean,1,1,mythid)
-
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth2Dfld',smoothOpNb
-      CALL WRITE_REC_3D_RL( fnamegeneric, smoothprec,
-     &                      1, smoothTmpFld, 1, 1, myThid )
 
       ENDIF ! end smooth2Dtype != 0
 
