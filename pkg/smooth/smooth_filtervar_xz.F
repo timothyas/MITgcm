@@ -205,6 +205,12 @@ c --- 5. accumulate statistics (to compute the variance later)
         ENDDO
        ENDDO
 
+C --- temporary, write out all samples
+      write(fnamegeneric(1:80),'(1a,i3.3)')
+     &    'smooth2Dfld',smoothOpNb
+      CALL WRITE_REC_XZ_RL( fnamegeneric, smoothprec,
+     &                      Nr, smoothTmpFld, ii, slice, 1, myThid )
+
        WRITE(standardMessageUnit,'(A,I4,A,I4)')
      & 'smooth_filtervar_xz: ',ii,' members done out of ',
      &  smooth2DNbRand(smoothOpNb)
@@ -248,10 +254,6 @@ c write out mean too
       CALL WRITE_REC_XZ_RL(fnamegeneric,smoothprec,
      &            Nr,smoothTmpMean,1,slice,1,mythid)
 
-      write(fnamegeneric(1:80),'(1a,i3.3)')
-     &    'smooth2Dfld',smoothOpNb
-      CALL WRITE_REC_XZ_RL( fnamegeneric, smoothprec,
-     &                      Nr, smoothTmpFld, 1, slice, 1, myThid )
 
       ENDIF ! end smooth2Dtype != 0
 
