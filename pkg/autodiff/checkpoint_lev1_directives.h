@@ -35,6 +35,12 @@ CADJ STORE hfac_surfNm1S = comlev1, key = ikey_dynamics, kind = isbyte
 
 CADJ STORE theta, salt   = comlev1, key = ikey_dynamics,kind = isbyte
 CADJ STORE uVel, vVel    = comlev1, key = ikey_dynamics,kind = isbyte
+CADJ STORE aW2d    = comlev1, key = ikey_dynamics, kind = isbyte
+CADJ STORE aS2d    = comlev1, key = ikey_dynamics, kind = isbyte
+CADJ STORE aC2d    = comlev1, key = ikey_dynamics, kind = isbyte
+CADJ STORE pW    = comlev1, key = ikey_dynamics, kind = isbyte
+CADJ STORE pS    = comlev1, key = ikey_dynamics, kind = isbyte
+CADJ STORE pC    = comlev1, key = ikey_dynamics, kind = isbyte
 
 # ifndef DISABLE_RSTAR_CODE
 CADJ STORE rStarFacC = comlev1, key = ikey_dynamics, kind = isbyte

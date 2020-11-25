@@ -44,6 +44,9 @@ c They provide the fields to be stored.
 #include "SURFACE.h"
 #include "AUTODIFF.h"
 
+#ifdef NONLIN_FRSURF
+# include "CG2D.h"
+#endif
 #ifdef ALLOW_OBCS
 # include "OBCS_FIELDS.h"
 # include "OBCS_SEAICE.h"
@@ -129,6 +132,21 @@ C-      2D arrays
           StoreDynVars2D(I,J,bi,bj,20) = 0.
           StoreDynVars2D(I,J,bi,bj,21) = 0.
           StoreDynVars2D(I,J,bi,bj,22) = 0.
+#endif
+#ifdef NONLIN_FRSURF
+          StoreDynVars2D(I,J,bi,bj,23) = aW2d(i,j,bi,bj)
+          StoreDynVars2D(I,J,bi,bj,24) = aS2d(i,j,bi,bj)
+          StoreDynVars2D(I,J,bi,bj,25) = aC2d(i,j,bi,bj)
+          StoreDynVars2D(I,J,bi,bj,26) = pW(i,j,bi,bj)
+          StoreDynVars2D(I,J,bi,bj,27) = pS(i,j,bi,bj)
+          StoreDynVars2D(I,J,bi,bj,28) = pC(i,j,bi,bj)
+#else
+          StoreDynVars2D(I,J,bi,bj,23) = 0.
+          StoreDynVars2D(I,J,bi,bj,24) = 0.
+          StoreDynVars2D(I,J,bi,bj,25) = 0.
+          StoreDynVars2D(I,J,bi,bj,26) = 0.
+          StoreDynVars2D(I,J,bi,bj,27) = 0.
+          StoreDynVars2D(I,J,bi,bj,28) = 0.
 #endif
          ENDDO
         ENDDO

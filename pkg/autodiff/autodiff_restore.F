@@ -44,6 +44,10 @@ c They provide the fields to be stored.
 # include "SURFACE.h"
 # include "AUTODIFF.h"
 
+#ifdef NONLIN_FRSURF
+# include "CG2D.h"
+#endif
+
 #ifdef ALLOW_OBCS
 # include "OBCS_FIELDS.h"
 # include "OBCS_SEAICE.h"
@@ -119,6 +123,14 @@ C-      2D arrays
           etaH(I,J,bi,bj)    = StoreDynVars2D(I,J,bi,bj,20)
           dEtaHdt(I,J,bi,bj) = StoreDynVars2D(I,J,bi,bj,21)
           PmEpR(I,J,bi,bj)   = StoreDynVars2D(I,J,bi,bj,22)
+#endif
+#ifdef NONLIN_FRSURF
+          aW2d(i,j,bi,bj) = StoreDynVars2D(I,J,bi,bj,23)
+          aS2d(i,j,bi,bj) = StoreDynVars2D(I,J,bi,bj,24)
+          aC2d(i,j,bi,bj) = StoreDynVars2D(I,J,bi,bj,25)
+          pW(i,j,bi,bj)   = StoreDynVars2D(I,J,bi,bj,26)
+          pS(i,j,bi,bj)   = StoreDynVars2D(I,J,bi,bj,27)
+          pC(i,j,bi,bj)   = StoreDynVars2D(I,J,bi,bj,28)
 #endif
          ENDDO
         ENDDO
