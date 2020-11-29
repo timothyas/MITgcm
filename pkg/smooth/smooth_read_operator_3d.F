@@ -58,22 +58,36 @@ C --- Loop Counters
       itlo = mybxlo(mythid)
       ithi = mybxhi(mythid)
 
-
-C --- WC01: look for single file, smooth3Doperator
-      if (smooth3DAlgorithm(smoothOpNb)(1:4).eq.'WC01') then
-
-C       Initialize some stuff. Ignoring matern specific fields...
+C --- Initialize tensor with default values
+C     Doing this before if statement helps TAF
         do bj = jtlo,jthi
          do bi = itlo,ithi
           do k = 1,Nr
            do j = 1-OLy,sNy+OLy
             do i = 1-OLx,sNx+OLx
+             smooth3D_Kux(i,j,k,bi,bj) = 1. _d 0
+             smooth3D_Kvy(i,j,k,bi,bj) = 1. _d 0
+             smooth3D_Kwz(i,j,k,bi,bj) = 1. _d 0
+             smooth3DDelta(i,j,k,bi,bj) = 0. _d 0
+             smooth3DRandNorm(i,j,k,bi,bj) = 1. _d 0
              smooth3DNorm(i,j,k,bi,bj) = 0. _d 0
+
+             smooth3D_Kuy(i,j,k,bi,bj) = 0. _d 0
+             smooth3D_Kuz(i,j,k,bi,bj) = 0. _d 0
+             smooth3D_Kvx(i,j,k,bi,bj) = 0. _d 0
+             smooth3D_Kvz(i,j,k,bi,bj) = 0. _d 0
+             smooth3D_Kwx(i,j,k,bi,bj) = 0. _d 0
+             smooth3D_Kwy(i,j,k,bi,bj) = 0. _d 0
+             smooth3D_kappaR(i,j,k,bi,bj) = 0. _d 0
             enddo
            enddo
           enddo
          enddo
         enddo
+
+
+C --- WC01: look for single file, smooth3Doperator
+      if (smooth3DAlgorithm(smoothOpNb)(1:4).eq.'WC01') then
 
         write(fnamegeneric(1:80),'(1a,i3.3,a)')
      &        'smooth3Doperator',smoothOpNb,'.data'
@@ -103,36 +117,10 @@ C       Initialize some stuff. Ignoring matern specific fields...
           WRITE(msgBuf,'(3A)') 'SMOOTH_READ_OPERATOR_3D: ',
      &      'cannot find file ', fnamegeneric
           CALL PRINT_ERROR( msgBuf, myThid )
-          STOP 'ABNORMAL END: S/R SMOOTH_READ_OPERATOR_3D' 
+          STOP 'ABNORMAL END: S/R SMOOTH_READ_OPERATOR_3D'
         endif ! look for smooth3Doperator file
 
       elseif (smooth3DAlgorithm(smoothOpNb)(1:6).eq.'matern') then
-
-c --- Initialize tensor with default values
-        do bj = jtlo,jthi
-         do bi = itlo,ithi
-          do k = 1,Nr
-           do j = 1-OLy,sNy+OLy
-            do i = 1-OLx,sNx+OLx
-             smooth3D_Kux(i,j,k,bi,bj) = 1. _d 0
-             smooth3D_Kvy(i,j,k,bi,bj) = 1. _d 0
-             smooth3D_Kwz(i,j,k,bi,bj) = 1. _d 0
-             smooth3DDelta(i,j,k,bi,bj) = 0. _d 0
-             smooth3DRandNorm(i,j,k,bi,bj) = 1. _d 0
-             smooth3DNorm(i,j,k,bi,bj) = 0. _d 0
-
-             smooth3D_Kuy(i,j,k,bi,bj) = 0. _d 0
-             smooth3D_Kuz(i,j,k,bi,bj) = 0. _d 0
-             smooth3D_Kvx(i,j,k,bi,bj) = 0. _d 0
-             smooth3D_Kvz(i,j,k,bi,bj) = 0. _d 0
-             smooth3D_Kwx(i,j,k,bi,bj) = 0. _d 0
-             smooth3D_Kwy(i,j,k,bi,bj) = 0. _d 0
-             smooth3D_kappaR(i,j,k,bi,bj) = 0. _d 0
-            enddo
-           enddo
-          enddo
-         enddo
-        enddo
 
 C ---   Kux
         write(fnamegeneric(1:80),'(1a,i3.3,a)')
