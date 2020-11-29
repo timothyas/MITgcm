@@ -42,9 +42,16 @@ c     == local variables ==
 #if (defined (ALLOW_GENARR2D_CONTROL) || defined (ALLOW_GENARR3D_CONTROL) || defined (ALLOW_GENTIM2D_CONTROL))
       integer iarr
       logical dodimensionalcost
+      logical doRegularize
+      character*(MAX_LEN_FNAM) fnamebase
+      character*(MAX_LEN_FNAM) fname
       integer k2
+      integer ilgen
       _RL mask2D(1-olx:snx+olx,1-oly:sny+oly,nsx,nsy)
       _RL mask3D(1-olx:snx+olx,1-oly:sny+oly,Nr,nsx,nsy)
+
+      integer  ilnblnk
+      external ilnblnk
 #endif
 
 c     == end of interface ==
@@ -75,7 +82,7 @@ c--   Evaluate the individual cost function contributions.
 
 C --- Get appropriate mask for field
       call ctrl_get_mask2D(xx_gentim2d_file(iarr),mask2D,myThid)
-    
+
       call ctrl_cost_gen2d (
      &     startrec, endrec,
      &     xx_gentim2d_file(iarr),xx_gentim2d_dummy(iarr),
@@ -97,20 +104,31 @@ C --- Get appropriate mask for field
 #ifdef ALLOW_GENARR2D_CONTROL
       do iarr = 1, maxCtrlArr2D
 
+      doRegularize=.FALSE.
       dodimensionalcost=.FALSE.
       do k2 = 1, maxCtrlProc
        if (xx_genarr2d_preproc(k2,iarr).EQ.'noscaling') then
          dodimensionalcost=.TRUE.
        endif
+       if (xx_genarr2d_preproc(k2,iarr).EQ.'matern_reg')
+     &   doRegularize=.TRUE.
       enddo
 
 C --- Get appropriate mask for field
       call ctrl_get_mask2D(xx_genarr2d_file(iarr),mask2D,myThid)
 
+      fnamebase = xx_genarr2d_file(iarr)
+      ilgen=ilnblnk( xx_genarr2d_file(iarr) )
+      if (doRegularize) then
+        write(fname,'(2a)') xx_genarr2d_file(iarr)(1:ilgen),'.reg'
+      else
+        write(fname,'(a)') xx_genarr2d_file(iarr)(1:ilgen)
+      endif
+
       if (xx_genarr2d_weight(iarr).NE.' ') then
       call ctrl_cost_gen2d (
      &     1,1,
-     &     xx_genarr2d_file(iarr),xx_genarr2d_dummy(iarr),
+     &     fname,xx_genarr2d_dummy(iarr),
      &     zeroRL, wgenarr2d(1-Olx,1-Oly,1,1,iarr),
      &     dodimensionalcost,
      &     num_genarr2d(1,1,iarr), objf_genarr2d(1,1,iarr),
@@ -154,5 +172,5 @@ C --- Get appropriate mask for field
 #endif
 
 
-      return 
+      return
       end

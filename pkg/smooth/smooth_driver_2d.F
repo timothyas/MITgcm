@@ -4,7 +4,7 @@
 #endif
 
       subroutine smooth_driver_2D (
-     U     fld_in,
+     U     fld_in, fld_reg,
      I     smooth_options,smooth2DMask,smoothOpNb,mythid)
 
 C     *==========================================================*
@@ -34,6 +34,7 @@ C 2. there should not be more than one preprocessing option
 
 C --- Inputs
       _RL fld_in(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL fld_reg(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       character*(20) smooth_options(maxCtrlProc)
       _RL smooth2DMask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       integer smoothOpNb
@@ -56,6 +57,9 @@ c read smoothing [i.e diffusion] operator and normalization:
      &          smooth2Dnbt(smoothOpNb),myThid)
         if (smooth_options(k2).eq.'matern_precond')
      &      CALL smooth_inverse_matern_2d(fld_in,
+     &          smooth2DMask, smoothOpNb, doNormalize, myThid)
+        if (smooth_options(k2).eq.'matern_reg')
+     &      CALL smooth_apply_matern_2d(fld_in, fld_reg,
      &          smooth2DMask, smoothOpNb, doNormalize, myThid)
       enddo
 
