@@ -57,23 +57,23 @@ C --- Loop Counters
       itlo = mybxlo(mythid)
       ithi = mybxhi(mythid)
 
-
-      if (smooth2DAlgorithm(smoothOpNb)(1:6).eq.'matern') then
-
-c --- Initialize tensor with default values
-        do bj = jtlo,jthi
-         do bi = itlo,ithi
-          do k = 1,Nr
-           do i = 1-OLx,sNx+OLx
-            smoothXZ_Kux(i,k,bi,bj)  = 1. _d 0
-            smoothXZ_Kwz(i,k,bi,bj)  = 1. _d 0
-            smoothXZDelta(i,k,bi,bj) = 0. _d 0
-            smoothXZRandNorm(i,k,bi,bj) = 1. _d 0
-            smoothXZNorm(i,k,bi,bj) = 0. _d 0
-           enddo
-          enddo
+C --- Initialize tensor with default values
+C     Doing this before if statement helps TAF
+      do bj = jtlo,jthi
+       do bi = itlo,ithi
+        do k = 1,Nr
+         do i = 1-OLx,sNx+OLx
+          smoothXZ_Kux(i,k,bi,bj)  = 1. _d 0
+          smoothXZ_Kwz(i,k,bi,bj)  = 1. _d 0
+          smoothXZDelta(i,k,bi,bj) = 0. _d 0
+          smoothXZRandNorm(i,k,bi,bj) = 1. _d 0
+          smoothXZNorm(i,k,bi,bj) = 0. _d 0
          enddo
         enddo
+       enddo
+      enddo
+
+      if (smooth2DAlgorithm(smoothOpNb)(1:6).eq.'matern') then
 
 C ---   Kux
         write(fnamegeneric(1:80),'(1a,i3.3,a)')

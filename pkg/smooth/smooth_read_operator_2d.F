@@ -56,20 +56,24 @@ C --- Loop Counters
       itlo = mybxlo(mythid)
       ithi = mybxhi(mythid)
 
+C --- Initialize tensor with default values
+C     Doing this before if statement helps TAF
+      do bj = jtlo,jthi
+       do bi = itlo,ithi
+        do j = 1-OLy,sNy+OLy
+         do i = 1-OLx,sNx+OLx
+          smooth2D_Kux(i,j,bi,bj)  = 1. _d 0
+          smooth2D_Kvy(i,j,bi,bj)  = 1. _d 0
+          smooth2DDelta(i,j,bi,bj) = 0. _d 0
+          smooth2DRandNorm(i,j,bi,bj) = 1. _d 0
+          smooth2DNorm(i,j,bi,bj) = 0. _d 0
+         enddo
+        enddo
+       enddo
+      enddo
 
 C --- WC01: look for single file, smooth2Doperator
       if (smooth2DAlgorithm(smoothOpNb)(1:4).eq.'WC01') then
-
-C       Initialize some stuff. Ignoring matern specific fields...
-        do bj = jtlo,jthi
-         do bi = itlo,ithi
-          do j = 1-OLy,sNy+OLy
-           do i = 1-OLx,sNx+OLx
-            smooth2DNorm(i,j,bi,bj) = 0. _d 0
-           enddo
-          enddo
-         enddo
-        enddo
 
 c       read smoothing [i.e diffusion] operator:
         write(fnamegeneric(1:80),'(1a,i3.3)')
@@ -84,25 +88,10 @@ c       read smoothing [i.e diffusion] operator:
           WRITE(msgBuf,'(3A)') 'SMOOTH_READ_OPERATOR_2D: ',
      &      'cannot find file ', fnamegeneric
           CALL PRINT_ERROR( msgBuf, myThid )
-          STOP 'ABNORMAL END: S/R SMOOTH_READ_OPERATOR_2D' 
+          STOP 'ABNORMAL END: S/R SMOOTH_READ_OPERATOR_2D'
         endif ! look for smooth2Doperator file
 
       elseif (smooth2DAlgorithm(smoothOpNb)(1:6).eq.'matern') then
-
-c --- Initialize tensor with default values
-        do bj = jtlo,jthi
-         do bi = itlo,ithi
-          do j = 1-OLy,sNy+OLy
-           do i = 1-OLx,sNx+OLx
-            smooth2D_Kux(i,j,bi,bj)  = 1. _d 0
-            smooth2D_Kvy(i,j,bi,bj)  = 1. _d 0
-            smooth2DDelta(i,j,bi,bj) = 0. _d 0
-            smooth2DRandNorm(i,j,bi,bj) = 1. _d 0
-            smooth2DNorm(i,j,bi,bj) = 0. _d 0
-           enddo
-          enddo
-         enddo
-        enddo
 
 C ---   Kux
         write(fnamegeneric(1:80),'(1a,i3.3,a)')
