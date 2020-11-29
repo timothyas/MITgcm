@@ -1,17 +1,23 @@
 #include "SMOOTH_OPTIONS.h"
 
       subroutine smooth_apply_matern_2d (
-     U     fld_in,smooth2DMask,smoothOpNb,doNormalize,mythid)
+     I     fld_in,
+     U     fld_reg,
+     I     smooth2DMask,smoothOpNb,doNormalize,mythid)
 
 C     *==========================================================*
 C     | SUBROUTINE smooth_apply_matern_2d
 C     | o Routine that applies the following differential operator
 C     |   to any field, u
-C     |         
+C     |
 C     |         K^2 u - laplacian(u)
-C     |         
-C     | o This is used for the regularization term in an inverse 
+C     |
+C     | o This is used for the regularization term in an inverse
 C     |   problem
+C     | o Because run time inputs are processed in ctrl_map_ini_genarr
+C     |   this takes fld_in, copies to fld_reg, applies regularization
+C     |   and returns that. ctrl_map_ini_genarr then writes that,
+C     |   and ctrl_cost_gen2d reads it and adds it to the cost function.
 C     |
 C     *==========================================================*
 
@@ -25,6 +31,7 @@ c#include "tamc.h"
 
 C --- Inputs
       _RL fld_in(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
+      _RL fld_reg(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       _RL smooth2DMask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nSx,nSy)
       integer smoothOpNb
       logical doNormalize
@@ -50,18 +57,17 @@ C --- Loop counters
       ithi = mybxhi(mythid)
 
 C --- Initialize
+      CALL EXCH_XY_RL( fld_in, myThid )
       do bj = jtlo,jthi
        do bi = itlo,ithi
-        do j = 1+OLy,sNy-OLy
+        do j = 1-OLy,sNy+OLy
          do i = 1-OLx,sNx+OLx
           fld_out(i,j,bi,bj) = 0. _d 0
+          fld_reg(i,j,bi,bj) = fld_in(i,j,bi,bj)
          enddo
         enddo
        enddo
       enddo
-
-C --- Read in operator
-      CALL smooth_read_operator_2d(smoothOpNb,myThid)
 
 C --- Make sure input mask halos are good to go
       CALL EXCH_XY_RL( smooth2DMask, myThid )
@@ -76,20 +82,19 @@ c --- 1. Apply inverse of filter normalization (i.e. sqrt(filtervar))
       if (doNormalize) then
        do bj = jtlo,jthi
         do bi = itlo,ithi
-         do j = 1,sNy
-          do i = 1,sNx
+         do j = 1-OLy,sNy+OLy
+          do i = 1-OLx,sNx+OLx
            if ((ABS(smooth2DNorm(i,j,bi,bj)).gt.0. _d 0).and.
      &         (smooth2DMask(i,j,bi,bj).ne.0)) then
-            fld_in(i,j,bi,bj)=
-     &       fld_in(i,j,bi,bj)/smooth2DNorm(i,j,bi,bj)
+            fld_reg(i,j,bi,bj)=
+     &       fld_reg(i,j,bi,bj)/smooth2DNorm(i,j,bi,bj)
            else
-            fld_in(i,j,bi,bj)=0. _d 0
+            fld_reg(i,j,bi,bj)=0. _d 0
            endif
           enddo
          enddo
         enddo
        enddo
-       CALL EXCH_XY_RL ( fld_in , myThid )
       endif
 
 C --- 2. Apply laplacian-like operator
@@ -98,13 +103,13 @@ C --- 2. Apply laplacian-like operator
         do j = 1,sNy
          do i = 1,sNx
 
-          fld_out(i,j,bi,bj) = fld_in(i,j,bi,bj)*
+          fld_out(i,j,bi,bj) = fld_reg(i,j,bi,bj)*
      &         (smooth2DDelta(i,j,bi,bj) -
      &         center(i,j,bi,bj)) -
-     &         east (i,j,bi,bj)*fld_in(i+1,j,bi,bj) -
-     &         west (i,j,bi,bj)*fld_in(i-1,j,bi,bj) -
-     &         north(i,j,bi,bj)*fld_in(i,j+1,bi,bj) -
-     &         south(i,j,bi,bj)*fld_in(i,j-1,bi,bj)
+     &         east (i,j,bi,bj)*fld_reg(i+1,j,bi,bj) -
+     &         west (i,j,bi,bj)*fld_reg(i-1,j,bi,bj) -
+     &         north(i,j,bi,bj)*fld_reg(i,j+1,bi,bj) -
+     &         south(i,j,bi,bj)*fld_reg(i,j-1,bi,bj)
 
           ! Is this necessary? I can't keep track anymore...
           fld_out(i,j,bi,bj) = fld_out(i,j,bi,bj)*
@@ -114,14 +119,23 @@ C --- 2. Apply laplacian-like operator
        enddo
       enddo
 
-      CALL EXCH_XYZ_RL ( fld_out, myThid )
+      CALL EXCH_XY_RL ( fld_out, myThid )
 
 c --- 3. Rewrite input <- output
+c        and divide by randNorm
        do bj = jtlo,jthi
         do bi = itlo,ithi
          do j = 1-OLy,sNy+OLy
           do i = 1-OLx,sNx+OLx
-           fld_in(i,j,bi,bj) = fld_out(i,j,bi,bj)
+           fld_reg(i,j,bi,bj) = fld_out(i,j,bi,bj)
+           if (doNormalize) then
+            if (ABS(smooth2DRandNorm(i,j,bi,bj)).gt.0.) then
+             fld_reg(i,j,bi,bj) =
+     &       fld_reg(i,j,bi,bj)/smooth2DRandNorm(i,j,bi,bj)
+            else
+             fld_reg(i,j,bi,bj) = 0. _d 0
+            endif
+           endif
           enddo
          enddo
         enddo
