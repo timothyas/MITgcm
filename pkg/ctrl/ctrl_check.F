@@ -44,6 +44,7 @@ C     msgBuf      - Informational/error message buffer
       integer iarr, k2
 # ifdef ALLOW_SMOOTH
       integer numsmo
+      logical doWC01, doSmooth, doMatern
 # endif
 #endif
 #endif
@@ -354,7 +355,7 @@ C this could be changed to control cdrag for momentum equation...
 # ifdef ALLOW_GENARR2D_CONTROL
       do iarr = 1, maxCtrlArr2D
          do k2 = 1, maxCtrlProc
-           if ((xx_genarr2d_preproc(k2,iarr).EQ.'WC01').or.
+           if ((xx_genarr2d_preproc(k2,iarr)(1:4).EQ.'WC01').or.
      &         (xx_genarr2d_preproc(k2,iarr)(1:6).EQ.'matern')) then
              if (xx_genarr2d_preproc_i(k2,iarr).NE.0) then
                numsmo=xx_genarr2d_preproc_i(k2,iarr)
@@ -377,6 +378,24 @@ C this could be changed to control cdrag for momentum equation...
             ENDIF ! test if computing filtervar
           ENDIF ! test if WC01 or matern
         enddo
+        doWC01=.FALSE.
+        doSmooth=.FALSE.
+        doMatern=.FALSE.
+        do k2 = 1, maxCtrlProc
+          if (xx_genarr2d_preproc(k2,iarr)(1:4).eq.'WC01')
+     &      doWC01 = .TRUE.
+          if (xx_genarr2d_preproc(k2,iarr)(1:6).eq.'smooth')
+     &      doSmooth = .TRUE.
+          if (xx_genarr2d_preproc(k2,iarr)(1:6).eq.'matern')
+     &      doMatern=.TRUE.
+        enddo
+        if((doWC01.and.doSmooth)     .or.(doWC01.and.doMatern).or.
+     &     (doSmooth.and.doMatern)) then
+          write(msgBuf,'(A,I)')
+     &    'CTRL_CHECK: Using 2 or more of smooth, WC01, & Matern ',
+     &    'for genarr2d, iarr = ',iarr
+          STOP "ABNORMAL END: S/R CTRL_CHECK"
+        endif
       enddo
 # endif
 
@@ -407,6 +426,24 @@ C this could be changed to control cdrag for momentum equation...
             ENDIF ! test if computing filtervar
           ENDIF ! test if WC01 or matern
         enddo
+        doWC01=.FALSE.
+        doSmooth=.FALSE.
+        doMatern=.FALSE.
+        do k2 = 1, maxCtrlProc
+          if (xx_genarr3d_preproc(k2,iarr)(1:4).eq.'WC01')
+     &      doWC01 = .TRUE.
+          if (xx_genarr3d_preproc(k2,iarr)(1:6).eq.'smooth')
+     &      doSmooth = .TRUE.
+          if (xx_genarr3d_preproc(k2,iarr)(1:6).eq.'matern')
+     &      doMatern=.TRUE.
+        enddo
+        if((doWC01.and.doSmooth)     .or.(doWC01.and.doMatern).or.
+     &     (doSmooth.and.doMatern)) then
+          write(msgBuf,'(A,I)')
+     &    'CTRL_CHECK: Using 2 or more of smooth, WC01, & Matern ',
+     &    'for genarr3d, iarr = ',iarr
+          STOP "ABNORMAL END: S/R CTRL_CHECK"
+        endif
       enddo
 # endif
 
@@ -435,6 +472,7 @@ C this could be changed to control cdrag for momentum equation...
               ENDIF
             ENDIF ! test if computing filtervar
           ENDIF ! test if WC01 or matern
+
         enddo
       enddo
 # endif

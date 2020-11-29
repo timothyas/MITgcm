@@ -44,24 +44,35 @@ C --- Local Parameters
       character*( 80) fnamegeneric
       integer k2
       logical doNormalize
+      logical doWC01, doSmooth, doMaternPre, doMaternReg
 
 c read smoothing [i.e diffusion] operator and normalization:
       CALL smooth_read_operator_2d(smoothOpNb,myThid)
 
+c determine algorithm to use
       doNormalize=.TRUE.
+      doWC01=.FALSE.
+      doSmooth=.FALSE.
+      doMaternPre=.FALSE.
+      doMaternReg=.FALSE.
       do k2 = 1, maxCtrlProc
-        if (smooth_options(k2).eq.'WC01')
+        if (smooth_options(k2)(1:4).eq.'WC01') doWC01 = .TRUE.
+        if (smooth_options(k2)(1:6).eq.'smooth') doSmooth = .TRUE.
+        if (smooth_options(k2)(1:10).eq.'matern_pre') doMaternPre=.TRUE.
+        if (smooth_options(k2)(1:10).eq.'matern_reg') doMaternReg=.TRUE.
+      enddo
+
+      if (doWC01)
      &      CALL smooth_correl2d(fld_in,smooth2DMask,smoothOpNb,myThid)
-        if (smooth_options(k2).eq.'smooth')
+      if (doSmooth)
      &      CALL smooth_diff2d(fld_in,smooth2DMask,
      &          smooth2Dnbt(smoothOpNb),myThid)
-        if (smooth_options(k2).eq.'matern_precond')
+      if (doMaternPre)
      &      CALL smooth_inverse_matern_2d(fld_in,
      &          smooth2DMask, smoothOpNb, doNormalize, myThid)
-        if (smooth_options(k2).eq.'matern_reg')
+      if (doMaternReg)
      &      CALL smooth_apply_matern_2d(fld_in, fld_reg,
      &          smooth2DMask, smoothOpNb, doNormalize, myThid)
-      enddo
 
       CALL EXCH_XY_RL ( fld_in , myThid )
 
