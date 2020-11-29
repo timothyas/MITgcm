@@ -147,19 +147,30 @@ C --- Get appropriate mask for field
 #ifdef ALLOW_GENARR3D_CONTROL
       do iarr = 1, maxCtrlArr3D
 
+      doRegularize=.FALSE.
       dodimensionalcost=.FALSE.
       do k2 = 1, maxCtrlProc
        if (xx_genarr3d_preproc(k2,iarr).EQ.'noscaling') then
          dodimensionalcost=.TRUE.
        endif
+       if (xx_genarr3d_preproc(k2,iarr).EQ.'matern_reg')
+     &   doRegularize=.TRUE.
       enddo
 
 C --- Get appropriate mask for field
       call ctrl_get_mask3D(xx_genarr3d_file(iarr),mask3D,myThid)
 
+      fnamebase = xx_genarr3d_file(iarr)
+      ilgen=ilnblnk( xx_genarr3d_file(iarr) )
+      if (doRegularize) then
+        write(fname,'(2a)') xx_genarr3d_file(iarr)(1:ilgen),'.reg'
+      else
+        write(fname,'(a)') xx_genarr3d_file(iarr)(1:ilgen)
+      endif
+
       if (xx_genarr3d_weight(iarr).NE.' ') then
       call ctrl_cost_gen3d (
-     &     xx_genarr3d_file(iarr),xx_genarr3d_dummy(iarr),
+     &     fname,xx_genarr3d_dummy(iarr),
      &     wgenarr3d(1-Olx,1-Oly,1,1,1,iarr),
      &     dodimensionalcost,
      &     num_genarr3d(1,1,iarr), objf_genarr3d(1,1,iarr),

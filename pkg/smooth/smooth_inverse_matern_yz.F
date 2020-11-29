@@ -69,6 +69,7 @@ C --- Update halo retions for mask
 C     this is not done right now by ctrl_map_ini_genarr
 C     so we can't assume it to be the case
       CALL SMOOTH_EXCH_YZ_RL( smooth2DMask, smoothOpNb, myThid )
+      CALL SMOOTH_EXCH_YZ_RL( fld_in, smoothOpNb, myThid )
 
 C ------------------------------------------------------------------
 C the actual algorithm

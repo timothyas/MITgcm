@@ -4,16 +4,18 @@
 #endif
 
       subroutine smooth_apply_matern_yz (
-     U     fld_in,smooth2DMask,smoothOpNb,doNormalize,mythid)
+     I      fld_in,
+     U      fld_reg,
+     I      smooth2DMask,smoothOpNb,doNormalize,mythid)
 
 C     *==========================================================*
 C     | SUBROUTINE smooth_apply_matern_yz
 C     | o Routine that applies the following differential operator
 C     |   to any field, u
-C     |         
+C     |
 C     |         K^2 u - laplacian(u)
-C     |         
-C     | o This is used for the regularization term in an inverse 
+C     |
+C     | o This is used for the regularization term in an inverse
 C     |   problem
 C     |
 C     *==========================================================*
@@ -31,6 +33,7 @@ c#include "tamc.h"
 
 C --- Inputs
       _RL fld_in(1-OLy:sNy+OLy,Nr,nSx,nSy)
+      _RL fld_reg(1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL smooth2DMask(1-OLy:sNy+OLy,Nr,nSx,nSy)
       integer smoothOpNb
       logical doNormalize
@@ -59,18 +62,17 @@ C --- Loop counters
       ithi = mybxhi(mythid)
 
 C --- Initialize
+      CALL SMOOTH_EXCH_YZ_RL( fld_in, smoothOpNb, myThid )
       do bj = jtlo,jthi
        do bi = itlo,ithi
         do k = 1,Nr
          do j = 1-OLy,sNy+OLy
           fld_out(j,k,bi,bj) = 0. _d 0
+          fld_reg(j,k,bi,bj) = fld_in(j,k,bi,bj)
          enddo
         enddo
        enddo
       enddo
-
-C --- Read in operator
-      CALL smooth_read_operator_yz(smoothOpNb,myThid)
 
 C --- Make sure input mask halos are good to go
       CALL SMOOTH_EXCH_YZ_RL( smooth2DMask, smoothOpNb, myThid )
@@ -95,10 +97,10 @@ c --- 1. Apply inverse of filter normalization (i.e. sqrt(filtervar))
             IF ((ABS(smooth2DNorm(j,k,bi,bj)).GT.0. _d 0).AND.
      &          (smooth2DMask(j,k,bi,bj).NE.0)) then
 
-              fld_in(j,k,bi,bj) = fld_in(j,k,bi,bj)/
+              fld_reg(j,k,bi,bj) = fld_reg(j,k,bi,bj)/
      &            smoothYZNorm(j,k,bi,bj)
             ELSE
-             fld_in(j,k,bi,bj) = 0. _d 0
+             fld_reg(j,k,bi,bj) = 0. _d 0
             ENDIF
            enddo
           enddo
@@ -139,11 +141,20 @@ C --- 2. Apply laplacian-like operator
       CALL SMOOTH_EXCH_YZ_RL ( fld_out, smoothOpNb, myThid )
 
 c --- 3. Rewrite input <- output
+C        and divide by randnorm
        do bj = jtlo,jthi
         do bi = itlo,ithi
          do k = 1,Nr
           do j = 1-OLy,sNy+OLy
-           fld_in(j,k,bi,bj) = fld_out(j,k,bi,bj)
+           fld_reg(j,k,bi,bj) = fld_out(j,k,bi,bj)
+           if (doNormalize) then
+            if (ABS(smoothYZRandNorm(j,k,bi,bj)).gt.0.) then
+             fld_reg(j,k,bi,bj) =
+     &       fld_reg(j,k,bi,bj)/smoothYZRandNorm(j,k,bi,bj)
+            else
+             fld_reg(j,k,bi,bj) = 0. _d 0
+            endif
+           endif
           enddo
          enddo
         enddo

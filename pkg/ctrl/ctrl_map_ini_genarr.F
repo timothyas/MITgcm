@@ -464,9 +464,11 @@ C     == local variables ==
       logical dolog10ctrl
       _RL log10initval
       _RL xx_gen  (1-olx:snx+olx,1-oly:sny+oly,nr,nsx,nsy)
+      _RL xx_reg  (1-olx:snx+olx,1-oly:sny+oly,nr,nsx,nsy)
       _RS dummyRS(1)
       character*(80) fnamegenIn
       character*(80) fnamegenOut
+      character*(80) fnamegenReg
       character*(80) fnamebase
       character*(20) smooth_options(maxCtrlProc)
       INTEGER  ILNBLNK
@@ -474,6 +476,7 @@ C     == local variables ==
       integer ilgen
       logical doglobalread
       logical ladinit
+      logical doRegularize
       _RL mask3D(1-olx:snx+olx,1-oly:sny+oly,nr,nsx,nsy)
 CEOP
 
@@ -482,7 +485,9 @@ c--   Now, read the control vector.
       ladinit      = .false.
 
       call ctrl_zero(xx_gen, Nr, 0. _d 0, myThid)
+      call ctrl_zero(xx_reg, Nr, 0. _d 0, myThid)
 
+      doRegularize=.false.
       be_smooth=.false.
       doscaling=.true.
       dolog10ctrl=.false.
@@ -491,14 +496,16 @@ c--   Now, read the control vector.
       numsmo=1
       do k2 = 1, maxCtrlProc
           write(smooth_options(k2),'(a)') ''
-          if ((xx_genarr3d_preproc(k2,iarr).EQ.'WC01').or.
-     &        (xx_genarr3d_preproc(k2,iarr).EQ.'smooth').or.
+          if ((xx_genarr3d_preproc(k2,iarr)(1:4).EQ.'WC01').or.
+     &        (xx_genarr3d_preproc(k2,iarr)(1:6).EQ.'smooth').or.
      &        (xx_genarr3d_preproc(k2,iarr)(1:6).EQ.'matern')) then
              be_smooth=.TRUE.
              smooth_options(k2) = xx_genarr3d_preproc(k2,iarr)
              if (xx_genarr3d_preproc_i(k2,iarr).NE.0)
      &           numsmo=xx_genarr3d_preproc_i(k2,iarr)
           endif
+          if (xx_genarr2d_preproc(k2,iarr)(8:10).EQ.'reg')
+     &       doRegularize=.TRUE.
           if (xx_genarr3d_preproc(k2,iarr).EQ.'noscaling') then
              doscaling=.FALSE.
           endif
@@ -517,6 +524,8 @@ c               passed to data.ctrl, (default = 0.0)
      &       fnamebase(1:ilgen),'.',optimcycle
       write(fnamegenOut(1:80),'(2a,i10.10)')
      &       fnamebase(1:ilgen),'.effective.',optimcycle
+      write(fnamegenReg(1:80),'(2a,i10.10)')
+     &       fnamebase(1:ilgen),'.reg.',optimcycle
 
       CALL MDS_READ_FIELD(xx_genarr3d_weight(iarr),ctrlprec,.FALSE.,
      & 'RL',nR,1,nR,wgenarr3d(1-Olx,1-Oly,1,1,1,iarr),dummyRS,1,mythid)
@@ -535,7 +544,7 @@ C --- Get appropriate mask for ctrl variable
 C --- Do any smoothing: WC01, smooth, or matern-type
 CADJ STORE mask3D = tapelev_init, key = 1
       IF ((useSMOOTH).and.(be_smooth))
-     &  call smooth_driver_3d(xx_gen,smooth_options,
+     &  call smooth_driver_3d(xx_gen,xx_reg,smooth_options,
      &                        mask3D,numsmo,myThid)
 #endif
 
@@ -584,6 +593,10 @@ C  xx_uvel and xx_vvel are read in.
 
       CALL MDS_WRITE_FIELD(fnamegenOut,ctrlprec,.FALSE.,.FALSE.,
      & 'RL',nr,1,nr,fld,dummyRS,1,optimcycle,mythid)
+
+      if (doRegularize)
+     & CALL MDS_WRITE_FIELD(fnamegenReg,ctrlprec,.FALSE.,.FALSE.,
+     & 'RL',nr,1,nr,xx_reg,dummyRS,1,optimcycle,mythid)
 
 #endif /* ALLOW_GENARR3D_CONTROL */
 

@@ -4,16 +4,18 @@
 #endif
 
       subroutine smooth_apply_matern_xz (
-     U     fld_in,smooth2DMask,smoothOpNb,doNormalize,mythid)
+     I      fld_in,
+     U      fld_reg,
+     I      smooth2DMask,smoothOpNb,doNormalize,mythid)
 
 C     *==========================================================*
 C     | SUBROUTINE smooth_apply_matern_xz
 C     | o Routine that applies the following differential operator
 C     |   to any field, u
-C     |         
+C     |
 C     |         K^2 u - laplacian(u)
-C     |         
-C     | o This is used for the regularization term in an inverse 
+C     |
+C     | o This is used for the regularization term in an inverse
 C     |   problem
 C     |
 C     *==========================================================*
@@ -31,6 +33,7 @@ c#include "tamc.h"
 
 C --- Inputs
       _RL fld_in(1-OLx:sNx+OLx,Nr,nSx,nSy)
+      _RL fld_reg(1-OLx:sNx+OLx,Nr,nSx,nSy)
       _RL smooth2DMask(1-OLx:sNx+OLx,Nr,nSx,nSy)
       integer smoothOpNb
       logical doNormalize
@@ -59,18 +62,17 @@ C --- Loop counters
       ithi = mybxhi(mythid)
 
 C --- Initialize
+      CALL SMOOTH_EXCH_XZ_RL( fld_in, smoothOpNb, myThid )
       do bj = jtlo,jthi
        do bi = itlo,ithi
         do k = 1,Nr
          do i = 1-OLx,sNx+OLx
           fld_out(i,k,bi,bj) = 0. _d 0
+          fld_reg(i,k,bi,bj) = fld_in(i,k,bi,bj)
          enddo
         enddo
        enddo
       enddo
-
-C --- Read in operator
-      CALL smooth_read_operator_xz(smoothOpNb,myThid)
 
 C --- Make sure input mask halos are good to go
       CALL SMOOTH_EXCH_XZ_RL( smooth2DMask, smoothOpNb, myThid )
@@ -95,10 +97,10 @@ c --- 1. Apply inverse of filter normalization (i.e. sqrt(filtervar))
             IF ((ABS(smooth2DNorm(i,k,bi,bj)).GT.0. _d 0).AND.
      &          (smooth2DMask(i,k,bi,bj).NE.0)) then
 
-              fld_in(i,k,bi,bj) = fld_in(i,k,bi,bj)/
+              fld_reg(i,k,bi,bj) = fld_reg(i,k,bi,bj)/
      &            smoothXZNorm(i,k,bi,bj)
             ELSE
-             fld_in(i,k,bi,bj) = 0. _d 0
+             fld_reg(i,k,bi,bj) = 0. _d 0
             ENDIF
            enddo
           enddo
@@ -117,18 +119,18 @@ C --- 2. Apply laplacian-like operator
           do k = 1,Nr
            do i = 1,sNx
 
-            fld_out(i,k,bi,bj) = fld_in(i,k,bi,bj)*
+            fld_out(i,k,bi,bj) = fld_reg(i,k,bi,bj)*
      &         (smooth2DDelta(i,k,bi,bj) - center(i,k,bi,bj)) -
-     &         east (i,k,bi,bj)*fld_in(i+1,k,bi,bj) -
-     &         west (i,k,bi,bj)*fld_in(i-1,k,bi,bj)
+     &         east (i,k,bi,bj)*fld_reg(i+1,k,bi,bj) -
+     &         west (i,k,bi,bj)*fld_reg(i-1,k,bi,bj)
 
              if (k.lt.Nr)
      &         fld_out(i,k,bi,bj) = fld_out(i,k,bi,bj) -
-     &          up(i,k,bi,bj)*fld_in(i,k+1,bi,bj)
+     &          up(i,k,bi,bj)*fld_reg(i,k+1,bi,bj)
 
              if (k.gt.1)
      &         fld_out(i,k,bi,bj) = fld_out(i,k,bi,bj) -
-     &          down(i,k,bi,bj)*fld_in(i,k-1,bi,bj)
+     &          down(i,k,bi,bj)*fld_reg(i,k-1,bi,bj)
 
           enddo
          enddo
@@ -139,11 +141,20 @@ C --- 2. Apply laplacian-like operator
       CALL SMOOTH_EXCH_XZ_RL ( fld_out, smoothOpNb, myThid )
 
 c --- 3. Rewrite input <- output
+C        and divide by randnorm
        do bj = jtlo,jthi
         do bi = itlo,ithi
          do k = 1,Nr
           do i = 1-OLx,sNx+OLx
-           fld_in(i,k,bi,bj) = fld_out(i,k,bi,bj)
+           fld_reg(i,k,bi,bj) = fld_out(i,k,bi,bj)
+           if (doNormalize) then
+            if (ABS(smoothXZRandNorm(i,k,bi,bj)).gt.0.) then
+             fld_reg(i,k,bi,bj)=
+     &       fld_reg(i,k,bi,bj)/smoothXZRandNorm(i,k,bi,bj)
+            else
+             fld_reg(i,k,bi,bj)= 0. _d 0
+            endif
+           endif
           enddo
          enddo
         enddo
