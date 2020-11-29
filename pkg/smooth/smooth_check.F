@@ -36,20 +36,6 @@ C     iUnit       - Work variable for IO unit number
 
 c     == end of interface ==
 
-C     TODO:
-C --- Check to make sure operator file exists in this case
-C       when smooth2Dtype .ne.0 and smooth2Dsize.eq.1
-C       when smooth3Dtype .ne.0 and smooth3Dsize.eq.1 or 2
-
-C --- Check to make sure length scale file exists in this case
-C       when smooth2Dtype .ne.0 and smooth2Dsize.eq.2
-C       when smooth3Dtype .ne.0 and smooth3Dsize.eq.3
-
-C --- Check to make sure norm exists if 
-C       smooth2dfilter.eq.1
-C       smooth3dfilter.eq.1
-      
-
 C --- Check for legal mask names
       DO smoothOpNb=1,smoothOpNbMax
         IF ( (smooth2DmaskName(smoothOpNb).ne.'maskC').and.
@@ -57,7 +43,7 @@ C --- Check for legal mask names
      &       (smooth2DmaskName(smoothOpNb).ne.'maskS').and.
      &       (smooth2DmaskName(smoothOpNb).ne.'maskI') ) then
           WRITE(msgBuf,'(2A,I2,2A)') 'SMOOTH_CHECK: ',
-     &      'Unrecognized option for smooth2DmaskName(', smoothOpNb, 
+     &      'Unrecognized option for smooth2DmaskName(', smoothOpNb,
      &      '): ', smooth2DmaskName(smoothOpNb)
           CALL PRINT_ERROR( msgBuf, myThid )
           WRITE(msgBuf,'(2A)') 'SMOOTH_CHECK: ',
@@ -78,7 +64,7 @@ C --- only maskC is allowed for smoothing 3D fields... for now I guess.
      &       (smooth3DmaskName(smoothOpNb).ne.'maskW').and.
      &       (smooth3DmaskName(smoothOpNb).ne.'maskS')) then
           WRITE(msgBuf,'(2A,I2,2A)') 'SMOOTH_CHECK: ',
-     &      'Unrecognized option for smooth3DmaskName(', smoothOpNb, 
+     &      'Unrecognized option for smooth3DmaskName(', smoothOpNb,
      &      '): ', smooth3DmaskName(smoothOpNb)
           CALL PRINT_ERROR( msgBuf, myThid )
           WRITE(msgBuf,'(2A)') 'SMOOTH_CHECK: ',
@@ -92,7 +78,7 @@ C --- Make sure 2D Dims are 'xy', 'xz', or 'yz'
      &      (smooth2DDims(smoothOpNb)(1:2).NE.'xz').AND.
      &      (smooth2DDims(smoothOpNb)(1:2).NE.'yz')) THEN
           WRITE(msgBuf,'(2A,I2,2A)') 'SMOOTH_CHECK: ',
-     &      'Unrecognized option for smooth2DDims(', smoothOpNb, 
+     &      'Unrecognized option for smooth2DDims(', smoothOpNb,
      &      '): ', smooth2DDims(smoothOpNb)
           CALL PRINT_ERROR( msgBuf, myThid )
           WRITE(msgBuf,'(2A)') 'SMOOTH_CHECK: ',
@@ -154,7 +140,7 @@ C     Also, not implemented for WC01 algorithm ... yet?
 
 C --- make sure proper macros are defined for maskI (iceshelf domain)
 #if !( defined(ALLOW_SHI2D_CONTROL) || defined(ALLOW_SHIFWFLX_CONTROL) )
-        IF ( (smooth2DmaskName(smoothOpNb).eq.'maskI') .or. 
+        IF ( (smooth2DmaskName(smoothOpNb).eq.'maskI') .or.
      &       (smooth3DmaskName(smoothOpNb).eq.'maskI') )then
           WRITE(msgBuf,'(3A)') 'SMOOTH_CHECK: ',
      &      'Must compile with option ALLOW_SHI2D_CONTROL or ',
