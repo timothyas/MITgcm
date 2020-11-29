@@ -504,7 +504,7 @@ c--   Now, read the control vector.
              if (xx_genarr3d_preproc_i(k2,iarr).NE.0)
      &           numsmo=xx_genarr3d_preproc_i(k2,iarr)
           endif
-          if (xx_genarr2d_preproc(k2,iarr)(8:10).EQ.'reg')
+          if (xx_genarr3d_preproc(k2,iarr)(8:10).EQ.'reg')
      &       doRegularize=.TRUE.
           if (xx_genarr3d_preproc(k2,iarr).EQ.'noscaling') then
              doscaling=.FALSE.
