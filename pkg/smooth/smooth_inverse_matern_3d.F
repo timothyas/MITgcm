@@ -62,6 +62,7 @@ C --- Update halo retions for mask
 C     this is not done right now by ctrl_map_ini_genarr
 C     so we can't assume it to be the case
       CALL EXCH_XYZ_RL( smooth3DMask, myThid )
+      CALL EXCH_XYZ_RL( fld_in, myThid )
 
 C ------------------------------------------------------------------
 C the actual algorithm

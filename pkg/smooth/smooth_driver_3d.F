@@ -4,7 +4,7 @@
 #endif
 
       subroutine smooth_driver_3D (
-     U     fld_in,
+     U     fld_in, fld_reg,
      I     smooth_options,smooth3DMask,smoothOpNb,mythid)
 
 C     *==========================================================*
@@ -34,6 +34,7 @@ C 2. there should not be more than one preprocessing option
 
 C --- Inputs
       _RL fld_in(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nR,nSx,nSy)
+      _RL fld_reg(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nR,nSx,nSy)
       character*(20) smooth_options(maxCtrlProc)
       _RL smooth3DMask(1-OLx:sNx+OLx,1-OLy:sNy+OLy,nR,nSx,nSy)
       integer smoothOpNb
@@ -55,6 +56,9 @@ c read smoothing [i.e diffusion] operator and normalization:
      &      CALL smooth_diff3d(fld_in,smooth3Dnbt(smoothOpNb),myThid)
         if (smooth_options(k2).eq.'matern_precond')
      &      CALL smooth_inverse_matern_3d(fld_in,
+     &          smooth3DMask, smoothOpNb, doNormalize, myThid)
+        if (smooth_options(k2).eq.'matern_reg')
+     &      CALL smooth_apply_matern_3d(fld_in, fld_reg,
      &          smooth3DMask, smoothOpNb, doNormalize, myThid)
       enddo
 
