@@ -363,7 +363,6 @@ C --- Get appropriate mask for ctrl variable
 
 #ifdef ALLOW_SMOOTH
 C --- Do any smoothing: WC01, smooth, or matern-type
-CADJ STORE mask2D = tapelev_init, key = 1
       IF ((useSMOOTH).and.(be_smooth))
      &  call smooth_driver_2d(xx_gen,xx_reg,smooth_options,
      &                        mask2D,numsmo,myThid)
@@ -542,7 +541,6 @@ C --- Get appropriate mask for ctrl variable
 
 #ifdef ALLOW_SMOOTH
 C --- Do any smoothing: WC01, smooth, or matern-type
-CADJ STORE mask3D = tapelev_init, key = 1
       IF ((useSMOOTH).and.(be_smooth))
      &  call smooth_driver_3d(xx_gen,xx_reg,smooth_options,
      &                        mask3D,numsmo,myThid)
