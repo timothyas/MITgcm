@@ -42,16 +42,11 @@ c     == local variables ==
 #if (defined (ALLOW_GENARR2D_CONTROL) || defined (ALLOW_GENARR3D_CONTROL) || defined (ALLOW_GENTIM2D_CONTROL))
       integer iarr
       logical dodimensionalcost
-      logical doRegularize
-      character*(MAX_LEN_FNAM) fnamebase
-      character*(MAX_LEN_FNAM) fname
+      character*(20) smooth_options
+      integer numsmo
       integer k2
-      integer ilgen
       _RL mask2D(1-olx:snx+olx,1-oly:sny+oly,nsx,nsy)
       _RL mask3D(1-olx:snx+olx,1-oly:sny+oly,Nr,nsx,nsy)
-
-      integer  ilnblnk
-      external ilnblnk
 #endif
 
 c     == end of interface ==
@@ -104,33 +99,29 @@ C --- Get appropriate mask for field
 #ifdef ALLOW_GENARR2D_CONTROL
       do iarr = 1, maxCtrlArr2D
 
-      doRegularize=.FALSE.
       dodimensionalcost=.FALSE.
+      smooth_options = ' '
+      numsmo = 1
       do k2 = 1, maxCtrlProc
        if (xx_genarr2d_preproc(k2,iarr).EQ.'noscaling') then
          dodimensionalcost=.TRUE.
        endif
-       if (xx_genarr2d_preproc(k2,iarr).EQ.'matern_reg')
-     &   doRegularize=.TRUE.
+       if (xx_genarr2d_preproc(k2,iarr)(1:10).EQ.'matern_reg') then
+         smooth_options=xx_genarr2d_preproc(k2,iarr)
+         if (xx_genarr2d_preproc_i(k2,iarr).NE.0)
+     &     numsmo=xx_genarr2d_preproc_i(k2,iarr)
+       endif
       enddo
 
 C --- Get appropriate mask for field
       call ctrl_get_mask2D(xx_genarr2d_file(iarr),mask2D,myThid)
 
-      fnamebase = xx_genarr2d_file(iarr)
-      ilgen=ilnblnk( xx_genarr2d_file(iarr) )
-      if (doRegularize) then
-        write(fname,'(2a)') xx_genarr2d_file(iarr)(1:ilgen),'.reg'
-      else
-        write(fname,'(a)') xx_genarr2d_file(iarr)(1:ilgen)
-      endif
-
       if (xx_genarr2d_weight(iarr).NE.' ') then
       call ctrl_cost_gen2d (
      &     1,1,
-     &     fname,xx_genarr2d_dummy(iarr),
+     &     xx_genarr2d_file(iarr),xx_genarr2d_dummy(iarr),
      &     zeroRL, wgenarr2d(1-Olx,1-Oly,1,1,iarr),
-     &     dodimensionalcost,
+     &     dodimensionalcost,smooth_options,numsmo,
      &     num_genarr2d(1,1,iarr), objf_genarr2d(1,1,iarr),
 #ifdef ECCO_CTRL_DEPRECATED
      &     zeroRL, num_zero_mean, objf_zero_mean,
@@ -147,32 +138,28 @@ C --- Get appropriate mask for field
 #ifdef ALLOW_GENARR3D_CONTROL
       do iarr = 1, maxCtrlArr3D
 
-      doRegularize=.FALSE.
       dodimensionalcost=.FALSE.
+      smooth_options = ' '
+      numsmo = 1
       do k2 = 1, maxCtrlProc
        if (xx_genarr3d_preproc(k2,iarr).EQ.'noscaling') then
          dodimensionalcost=.TRUE.
        endif
-       if (xx_genarr3d_preproc(k2,iarr).EQ.'matern_reg')
-     &   doRegularize=.TRUE.
+       if (xx_genarr3d_preproc(k2,iarr)(1:10).EQ.'matern_reg') then
+         smooth_options=xx_genarr3d_preproc(k2,iarr)
+         if (xx_genarr3d_preproc_i(k2,iarr).NE.0)
+     &     numsmo=xx_genarr3d_preproc_i(k2,iarr)
+       endif
       enddo
 
 C --- Get appropriate mask for field
       call ctrl_get_mask3D(xx_genarr3d_file(iarr),mask3D,myThid)
 
-      fnamebase = xx_genarr3d_file(iarr)
-      ilgen=ilnblnk( xx_genarr3d_file(iarr) )
-      if (doRegularize) then
-        write(fname,'(2a)') xx_genarr3d_file(iarr)(1:ilgen),'.reg'
-      else
-        write(fname,'(a)') xx_genarr3d_file(iarr)(1:ilgen)
-      endif
-
       if (xx_genarr3d_weight(iarr).NE.' ') then
       call ctrl_cost_gen3d (
-     &     fname,xx_genarr3d_dummy(iarr),
+     &     xx_genarr3d_file(iarr),xx_genarr3d_dummy(iarr),
      &     wgenarr3d(1-Olx,1-Oly,1,1,1,iarr),
-     &     dodimensionalcost,
+     &     dodimensionalcost,smooth_options,numsmo,
      &     num_genarr3d(1,1,iarr), objf_genarr3d(1,1,iarr),
      &     mask3D, myThid )
       endif

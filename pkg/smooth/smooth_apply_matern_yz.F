@@ -4,8 +4,7 @@
 #endif
 
       subroutine smooth_apply_matern_yz (
-     I      fld_in,
-     U      fld_reg,
+     U      fld_in,
      I      smooth2DMask,smoothOpNb,doNormalize,mythid)
 
 C     *==========================================================*
@@ -25,7 +24,6 @@ C     *==========================================================*
 #include "EEPARAMS.h"
 #include "GRID.h"
 #include "PARAMS.h"
-c#include "tamc.h"
 #include "SMOOTH.h"
 #ifdef ALLOW_OBCS
 # include "OBCS_GRID.h"
@@ -33,7 +31,6 @@ c#include "tamc.h"
 
 C --- Inputs
       _RL fld_in(1-OLy:sNy+OLy,Nr,nSx,nSy)
-      _RL fld_reg(1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL smooth2DMask(1-OLy:sNy+OLy,Nr,nSx,nSy)
       integer smoothOpNb
       logical doNormalize
@@ -49,7 +46,6 @@ C --- Local parameters
       _RL south  (1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL up     (1-OLy:sNy+OLy,Nr,nSx,nSy)
       _RL down   (1-OLy:sNy+OLy,Nr,nSx,nSy)
-      character*( 80) fnamegeneric
       integer i,j,k,bi,bj
       integer itlo,ithi
       integer jtlo,jthi
@@ -62,20 +58,22 @@ C --- Loop counters
       ithi = mybxhi(mythid)
 
 C --- Initialize
-      CALL SMOOTH_EXCH_YZ_RL( fld_in, smoothOpNb, myThid )
       do bj = jtlo,jthi
        do bi = itlo,ithi
         do k = 1,Nr
          do j = 1-OLy,sNy+OLy
           fld_out(j,k,bi,bj) = 0. _d 0
-          fld_reg(j,k,bi,bj) = fld_in(j,k,bi,bj)
          enddo
         enddo
        enddo
       enddo
 
+C --- Read in operator
+      CALL smooth_read_operator_yz( smoothOpNb, myThid )
+
 C --- Make sure input mask halos are good to go
       CALL SMOOTH_EXCH_YZ_RL( smooth2DMask, smoothOpNb, myThid )
+      CALL SMOOTH_EXCH_YZ_RL( fld_in, smoothOpNb, myThid )
 
 C --- Get laplacian matrix elements
       CALL smooth_get_laplacian_yz(
@@ -97,10 +95,10 @@ c --- 1. Apply inverse of filter normalization (i.e. sqrt(filtervar))
             IF ((ABS(smooth2DNorm(j,k,bi,bj)).GT.0. _d 0).AND.
      &          (smooth2DMask(j,k,bi,bj).NE.0)) then
 
-              fld_reg(j,k,bi,bj) = fld_reg(j,k,bi,bj)/
+              fld_in(j,k,bi,bj) = fld_in(j,k,bi,bj)/
      &            smoothYZNorm(j,k,bi,bj)
             ELSE
-             fld_reg(j,k,bi,bj) = 0. _d 0
+             fld_in(j,k,bi,bj) = 0. _d 0
             ENDIF
            enddo
           enddo
@@ -146,13 +144,13 @@ C        and divide by randnorm
         do bi = itlo,ithi
          do k = 1,Nr
           do j = 1-OLy,sNy+OLy
-           fld_reg(j,k,bi,bj) = fld_out(j,k,bi,bj)
+           fld_in(j,k,bi,bj) = fld_out(j,k,bi,bj)
            if (doNormalize) then
             if (ABS(smoothYZRandNorm(j,k,bi,bj)).gt.0.) then
-             fld_reg(j,k,bi,bj) =
-     &       fld_reg(j,k,bi,bj)/smoothYZRandNorm(j,k,bi,bj)
+             fld_in(j,k,bi,bj) =
+     &       fld_in(j,k,bi,bj)/smoothYZRandNorm(j,k,bi,bj)
             else
-             fld_reg(j,k,bi,bj) = 0. _d 0
+             fld_in(j,k,bi,bj) = 0. _d 0
             endif
            endif
           enddo
