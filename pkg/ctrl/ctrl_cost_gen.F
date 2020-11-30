@@ -22,6 +22,8 @@ C     !INTERFACE:
      I                       xx_gen_period,
      I                       xx_gen_weight,
      I                       dodimensionalcost,
+     I                       smooth_options,
+     I                       numsmo,
      O                       num_gen_anom,
      O                       objf_gen_anom,
 #ifdef ECCO_CTRL_DEPRECATED
@@ -66,6 +68,8 @@ c     == routine arguments ==
       _RL xx_gen_period
       _RL xx_gen_weight(1-olx:snx+olx,1-oly:sny+oly,nsx,nsy)
       logical dodimensionalcost
+      character*(20) smooth_options
+      integer numsmo
       _RL num_gen_anom(nsx,nsy)
       _RL objf_gen_anom(nsx,nsy)
 #ifdef ECCO_CTRL_DEPRECATED
@@ -107,6 +111,7 @@ c     == local variables ==
       logical ladinit
 
       character*(80) fnamefld
+
 
 c     == external functions ==
 
@@ -159,6 +164,7 @@ c--   >>> Loop 1 to compute mean forcing:
       enddo
 
 #ifndef ECCO_CTRL_DEPRECATED
+
 c--   >>> Loop over records.
       do irec = 1,nrec
 
@@ -169,6 +175,14 @@ c--   >>> Loop over records.
 #else
         CALL READ_REC_XY_RL( fnamefld, tmpfld2d, iRec, 1, myThid )
 #endif
+
+#ifdef ALLOW_SMOOTH
+        if ((useSmooth).and.(smooth_options(1:10).eq.'matern_reg')) then
+         CALL smooth_apply_matern_2d(tmpfld2d,xx_gen_mask2d,
+     &                               numsmo, .TRUE., myThid)
+        endif
+#endif
+
 
 c--     Loop over this thread tiles.
         do bj = jtlo,jthi
@@ -201,6 +215,14 @@ c--         Determine the weights to be used.
 
 c--   End of loop over records.
       enddo
+
+#ifdef ALLOW_SMOOTH
+        if ((useSmooth).and.(smooth_options(1:10).eq.'matern_reg')) then
+         write(fnamefld(1:80),'(2a,i10.10)')
+     &         xx_gen_file(1:ilfld),'.reg.',optimcycle
+         CALL WRITE_REC_3D_RL(fnamefld,ctrlprec,1,tmpfld2d,1,1,myThid)
+        endif
+#endif
 
 #else /* ECCO_CTRL_DEPRECATED */
 
@@ -406,6 +428,8 @@ C     !INTERFACE:
      I                       xx_gen_dummy,
      I                       xx_gen_weight,
      I                       dodimensionalcost,
+     I                       smooth_options,
+     I                       numsmo,
      O                       num_gen,
      O                       objf_gen,
      I                       xx_gen_mask,
@@ -439,6 +463,8 @@ c     == routine arguments ==
       _RL xx_gen_dummy
       _RL xx_gen_weight(1-olx:snx+olx,1-oly:sny+oly,nr,nsx,nsy)
       logical dodimensionalcost
+      character*(20) smooth_options
+      integer numsmo
       _RL num_gen(nsx,nsy)
       _RL objf_gen(nsx,nsy)
       _RL xx_gen_mask(1-olx:snx+olx,1-oly:sny+oly,nr,nsx,nsy)
@@ -506,6 +532,16 @@ c--   >>> Loop 1 to compute mean forcing:
      &        , xx_gen_dummy )
 #else
         CALL READ_REC_XYZ_RL( fnamefld, tmpfld3d, iRec, 1, myThid )
+#endif
+
+#ifdef ALLOW_SMOOTH
+        if (smooth_options(1:10).eq.'matern_reg') then
+         CALL smooth_apply_matern_3d(tmpfld3d, xx_gen_mask,
+     &                               numsmo, .TRUE., myThid)
+         write(fnamefld(1:80),'(2a,i10.10)')
+     &         xx_gen_file(1:ilfld),'.reg.',optimcycle
+         CALL WRITE_REC_3D_RL(fnamefld,ctrlprec,Nr,tmpfld3d,1,1,myThid)
+        endif
 #endif
 
 c--     Loop over this thread tiles.
