@@ -199,7 +199,7 @@ c     >>> Initialise control vector for optimcycle=0 <<<
           write(cfile(1:128),'(4a,i4.4)')
      &         ctrlname(1:9),'_',yctrlid(1:10),
      &         yctrlposunpack(1:4), optimcycle
-          write(standardMessageUnit,*) 'ph-pack: unpacking ', 
+          write(standardMessageUnit,*) 'ph-pack: unpacking ',
      &         ctrlname(1:9)
       else
 c     >>> Write gradient vector <<<
@@ -208,7 +208,7 @@ c     >>> Write gradient vector <<<
           write(cfile(1:128),'(4a,i4.4)')
      &         costname(1:9),'_',yctrlid(1:10),
      &         yctrlposunpack(1:4), optimcycle
-          write(standardMessageUnit,*) 'ph-pack: unpacking ', 
+          write(standardMessageUnit,*) 'ph-pack: unpacking ',
      &         costname(1:9)
        endif
 
@@ -837,7 +837,8 @@ c----------------------------------------------------------------------
          mskNameForSetUnpack='maskCtrlC'
          nwettmp(1:Nr) = nwetcglobal(1:Nr)
 # ifdef ALLOW_SHI2D_CONTROL
-         if (xx_genarr2d_file(iarr)(1:11).eq.'xx_shicoeff') then
+         if ((xx_genarr2d_file(iarr)(1:11).eq.'xx_shicoeff').or.
+     &       (xx_genarr2d_file(iarr)(1:11).eq.'xx_shicdrag')) then
           mskNameForSetUnpack='maskCtrlI'
           nwettmp(1:Nr) = nwetiglobal(1:Nr)
          endif
