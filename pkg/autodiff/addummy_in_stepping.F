@@ -178,8 +178,12 @@ C--   need to all the correct OpenAD EXCH S/R ; left empty for now
         CALL ADEXCH_3D_RL( adBottomDragFld, 1 , myThid )
 # endif
 # ifdef ALLOW_SHI2D_CONTROL
+#  ifndef SHI_ALLOW_GAMMAFRICT
         CALL ADEXCH_XY_RL( adshiTransCoeffT, myThid )
         CALL ADEXCH_XY_RL( adshiTransCoeffS, myThid )
+#  else
+        CALL ADEXCH_XY_RL( adshiCDragFld, myThid )
+#  endif
 # endif
 
 #endif /* AUTODIFF_TAMC_COMPATIBILITY */
