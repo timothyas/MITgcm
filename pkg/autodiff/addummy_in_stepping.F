@@ -175,8 +175,12 @@ C--   need to all the correct OpenAD EXCH S/R ; left empty for now
         CALL ADEXCH_3D_RL( adBottomDragFld, 1 , myThid )
 # endif
 # ifdef ALLOW_SHI2D_CONTROL
+#  ifndef SHI_ALLOW_GAMMAFRICT
         CALL ADEXCH_XY_RL( adshiTransCoeffT, myThid )
         CALL ADEXCH_XY_RL( adshiTransCoeffS, myThid )
+#  else
+        CALL ADEXCH_XY_RL( adshiCDragFld, myThid )
+#  endif
 # endif
 
 #endif /* AUTODIFF_TAMC_COMPATIBILITY */
@@ -267,12 +271,12 @@ C -     OpenAD
          CALL DIAGNOSTICS_FILL( vVel%d, 'ADJvvel ', 0,Nr,0,1,1,myThid )
 #  ifdef ALLOW_SHI2D_CONTROL
 #   ifndef SHI_ALLOW_GAMMAFRICT
-         CALL DIAGNOSTICS_FILL( shiTransCoeffT%d, 
+         CALL DIAGNOSTICS_FILL( shiTransCoeffT%d,
      &                          'ADJshict', 0,1,0,1,1,myThid )
-         CALL DIAGNOSTICS_FILL( shiTransCoeffS%d, 
+         CALL DIAGNOSTICS_FILL( shiTransCoeffS%d,
      &                          'ADJshics', 0,1,0,1,1,myThid )
 #   else
-         CALL DIAGNOSTICS_FILL( shiCDragFld%d, 
+         CALL DIAGNOSTICS_FILL( shiCDragFld%d,
      &                          'ADJshicd', 0,1,0,1,1,myThid )
 #   endif
 #  endif
@@ -285,12 +289,12 @@ C -     TAF
          CALL DIAGNOSTICS_FILL( advVel, 'ADJvvel ', 0,Nr,0,1,1,myThid )
 #  ifdef ALLOW_SHI2D_CONTROL
 #   ifndef SHI_ALLOW_GAMMAFRICT
-         CALL DIAGNOSTICS_FILL( adshiTransCoeffT, 
+         CALL DIAGNOSTICS_FILL( adshiTransCoeffT,
      &                          'ADJshict', 0,1,0,1,1,myThid )
-         CALL DIAGNOSTICS_FILL( adshiTransCoeffS, 
+         CALL DIAGNOSTICS_FILL( adshiTransCoeffS,
      &                          'ADJshics', 0,1,0,1,1,myThid )
 #   else
-         CALL DIAGNOSTICS_FILL( adshiCDragFld, 
+         CALL DIAGNOSTICS_FILL( adshiCDragFld,
      &                          'ADJshicd', 0,1,0,1,1,myThid )
 #   endif
 #  endif
@@ -461,7 +465,7 @@ c    &         adGGL90DiffKr, dumpAdRecMn, myIter, myThid )
 #endif
 #ifdef ALLOW_SHI2D_CONTROL
 # ifndef SHI_ALLOW_GAMMAFRICT
-          CALL WRITE_REC_XY_RL ( 'ADJshict', 
+          CALL WRITE_REC_XY_RL ( 'ADJshict',
      &         adshiTransCoeffT, dumpAdRecMn, myIter, myThid )
           CALL WRITE_REC_XY_RL ( 'ADJshics',
      &         adshiTransCoeffS, dumpAdRecMn, myIter, myThid )
@@ -799,7 +803,7 @@ cc     &         var3Du, dumpAdRecMn, myIter, myThid )
 #endif
 #ifdef ALLOW_SHI2D_CONTROL
 # ifndef SHI_ALLOW_GAMMAFRICT
-          CALL WRITE_REC_XY_RL ( 'ADJshict', 
+          CALL WRITE_REC_XY_RL ( 'ADJshict',
      &         shiTransCoeffT%d, dumpAdRecMn, myIter, myThid )
           CALL WRITE_REC_XY_RL ( 'ADJshics',
      &         shiTransCoeffS%d, dumpAdRecMn, myIter, myThid )
