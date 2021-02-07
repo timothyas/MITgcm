@@ -280,14 +280,14 @@ C-----------------------------------------------------------------------
 #  ifndef SHI_ALLOW_GAMMAFRICT
       CALL DUMP_ADJ_XY(dumRS, adshiTransCoeffT,
      &                 'ADJshict','ADJshict.',
-     &                 11, doDump, dumpAdRecMn, myTime, myIter,myThid)
+     &                 12, doDump, dumpAdRecMn, myTime, myIter,myThid)
       CALL DUMP_ADJ_XY(dumRS, adshiTransCoeffS,
      &                 'ADJshics','ADJshics.',
-     &                 11, doDump, dumpAdRecMn, myTime, myIter,myThid)
+     &                 12, doDump, dumpAdRecMn, myTime, myIter,myThid)
 #  else
       CALL DUMP_ADJ_XY(dumRS, adshiCDragFld,
      &                 'ADJshicd','ADJshicd.',
-     &                 11, doDump, dumpAdRecMn, myTime, myIter,myThid)
+     &                 12, doDump, dumpAdRecMn, myTime, myIter,myThid)
 #  endif
 # endif
 
